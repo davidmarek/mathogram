@@ -1,0 +1,123 @@
+import { enumerateEquations, isValidEquation } from './arithmetic';
+import { isRecord, validatePuzzle } from './puzzle';
+import type { Equation, Puzzle } from './puzzle';
+
+export interface Attempt {
+  puzzleId: string;
+  puzzleVersion: number;
+  queue: { pixelId: string; equation: Equation }[];
+  solved: string[];
+}
+
+function randomIndex(length: number, random: () => number): number {
+  const value = random();
+  if (!Number.isFinite(value) || value < 0 || value >= 1) {
+    throw new RangeError('Random source must return a number in [0, 1).');
+  }
+  return Math.floor(value * length);
+}
+
+function equationKey({ a, op, b }: Equation): string {
+  return `${a}${op}${b}`;
+}
+
+export function createAttempt(
+  puzzle: Puzzle,
+  random: () => number = Math.random,
+): Attempt {
+  if (!validatePuzzle(puzzle)) throw new TypeError('Invalid puzzle.');
+  const pixels = [...puzzle.pixels];
+  for (let index = pixels.length - 1; index > 0; index -= 1) {
+    const other = randomIndex(index + 1, random);
+    const current = pixels[index]!;
+    pixels[index] = pixels[other]!;
+    pixels[other] = current;
+  }
+  const candidates = enumerateEquations(puzzle.intro);
+  const uses = new Map<string, number>();
+  let previousOp: Equation['op'] | undefined;
+  const queue = pixels.map((pixel) => {
+    let choices = candidates.filter(({ c }) => c === pixel.col);
+    const nonzero = choices.filter(({ a, b }) => a !== 0 && b !== 0);
+    if (nonzero.length > 0) choices = nonzero;
+    const alternating = choices.filter(({ op }) => op !== previousOp);
+    if (alternating.length > 0) choices = alternating;
+    const leastUsed = Math.min(
+      ...choices.map((equation) => uses.get(equationKey(equation)) ?? 0),
+    );
+    choices = choices.filter(
+      (equation) => (uses.get(equationKey(equation)) ?? 0) === leastUsed,
+    );
+    const equation = { ...choices[randomIndex(choices.length, random)]! };
+    const key = equationKey(equation);
+    uses.set(key, (uses.get(key) ?? 0) + 1);
+    previousOp = equation.op;
+    return { pixelId: pixel.id, equation };
+  });
+  return {
+    puzzleId: puzzle.id,
+    puzzleVersion: puzzle.version,
+    queue,
+    solved: [],
+  };
+}
+
+export function submitAnswer(
+  attempt: Attempt,
+  answer: string,
+  expectedPixelId: string,
+): Attempt {
+  const current = attempt.queue[attempt.solved.length];
+  if (
+    !current ||
+    current.pixelId !== expectedPixelId ||
+    !/^[0-9]{1,2}$/.test(answer) ||
+    Number(answer) !== current.equation.c
+  ) {
+    return attempt;
+  }
+  return { ...attempt, solved: [...attempt.solved, current.pixelId] };
+}
+
+export function isComplete(attempt: Attempt): boolean {
+  return (
+    attempt.queue.length > 0 && attempt.solved.length === attempt.queue.length
+  );
+}
+
+export function validateAttempt(
+  value: unknown,
+  puzzle: Puzzle,
+): value is Attempt {
+  if (
+    !validatePuzzle(puzzle) ||
+    !isRecord(value) ||
+    value.puzzleId !== puzzle.id ||
+    value.puzzleVersion !== puzzle.version ||
+    !Array.isArray(value.queue) ||
+    value.queue.length !== puzzle.pixels.length ||
+    !Array.isArray(value.solved) ||
+    value.solved.length > value.queue.length
+  ) {
+    return false;
+  }
+  const pixels = new Map(puzzle.pixels.map((pixel) => [pixel.id, pixel]));
+  const seen = new Set<string>();
+  for (const entry of value.queue) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.pixelId !== 'string' ||
+      seen.has(entry.pixelId) ||
+      !isValidEquation(entry.equation, puzzle.intro) ||
+      entry.equation.c !== pixels.get(entry.pixelId)?.col
+    ) {
+      return false;
+    }
+    seen.add(entry.pixelId);
+  }
+  for (let index = 0; index < value.solved.length; index += 1) {
+    const entry: unknown = value.queue[index];
+    if (!isRecord(entry) || value.solved[index] !== entry.pixelId) return false;
+  }
+  return true;
+}

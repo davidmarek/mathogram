@@ -1,0 +1,86 @@
+name: Validate and deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the validated main-branch build
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: mathogram-pages
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Quality and production acceptance
+    if: >-
+      github.repository == 'davidmarek/mathogram' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'davidmarek' &&
+      github.triggering_actor == 'davidmarek' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run validate
+      - name: Keep browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-failure-evidence
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Upload only the validated build
+        if: >-
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.deploy)
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+          retention-days: 1
+
+  deploy:
+    name: Publish validated artifact
+    needs: validate
+    if: >-
+      github.repository == 'davidmarek/mathogram' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'davidmarek' &&
+      github.triggering_actor == 'davidmarek' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        with:
+          enablement: false
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

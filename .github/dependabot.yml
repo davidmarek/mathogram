@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      testing:
+        patterns:
+          - '@testing-library/*'
+          - '@playwright/*'
+          - '@axe-core/*'
+      vitest:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react*'
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
