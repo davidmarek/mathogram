@@ -35,7 +35,7 @@ export const en = {
   storageTitle: 'Saved on this device',
   analyticsTitle: 'Usage statistics — for parents',
   analyticsBody:
-    'This site uses Umami to count online visits and pictures started or completed, with the animal name. No cookies, saved progress, or answers are sent. The analytics service receives your IP address and browser information to estimate visitors. Do Not Track and Global Privacy Control stop these requests. Offline play is not reported.',
+    'This site uses Umami to count online visits and pictures started or completed, with the puzzle ID. No cookies, saved progress, or answers are sent. The analytics service receives your IP address and browser information to estimate visitors. Do Not Track and Global Privacy Control stop these requests. Offline play is not reported.',
   analyticsPolicy: 'How Umami protects privacy',
   storageBody:
     'Your animals are saved in this browser, not an account. Clearing browser data or device cleanup can remove progress and offline files. Home Screen and browser progress may be separate. Nothing syncs to another device.',

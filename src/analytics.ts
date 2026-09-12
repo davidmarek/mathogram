@@ -27,7 +27,7 @@ export const analyticsEnabled =
     website,
   );
 
-function send(name?: string, data?: { animal: string }) {
+function send(name?: string, data?: { puzzleId: string }) {
   try {
     if (
       !analyticsEnabled ||
@@ -67,7 +67,8 @@ export function trackPageview() {
 
 export function trackPuzzle(
   event: 'Puzzle started' | 'Puzzle completed',
-  animal: string,
+  puzzleId: string,
 ) {
-  if (puzzles.some((puzzle) => puzzle.id === animal)) send(event, { animal });
+  if (puzzles.some((puzzle) => puzzle.id === puzzleId))
+    send(event, { puzzleId });
 }

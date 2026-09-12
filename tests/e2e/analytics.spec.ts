@@ -14,7 +14,7 @@ test.describe('enabled analytics', () => {
     'Run against an explicitly analytics-enabled build.',
   );
 
-  test('reports one canonical visit, new attempts and final reveals with only animal properties', async ({
+  test('reports one canonical visit, new attempts and final reveals with only puzzle IDs', async ({
     page,
     context,
     analyticsRequests,
@@ -66,7 +66,7 @@ test.describe('enabled analytics', () => {
           website: process.env.VITE_UMAMI_WEBSITE_ID,
           hostname: '127.0.0.1',
           url: '/mathogram/',
-          ...(name === 'pageview' ? {} : { name, data: { animal: 'fish' } }),
+          ...(name === 'pageview' ? {} : { name, data: { puzzleId: 'fish' } }),
         },
       })),
     );
@@ -76,6 +76,43 @@ test.describe('enabled analytics', () => {
       expect(headers.cookie).toBeUndefined();
       expect(headers.referer).toBeUndefined();
     }
+  });
+
+  test('reports online Home Screen-style launches without adding a launch-mode property', async ({
+    page,
+    context,
+    analyticsRequests,
+  }) => {
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'standalone', { get: () => true });
+    });
+    await page.goto('./');
+    await expect.poll(() => analyticsRequests.length).toBe(1);
+    await page.getByRole('button', { name: 'Help' }).click();
+    await expect(page.getByText('Make yourself at home')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Back to play' }).click();
+    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await expect.poll(() => analyticsRequests.length).toBe(2);
+    expect(analyticsRequests.map((request) => request.postDataJSON())).toEqual([
+      {
+        type: 'event',
+        payload: {
+          website: process.env.VITE_UMAMI_WEBSITE_ID,
+          hostname: '127.0.0.1',
+          url: '/mathogram/',
+        },
+      },
+      {
+        type: 'event',
+        payload: {
+          website: process.env.VITE_UMAMI_WEBSITE_ID,
+          hostname: '127.0.0.1',
+          url: '/mathogram/',
+          name: 'Puzzle started',
+          data: { puzzleId: 'fish' },
+        },
+      },
+    ]);
   });
 
   for (const failure of ['blocked', 'server error']) {

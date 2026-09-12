@@ -37,7 +37,7 @@ export const cs: Messages = {
   storageTitle: 'Uloženo na tomto zařízení',
   analyticsTitle: 'Statistiky používání — pro rodiče',
   analyticsBody:
-    'Tento web používá Umami k počítání online návštěv a zahájených nebo dokončených obrázků podle zvířátka. Neposílá cookies, uložený postup ani odpovědi. Analytická služba přijímá IP adresu a informace o prohlížeči pro odhad počtu návštěvníků. Do Not Track a Global Privacy Control tyto požadavky vypnou. Offline hraní se nehlásí.',
+    'Tento web používá Umami k počítání online návštěv a zahájených nebo dokončených obrázků podle identifikátoru hlavolamu. Neposílá cookies, uložený postup ani odpovědi. Analytická služba přijímá IP adresu a informace o prohlížeči pro odhad počtu návštěvníků. Do Not Track a Global Privacy Control tyto požadavky vypnou. Offline hraní se nehlásí.',
   analyticsPolicy: 'Jak Umami chrání soukromí',
   storageBody:
     'Zvířátka se ukládají v tomto prohlížeči, ne do účtu. Smazání dat prohlížeče nebo úklid zařízení může odstranit postup i offline soubory. Aplikace na ploše a prohlížeč mohou mít oddělený postup. Mezi zařízeními se nic nesynchronizuje.',

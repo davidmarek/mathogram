@@ -51,7 +51,7 @@ describe('optional analytics', () => {
     expect(request).not.toHaveBeenCalled();
   });
 
-  it('sends only canonical pageviews and allowlisted animal events, without credentials or referrers', async () => {
+  it('sends only canonical pageviews and allowlisted puzzle events, without credentials or referrers', async () => {
     window.history.replaceState(
       null,
       '',
@@ -67,8 +67,8 @@ describe('optional analytics', () => {
     expect(request).toHaveBeenCalledTimes(3);
     for (const [index, [name, data]] of [
       [undefined, undefined],
-      ['Puzzle started', { animal: 'fish' }],
-      ['Puzzle completed', { animal: 'owl' }],
+      ['Puzzle started', { puzzleId: 'fish' }],
+      ['Puzzle completed', { puzzleId: 'owl' }],
     ].entries()) {
       expect(request).toHaveBeenNthCalledWith(index + 1, endpoint, {
         method: 'POST',
@@ -89,6 +89,33 @@ describe('optional analytics', () => {
       });
     }
     expect(storage).not.toHaveBeenCalled();
+  });
+
+  it('accepts non-animal IDs from the puzzle catalog without changing the event schema', async () => {
+    vi.doMock('./content/animals', () => ({
+      puzzles: [{ id: 'rocket' }],
+    }));
+    try {
+      const { trackPuzzle } = await import('./analytics');
+      trackPuzzle('Puzzle started', 'rocket');
+      trackPuzzle('Puzzle completed', 'rocket');
+      trackPuzzle('Puzzle started', 'unknown');
+      expect(request).toHaveBeenCalledTimes(2);
+      for (const [index, name] of [
+        'Puzzle started',
+        'Puzzle completed',
+      ].entries()) {
+        expect(JSON.parse(request.mock.calls[index]![1].body).payload).toEqual({
+          website,
+          hostname: window.location.hostname,
+          url: '/mathogram/',
+          name,
+          data: { puzzleId: 'rocket' },
+        });
+      }
+    } finally {
+      vi.doUnmock('./content/animals');
+    }
   });
 
   it.each([
