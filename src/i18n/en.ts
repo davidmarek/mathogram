@@ -20,11 +20,14 @@ export const en = {
   gallery: 'My animals',
   settings: 'Help & settings',
   language: 'Language',
+  showRowHints: 'Show row hints',
+  rowHintsHelp:
+    'Highlight the current row and show its letter. Turn this off to solve without hints from the picture.',
   close: 'Back to play',
   howTitle: 'One sum, one little pixel',
   howBody:
-    'Solve the sum and type your answer. Tap Check and a pixel appears in that column. The letter tells you its row. No need to tap the picture!',
-  gentle: 'Take your time. Try as often as you like.',
+    'Solve the sum and type your answer. Tap Check and a pixel appears in that column. Row hints can show its letter. A missed sum comes back after other exercises. If only one pixel is left, a practice sum comes first without adding a pixel. No need to tap the picture!',
+  gentle: 'Take your time. One little sum at a time.',
   installTitle: 'Make yourself at home',
   installBody:
     'On iPhone or iPad, open this page in Safari. Tap Share, then Add to Home Screen. Turn on Open as Web App if shown, then tap Add. On other browsers, use their install app menu.',
@@ -43,7 +46,7 @@ export const en = {
   resetAll: 'Reset all my animals',
   resetTitle: 'Start your collection over?',
   resetBody:
-    'This removes every saved picture and discovery badge in Mathogram. Your language stays the same. Other apps are not affected.',
+    'This removes every saved picture and discovery badge in Mathogram. Your language and row hint setting stay the same. Other apps are not affected.',
   restart: 'Restart this picture',
   restartTitle: 'Start this picture over?',
   restartBody:
@@ -56,9 +59,14 @@ export const en = {
   answer: 'Your answer',
   check: 'Check',
   erase: 'Erase last digit',
-  retry: 'Not quite. Give it another try!',
-  range: 'Try a number from 1 to 20.',
+  retry: 'Not quite. Let’s try another sum and come back to this one.',
+  range: 'Answers are from 1 to 20. Let’s try another sum first.',
+  retryOnly: 'Not quite. Take a moment and work through the sum.',
   correct: 'Lovely! A new pixel!',
+  practice: 'A LITTLE PRACTICE',
+  practiceHint:
+    'A practice sum, then back to the last pixel. No new pixel here.',
+  practiceCorrect: 'Well done! Back to the last pixel.',
   filled: 'pixels revealed',
   hiddenGrid:
     'Hidden animal. All empty squares look the same. Solve sums to reveal its colored pixels.',

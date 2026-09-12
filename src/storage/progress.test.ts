@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { puzzles } from '../content/animals';
-import { createAttempt, isComplete, submitAnswer } from '../domain/game';
+import {
+  createAttempt,
+  currentExercise,
+  deferExercise,
+  isComplete,
+  submitAnswer,
+} from '../domain/game';
 import type { Attempt } from '../domain/game';
 import {
   emptyProgress,
@@ -33,6 +39,7 @@ function inProgress(): Progress {
   return {
     version: 1,
     language: 'cs',
+    showRowHints: true,
     attempts: {
       fish: submitAnswer(attempt, String(current.equation.c), current.pixelId),
       cat: createAttempt(cat, () => 0.6),
@@ -58,6 +65,7 @@ describe('progress persistence', () => {
     const second = emptyProgress('en');
     expect(first.attempts).not.toBe(second.attempts);
     expect(first.completed).not.toBe(second.completed);
+    expect(first.showRowHints).toBe(true);
   });
 
   it('round-trips language, exact equations, queue order, solved prefix, and badges', () => {
@@ -116,6 +124,65 @@ describe('progress persistence', () => {
     expect(loadProgress(storage, 'cs').progress).toEqual(progress);
   });
 
+  it.each([true, false])('persists row hint preference %s', (showRowHints) => {
+    const progress = { ...inProgress(), showRowHints };
+    const storage = memoryStorage();
+    saveProgress(storage, progress);
+    expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+  });
+
+  it('migrates a preexisting v1 save without hints silently and preserves gameplay', () => {
+    const progress = inProgress();
+    const legacy = {
+      version: progress.version,
+      language: progress.language,
+      attempts: progress.attempts,
+      completed: progress.completed,
+    };
+    expect(load(legacy)).toEqual({ progress, notice: null });
+  });
+
+  it('persists exact reordered queues and review state through resumption', () => {
+    const progress = inProgress();
+    const storage = memoryStorage();
+    let attempt = progress.attempts.fish!;
+    attempt = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+    const reorderedQueue = attempt.queue;
+    progress.attempts.fish = attempt;
+    saveProgress(storage, progress);
+    expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+    attempt = loadProgress(storage, 'en').progress.attempts.fish!;
+    attempt = {
+      ...attempt,
+      solved: attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId),
+    };
+    attempt = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+    attempt = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+    progress.attempts.fish = attempt;
+    saveProgress(storage, progress);
+    const restored = loadProgress(storage, 'en');
+    expect(restored).toEqual({ progress, notice: null });
+    const review = restored.progress.attempts.fish!;
+    expect(review.queue).toEqual(reorderedQueue);
+    expect(review.queue).not.toBe(attempt.queue);
+    expect(review.queue[0]!.equation).not.toBe(attempt.queue[0]!.equation);
+    expect(review.reviewPixelId).toBe(attempt.solved[1]);
+    const active = currentExercise(review)!;
+    progress.attempts.fish = submitAnswer(
+      review,
+      String(active.equation.c),
+      active.pixelId,
+    );
+    expect(progress.attempts.fish.solved).toEqual(attempt.solved);
+    expect(isComplete(progress.attempts.fish)).toBe(false);
+    saveProgress(storage, progress);
+    const resumed = loadProgress(storage, 'en');
+    expect(resumed).toEqual({ progress, notice: null });
+    expect(
+      Object.hasOwn(resumed.progress.attempts.fish!, 'reviewPixelId'),
+    ).toBe(false);
+  });
+
   it('does not implicitly write recovered or missing data', () => {
     const storage = memoryStorage('{broken');
     loadProgress(storage, 'cs');
@@ -126,6 +193,17 @@ describe('progress persistence', () => {
 });
 
 describe('independent recovery', () => {
+  it.each([null, 'false', 0, 1, [], {}])(
+    'recovers invalid row hints %j without losing other state',
+    (showRowHints) => {
+      const valid = inProgress();
+      expect(load({ ...valid, showRowHints })).toEqual({
+        progress: valid,
+        notice: 'recovered',
+      });
+    },
+  );
+
   it.each(['', '{broken', 'undefined', '{"version":'])(
     'reports invalid JSON %j',
     (raw) => {
@@ -315,6 +393,23 @@ describe('independent recovery', () => {
     ],
     ['unknown solved', { ...baseAttempt, solved: ['1:1'] }],
     ['nonstring solved', { ...baseAttempt, solved: [1] }],
+    ['premature review', { ...baseAttempt, reviewPixelId: first.pixelId }],
+    [
+      'unsolved review',
+      {
+        ...baseAttempt,
+        solved: baseAttempt.queue.slice(0, -1).map(({ pixelId }) => pixelId),
+        reviewPixelId: baseAttempt.queue.at(-1)!.pixelId,
+      },
+    ],
+    [
+      'completed review',
+      {
+        ...baseAttempt,
+        solved: baseAttempt.queue.map(({ pixelId }) => pixelId),
+        reviewPixelId: first.pixelId,
+      },
+    ],
   ];
 
   it.each(badAttempts)(
@@ -400,6 +495,26 @@ describe('independent recovery', () => {
 });
 
 describe('explicit persistence failures', () => {
+  it.each([undefined, null, 'false', 0, [], {}])(
+    'rejects invalid in-memory row hints %j instead of repairing on save',
+    (showRowHints) => {
+      const progress = inProgress();
+      Object.assign(progress, { showRowHints });
+      const storage = memoryStorage('previous value');
+      expect(() => saveProgress(storage, progress)).toThrow(TypeError);
+      expect(storage.setItem).not.toHaveBeenCalled();
+      expect(storage.values.get(STORAGE_KEY)).toBe('previous value');
+    },
+  );
+
+  it('rejects an explicitly undefined review field before serialization can omit it', () => {
+    const progress = inProgress();
+    progress.attempts.fish!.reviewPixelId = undefined;
+    const storage = memoryStorage();
+    expect(() => saveProgress(storage, progress)).toThrow(TypeError);
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
+
   it.each([
     'SecurityError',
     'QuotaExceededError',
@@ -497,8 +612,9 @@ describe('explicit persistence failures', () => {
 });
 
 describe('isolated resets', () => {
-  it('resets one attempt without removing its badge, locale, or other attempts', () => {
+  it('resets one attempt without removing its badge, preferences, or other attempts', () => {
     const progress = inProgress();
+    progress.showRowHints = false;
     progress.completed.push('fish');
     const before = JSON.stringify(progress);
     const result = resetPuzzle(progress, 'fish');
@@ -528,15 +644,18 @@ describe('isolated resets', () => {
     expect(replay.completed).toContain('fish');
   });
 
-  it('resets all own attempts/badges while preserving language and unrelated storage', () => {
-    const progress = inProgress();
-    const before = JSON.stringify(progress);
-    const storage = memoryStorage();
-    const reset = resetAllProgress(progress);
-    expect(reset).toEqual(emptyProgress('cs'));
-    expect(JSON.stringify(progress)).toBe(before);
-    expect(saveProgress(storage, reset)).toEqual({ ok: true });
-    expect(storage.values.get('unrelated-app')).toBe('leave me alone');
-    expect(loadProgress(storage, 'en').progress).toEqual(reset);
-  });
+  it.each([true, false])(
+    'resets all attempts/badges while preserving language, hints %s, and unrelated storage',
+    (showRowHints) => {
+      const progress = { ...inProgress(), showRowHints };
+      const before = JSON.stringify(progress);
+      const storage = memoryStorage();
+      const reset = resetAllProgress(progress);
+      expect(reset).toEqual({ ...emptyProgress('cs'), showRowHints });
+      expect(JSON.stringify(progress)).toBe(before);
+      expect(saveProgress(storage, reset)).toEqual({ ok: true });
+      expect(storage.values.get('unrelated-app')).toBe('leave me alone');
+      expect(loadProgress(storage, 'en').progress).toEqual(reset);
+    },
+  );
 });

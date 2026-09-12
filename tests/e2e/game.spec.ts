@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Progress } from '../../src/storage/progress';
+import { currentExercise } from '../../src/domain/game';
+import { messages } from '../../src/i18n';
 import { answerEquation } from './helpers';
 
 async function saved(page: Page): Promise<Progress> {
@@ -19,24 +21,31 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
   await page.getByRole('textbox').fill('99');
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Try a number from 1 to 20.' }),
+    page.getByRole('status').filter({ hasText: messages.en.range }),
   ).toBeVisible();
-  await page
-    .getByRole('textbox')
-    .fill(initial.queue[0]!.equation.c === 1 ? '2' : '1');
+  const afterRange = (await saved(page)).attempts.fish!;
+  expect(afterRange.solved).toEqual([]);
+  expect(afterRange.queue.at(-1)).toEqual(initial.queue[0]);
+  const missed = currentExercise(afterRange)!;
+  await expect(page.getByRole('textbox')).toBeEditable();
+  await page.getByRole('textbox').fill(missed.equation.c === 1 ? '2' : '1');
   await page.getByRole('textbox').press('Enter');
-  await expect(page.getByText('Not quite. Give it another try!')).toBeVisible();
-  expect((await saved(page)).attempts.fish).toEqual(initial);
-  await page.getByRole('textbox').fill('');
+  await expect(page.getByText(messages.en.retry)).toBeVisible();
+  const deferred = (await saved(page)).attempts.fish!;
+  expect(deferred.solved).toEqual([]);
+  expect(deferred.queue.at(-1)).toEqual(missed);
+  const next = currentExercise(deferred)!;
+  expect(next.pixelId).not.toBe(missed.pixelId);
   await answerEquation(page, true);
   await page.keyboard.press('Enter');
   expect((await saved(page)).attempts.fish!.solved).toHaveLength(1);
-  await expect(
-    page.getByTestId(`cell-${initial.queue[0]!.pixelId}`),
-  ).toHaveAttribute('data-filled', 'true');
+  await expect(page.getByTestId(`cell-${next.pixelId}`)).toHaveAttribute(
+    'data-filled',
+    'true',
+  );
   await page.reload();
   await page.getByRole('button', { name: /Sunny fish/ }).click();
-  expect((await saved(page)).attempts.fish!.queue).toEqual(initial.queue);
+  expect((await saved(page)).attempts.fish!.queue).toEqual(deferred.queue);
   expect((await saved(page)).attempts.fish!.solved).toHaveLength(1);
   for (let index = 1; index < initial.queue.length; index++)
     await answerEquation(page, index % 2 === 0);
@@ -47,6 +56,88 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
   await page.getByRole('button', { name: 'Play again' }).click();
   expect((await saved(page)).attempts.fish!.solved).toEqual([]);
   expect((await saved(page)).completed).toContain('fish');
+});
+
+test('row hints are optional, accessible, translated and remembered after reopening', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await expect(page.locator('.row-pill')).toBeVisible();
+  await page.getByRole('button', { name: 'Help & settings' }).click();
+  const hints = page.getByRole('checkbox', { name: 'Show row hints' });
+  await expect(hints).toBeChecked();
+  const label = hints.locator('..');
+  expect((await label.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await hints.uncheck();
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(results.violations).toEqual([]);
+  await page.getByRole('button', { name: 'Back to play' }).click();
+  await expect(
+    page.locator('.row-pill, .active-row, .active-row-label'),
+  ).toHaveCount(0);
+  await expect(page.getByTestId('pixel-grid')).not.toHaveAccessibleName(/Row /);
+  await answerEquation(page);
+  await page.reload();
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await expect(
+    page.locator('.row-pill, .active-row, .active-row-label'),
+  ).toHaveCount(0);
+  expect((await saved(page)).showRowHints).toBe(false);
+  await page.getByRole('button', { name: 'Language: Čeština' }).click();
+  await page.getByRole('button', { name: 'Nápověda a nastavení' }).click();
+  const translated = page.getByRole('checkbox', {
+    name: 'Zobrazovat nápovědu řádku',
+  });
+  await expect(translated).not.toBeChecked();
+  await translated.check();
+  await page.getByRole('button', { name: 'Zpátky ke hře' }).click();
+  await expect(page.locator('.row-pill')).toBeVisible();
+  expect((await saved(page)).showRowHints).toBe(true);
+});
+
+test('last missed pixel returns after a saved practice exercise without filling twice', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.evaluate(() => {
+    const progress: Progress = JSON.parse(
+      localStorage.getItem('mathogram.progress')!,
+    );
+    const attempt = progress.attempts.fish!;
+    attempt.solved = attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId);
+    localStorage.setItem('mathogram.progress', JSON.stringify(progress));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  const before = (await saved(page)).attempts.fish!;
+  const last = currentExercise(before)!;
+  await page.getByRole('textbox').fill(last.equation.c === 1 ? '2' : '1');
+  await page.getByRole('textbox').press('Enter');
+  await expect(
+    page.getByText('A LITTLE PRACTICE', { exact: true }),
+  ).toBeVisible();
+  const practice = (await saved(page)).attempts.fish!;
+  expect(practice.solved).toEqual(before.solved);
+  expect(practice.reviewPixelId).toBeDefined();
+  await page.reload();
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  expect((await saved(page)).attempts.fish).toEqual(practice);
+  await expect(page.locator('.row-pill, .active-row')).toHaveCount(0);
+  await answerEquation(page);
+  await expect(page.getByText(messages.en.practiceCorrect)).toBeVisible();
+  expect((await saved(page)).attempts.fish!.solved).toEqual(before.solved);
+  expect((await saved(page)).completed).toEqual([]);
+  await answerEquation(page);
+  await expect(
+    page.getByRole('heading', { name: 'Look who you found!' }),
+  ).toBeVisible();
+  expect((await saved(page)).attempts.fish!.solved).toHaveLength(
+    before.queue.length,
+  );
 });
 
 test('later animal reveals columns above ten and keeps other attempts on confirmed restart', async ({

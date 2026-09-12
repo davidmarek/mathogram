@@ -17,6 +17,9 @@ test.describe('real Workbox lifecycle', () => {
       const other = await caches.open('other-project-precaches-v1');
       await other.put('/other-project/keep', new Response('keep me'));
     });
+    await page.getByRole('button', { name: 'Help & settings' }).click();
+    await page.getByRole('checkbox', { name: 'Show row hints' }).uncheck();
+    await page.getByRole('button', { name: 'Back to play' }).click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     const queue = await page.evaluate(
       () =>
@@ -39,6 +42,9 @@ test.describe('real Workbox lifecycle', () => {
       'Twilight owl',
     ]) {
       await cold.getByRole('button', { name: new RegExp(name) }).click();
+      await expect(
+        cold.locator('.row-pill, .active-row, .active-row-label'),
+      ).toHaveCount(0);
       await expect(cold.getByTestId('equation')).toBeVisible();
       await answerEquation(cold);
       await expect(cold.locator('[data-filled="true"]')).toHaveCount(1);

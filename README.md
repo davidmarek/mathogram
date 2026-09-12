@@ -24,11 +24,15 @@ Open **http://127.0.0.1:4173/mathogram/**. HTTPS is required when not on localho
 
 ## Play
 
-Pick any animal. The equation card shows the current row letter; its answer is the column number. Enter up to two digits on the built-in keypad or a physical keyboard and press **Check / Ověřit** or Enter. Backspace works in either mode. Wrong answers keep the same equation and progress. Correct answers save immediately, reveal exactly one coordinate, then release a short duplicate-submission guard.
+Pick any animal. The answer to the equation is the column number. Enter up to two digits on the built-in keypad or a physical keyboard and press **Check / Ověřit** or Enter. Backspace works in either mode. Wrong answers (including out-of-range numbers) move the exercise to the back of the remaining queue without revealing a pixel. After brief feedback, the answer clears and another exercise appears; the missed exercise comes back later. Correct answers save immediately, reveal exactly one coordinate, then release a short duplicate-submission guard.
+
+In **Help & settings**, disable **Show row hints / Zobrazovat nápovědu řádku** to hide both the active-row highlight and the equation's row letter, including screen-reader row hints. Permanent grid coordinates remain visible. Hints default to on, including for existing saves; your choice is remembered across puzzles, reloads and collection resets.
+
+If only one pixel remains when an answer is wrong, a previously solved exercise becomes a clearly labeled practice round. Practice has no row hint, never adds another pixel, and returns to the final exercise when answered correctly. A wrong practice answer moves to another practice exercise. Neither missed exercises nor practice rounds cost progress. Exercise order and practice state are saved immediately, so reopening continues from the deferred exercise rather than permitting an immediate repeat.
 
 Return to **My animals / Moje zvířátka** at any point to resume later with the same equations. Completed animals have a discovery badge and can be replayed without losing it. Restarting an unfinished picture or resetting the collection requires confirmation.
 
-The header language switch works during a puzzle without changing its queue. On first use, Czech is chosen if the browser's preferred languages include Czech; otherwise English is used. The saved choice takes precedence thereafter. Help and settings explain installation, storage limitations, and optional persistent-storage permission.
+The header language switch works during a puzzle without changing its queue. On first use, Czech is chosen if the browser's preferred languages include Czech; otherwise English is used. The saved choice takes precedence thereafter. Help and settings include the row hint toggle, installation, storage limitations, and optional persistent-storage permission.
 
 ## Architecture and arithmetic
 
@@ -51,7 +55,7 @@ For `a op b = c`, all values are integers, `a` is 0–20, `b` is 0–10, and `c`
 
 Allowed: `12+5`, `8+2`, `10-3`, `13-3`, `20-5`, `10+10`, `20-0`. Forbidden: `7+8`, `12-5`, `0+20`, and every zero answer.
 
-Candidate selection favors nonzero operands, alternating operations, and less-used expressions when valid alternatives exist. It never retries randomly until something works. Injected randomness makes tests reproducible. Each attempt persists its exact ordered pixel/equation pairs; solved pixels must be a prefix of that queue. The transition also checks the expected current pixel ID, so stale submissions cannot skip an equation.
+Candidate selection favors nonzero operands, alternating operations, and less-used expressions when valid alternatives exist. It never retries randomly until something works. Injected randomness makes tests reproducible. Each attempt persists its exact pixel/equation pairs; deferral reorders only unsolved entries, preserving the solved prefix. A different displayed expression is preferred for the next exercise when available. Final-pixel practice references an already solved entry. Transitions check the expected current pixel ID, so stale submissions cannot skip an equation.
 
 ### Changing content or translations
 
@@ -63,9 +67,9 @@ Add English keys in `src\i18n\en.ts` and corresponding Czech keys in `cs.ts`; Ty
 
 ## Local data and recovery
 
-Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, attempts (including content versions, exact equations and solved prefix), and completion badges. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
+Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, the row hint preference, attempts (including content versions, exact equations, solved prefix and optional final-pixel practice reference), and completion badges. Earlier version-1 saves without the hint preference are loaded with hints enabled and retain their progress. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels, invalid practice references and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
 
-Every correct answer, fresh attempt, reset and preference change is saved synchronously, before animation. Quota/security failures show a persistent warning and allow in-memory play without claiming it was saved. Update acceptance is blocked if that save fails. No unload event is required, and neither reset action calls `localStorage.clear()` or deletes any origin-wide cache.
+Every correct answer, deferral, practice transition, fresh attempt, reset and preference change is saved synchronously, before animation. Quota/security failures show a persistent warning and allow in-memory play without claiming it was saved. Update acceptance is blocked if that save fails. No unload event is required, and neither reset action calls `localStorage.clear()` or deletes any origin-wide cache.
 
 Progress is **not permanent or synchronized**. Browser/device cleanup can remove it. Home Screen and browser contexts may not share the same storage. Optional persistent-storage permission is requested only from the help button; denial is normal and reported. Back up nothing to a server: there is no server.
 
@@ -106,7 +110,7 @@ Linux CI uses `npx playwright install --with-deps chromium webkit`.
 
 Domain and storage require at least **95% line / 90% branch coverage**. Arithmetic tests enumerate the bounded operand/operator/result space with an independent crossing-ten oracle and explicit boundaries. Tests also cover content shape, all target columns, stale/repeated submissions, completed attempts, replay, recovery, quota/security failures, translation, keyboard/keypad, and immediate saves.
 
-Browser tests play a complete introductory puzzle, a later column above 10, retry/resume/replay/restart, Czech detection and reset isolation. They check narrow phone, portrait/landscape phone, iPad and split-view dimensions, 44px touch controls, focus trapping, no horizontal overflow, reduced motion, local-only requests, manifest/icon sizes, and axe WCAG A/AA findings.
+Browser tests play a complete introductory puzzle, a later column above 10, deferred retries, final-pixel practice, resume/replay/restart, Czech detection and reset isolation. They check row hint settings and offline persistence, narrow phone, portrait/landscape phone, iPad and split-view dimensions, 44px touch controls, focus trapping, no horizontal overflow, reduced motion, local-only requests, manifest/icon sizes, and axe WCAG A/AA findings.
 
 Actual service-worker offline and update tests run in **Chromium**, separately from the WebKit interaction tests. The loopback-only server on port 4174 serves the production artifact plus a controlled new HTML precache revision to prove waiting activation and updated cold-offline shell loading. It is test infrastructure and never ships in `dist`. Ports 4173 and 4174 must be free; tests refuse to reuse an unknown server. Failed browser runs retain traces/screenshots; inspect `playwright-report` or `npx playwright show-report`.
 

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { puzzles } from './content/animals';
-import { createAttempt } from './domain/game';
+import { createAttempt, currentExercise } from './domain/game';
 import { emptyProgress, STORAGE_KEY } from './storage/progress';
 import type { Progress } from './storage/progress';
 import { detectLanguage, messages } from './i18n';
@@ -22,7 +22,7 @@ function saved(): Progress {
 }
 function firstAnswer(): string {
   const attempt = saved().attempts.fish!;
-  return String(attempt.queue[attempt.solved.length]!.equation.c);
+  return String(currentExercise(attempt)!.equation.c);
 }
 function openFish() {
   fireEvent.click(screen.getByRole('button', { name: /Sunny fish/ }));
@@ -117,25 +117,162 @@ describe('bilingual gallery and settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
     expect(screen.queryByText('Make yourself at home')).not.toBeInTheDocument();
   });
+  it('persists row hints and hides the active row visually and from screen readers', () => {
+    let view = render(<App />);
+    openFish();
+    expect(document.querySelector('.row-pill')).toBeVisible();
+    expect(document.querySelector('.active-row')).toBeVisible();
+    const before = saved().attempts.fish;
+    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    const setting = screen.getByRole('checkbox', { name: 'Show row hints' });
+    expect(setting).toBeChecked();
+    fireEvent.click(setting);
+    expect(saved().showRowHints).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
+    expect(document.querySelector('.active-row')).not.toBeInTheDocument();
+    expect(document.querySelector('.active-row-label')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pixel-grid')).not.toHaveAccessibleName(/Row /);
+    expect(document.querySelector('.row-label')).toBeVisible();
+    view.unmount();
+    view = render(<App />);
+    openFish();
+    expect(saved().attempts.fish).toEqual(before);
+    expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
+    enter(firstAnswer());
+    submit();
+    expect(screen.getByText('Lovely! A new pixel!')).toBeVisible();
+    expect(screen.queryByText(/Pixel revealed:/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Nápověda a nastavení' }),
+    );
+    const translated = screen.getByRole('checkbox', {
+      name: 'Zobrazovat nápovědu řádku',
+    });
+    expect(translated).not.toBeChecked();
+    fireEvent.click(translated);
+    fireEvent.click(screen.getByRole('button', { name: 'Zpátky ke hře' }));
+    expect(document.querySelector('.row-pill')).toBeVisible();
+    expect(document.querySelector('.active-row')).toBeVisible();
+    view.unmount();
+  });
+  it('keeps settings focus when a deferred exercise finishes its feedback', () => {
+    vi.useFakeTimers();
+    render(<App />);
+    openFish();
+    enter(firstAnswer() === '1' ? '2' : '1');
+    submit();
+    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    const setting = screen.getByRole('checkbox', { name: 'Show row hints' });
+    act(() => setting.focus());
+    act(() => vi.advanceTimersByTime(900));
+    expect(setting).toHaveFocus();
+  });
 });
 
 describe('pixel game', () => {
-  it('normalizes two digits, handles empty/range/wrong answers without changing progress', () => {
+  it('normalizes two digits and defers range/wrong answers without filling pixels', () => {
+    vi.useFakeTimers();
     render(<App />);
     openFish();
     expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
     enter('009');
     expect(screen.getByRole('textbox')).toHaveValue('0');
     submit();
-    expect(screen.getByText('Try a number from 1 to 20.')).toBeVisible();
+    expect(screen.getByText(messages.en.range)).toBeVisible();
+    expect(screen.getByRole('textbox')).toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
+    act(() => vi.advanceTimersByTime(900));
+    expect(screen.getByRole('textbox')).toHaveValue('');
     enter('99');
     submit();
     expect(saved().attempts.fish!.solved).toEqual([]);
+    act(() => vi.advanceTimersByTime(900));
     enter(firstAnswer() === '1' ? '2' : '1');
     submit();
-    expect(screen.getByText('Not quite. Give it another try!')).toBeVisible();
+    expect(screen.getByText(messages.en.retry)).toBeVisible();
     expect(saved().attempts.fish!.solved).toEqual([]);
+    act(() => vi.advanceTimersByTime(900));
     expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+  it('defers a missed pixel once, resumes the next exercise, and returns after the others', () => {
+    vi.useFakeTimers();
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!, () => 0.2);
+    attempt.solved = attempt.queue.slice(0, -3).map(({ pixelId }) => pixelId);
+    progress.attempts.fish = attempt;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    const missed = currentExercise(attempt)!;
+    let view = render(<App />);
+    openFish();
+    enter(missed.equation.c === 1 ? '2' : '1');
+    submit();
+    const deferred = saved().attempts.fish!;
+    expect(deferred.solved).toEqual(attempt.solved);
+    expect(deferred.queue.at(-1)).toEqual(missed);
+    expect(currentExercise(deferred)!.pixelId).not.toBe(missed.pixelId);
+    submit();
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+    expect(saved().attempts.fish).toEqual(deferred);
+    view.unmount();
+    view = render(<App />);
+    openFish();
+    expect(saved().attempts.fish).toEqual(deferred);
+    expect(screen.getByRole('textbox')).toHaveValue('');
+    for (let index = 0; index < 2; index += 1) {
+      enter(firstAnswer());
+      submit();
+      act(() => vi.advanceTimersByTime(650));
+    }
+    expect(currentExercise(saved().attempts.fish!)).toEqual(missed);
+    expect(screen.getByTestId(`cell-${missed.pixelId}`)).toHaveAttribute(
+      'data-filled',
+      'false',
+    );
+    enter(firstAnswer());
+    submit();
+    expect(
+      screen.getByRole('heading', { name: 'Look who you found!' }),
+    ).toBeVisible();
+    view.unmount();
+  });
+  it('inserts practice after missing the final pixel without revealing or completing it', () => {
+    vi.useFakeTimers();
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!, () => 0.2);
+    attempt.solved = attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId);
+    progress.attempts.fish = attempt;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    render(<App />);
+    openFish();
+    const last = currentExercise(attempt)!;
+    enter(last.equation.c === 1 ? '2' : '1');
+    submit();
+    act(() => vi.advanceTimersByTime(900));
+    expect(screen.getByText('A LITTLE PRACTICE')).toBeVisible();
+    expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
+    expect(document.querySelector('.active-row')).not.toBeInTheDocument();
+    expect(saved().attempts.fish!.solved).toEqual(attempt.solved);
+    const review = currentExercise(saved().attempts.fish!)!;
+    enter(review.equation.c === 1 ? '2' : '1');
+    submit();
+    act(() => vi.advanceTimersByTime(900));
+    expect(currentExercise(saved().attempts.fish!)!.pixelId).not.toBe(
+      review.pixelId,
+    );
+    enter(firstAnswer());
+    submit();
+    expect(screen.getByText(messages.en.practiceCorrect)).toBeVisible();
+    expect(document.querySelector('.new-pixel')).not.toBeInTheDocument();
+    expect(saved().attempts.fish!.solved).toEqual(attempt.solved);
+    expect(saved().completed).toEqual([]);
+    act(() => vi.advanceTimersByTime(650));
+    expect(currentExercise(saved().attempts.fish!)).toEqual(last);
+    expect(document.querySelector('.row-pill')).toBeVisible();
+    enter(firstAnswer());
+    submit();
+    expect(saved().completed).toEqual(['fish']);
   });
   it('saves and fills exactly the answer coordinate before animation, with repeat protection', () => {
     vi.useFakeTimers();

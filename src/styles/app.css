@@ -733,6 +733,20 @@ progress::-moz-progress-bar {
 .modal-close {
   width: 100%;
 }
+.hint-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 16px;
+  cursor: pointer;
+}
+.hint-setting input {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
 .language-setting {
   display: flex;
   justify-content: space-between;

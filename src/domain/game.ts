@@ -7,6 +7,7 @@ export interface Attempt {
   puzzleVersion: number;
   queue: { pixelId: string; equation: Equation }[];
   solved: string[];
+  reviewPixelId?: string;
 }
 
 function randomIndex(length: number, random: () => number): number {
@@ -62,19 +63,93 @@ export function createAttempt(
   };
 }
 
+export function currentExercise(
+  attempt: Attempt,
+): Attempt['queue'][number] | undefined {
+  return attempt.reviewPixelId !== undefined
+    ? attempt.queue.find(({ pixelId }) => pixelId === attempt.reviewPixelId)
+    : attempt.queue[attempt.solved.length];
+}
+
+function preferDifferentExercise(
+  exercises: Attempt['queue'],
+  previous: Equation,
+): Attempt['queue'][number] | undefined {
+  const previousKey = equationKey(previous);
+  return (
+    exercises.find(({ equation }) => equationKey(equation) !== previousKey) ??
+    exercises[0]
+  );
+}
+
+export function deferExercise(
+  attempt: Attempt,
+  expectedPixelId: string,
+): Attempt {
+  const current = currentExercise(attempt);
+  if (!current || isComplete(attempt) || current.pixelId !== expectedPixelId) {
+    return attempt;
+  }
+  if (attempt.reviewPixelId !== undefined) {
+    const next = { ...attempt };
+    if (attempt.solved.length === 1) {
+      delete next.reviewPixelId;
+    } else {
+      const index = attempt.solved.indexOf(attempt.reviewPixelId);
+      const candidates = [
+        ...attempt.queue.slice(index + 1, attempt.solved.length),
+        ...attempt.queue.slice(0, index),
+      ];
+      next.reviewPixelId = preferDifferentExercise(
+        candidates,
+        current.equation,
+      )!.pixelId;
+    }
+    return next;
+  }
+  if (attempt.queue.length - attempt.solved.length === 1) {
+    return attempt.solved.length > 0
+      ? {
+          ...attempt,
+          reviewPixelId: preferDifferentExercise(
+            attempt.queue.slice(0, attempt.solved.length),
+            current.equation,
+          )!.pixelId,
+        }
+      : attempt;
+  }
+  const remaining = attempt.queue.slice(attempt.solved.length + 1);
+  const next = preferDifferentExercise(remaining, current.equation)!;
+  return {
+    ...attempt,
+    queue: [
+      ...attempt.queue.slice(0, attempt.solved.length),
+      next,
+      ...remaining.filter((entry) => entry !== next),
+      current,
+    ],
+  };
+}
+
 export function submitAnswer(
   attempt: Attempt,
   answer: string,
   expectedPixelId: string,
 ): Attempt {
-  const current = attempt.queue[attempt.solved.length];
+  const current = currentExercise(attempt);
   if (
     !current ||
+    isComplete(attempt) ||
     current.pixelId !== expectedPixelId ||
     !/^[0-9]{1,2}$/.test(answer) ||
     Number(answer) !== current.equation.c
   ) {
     return attempt;
+  }
+  if (attempt.reviewPixelId !== undefined) {
+    const next = { ...attempt };
+    delete next.reviewPixelId;
+    return next;
   }
   return { ...attempt, solved: [...attempt.solved, current.pixelId] };
 }
@@ -118,6 +193,14 @@ export function validateAttempt(
   for (let index = 0; index < value.solved.length; index += 1) {
     const entry: unknown = value.queue[index];
     if (!isRecord(entry) || value.solved[index] !== entry.pixelId) return false;
+  }
+  if (
+    'reviewPixelId' in value &&
+    (typeof value.reviewPixelId !== 'string' ||
+      value.queue.length - value.solved.length !== 1 ||
+      !value.solved.includes(value.reviewPixelId))
+  ) {
+    return false;
   }
   return true;
 }

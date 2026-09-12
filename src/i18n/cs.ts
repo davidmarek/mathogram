@@ -22,11 +22,14 @@ export const cs: Messages = {
   gallery: 'Moje zvířátka',
   settings: 'Nápověda a nastavení',
   language: 'Jazyk',
+  showRowHints: 'Zobrazovat nápovědu řádku',
+  rowHintsHelp:
+    'Zvýrazní aktuální řádek a ukáže jeho písmeno. Vypni pro počítání bez nápovědy z obrázku.',
   close: 'Zpátky ke hře',
   howTitle: 'Jeden příklad, jedno políčko',
   howBody:
-    'Vyřeš příklad a napiš výsledek. Klepni na Ověřit a ve sloupci s tímto číslem se objeví políčko. Písmenko ukazuje řádek. Na obrázek klikat nemusíš!',
-  gentle: 'Nespěchej. Můžeš to zkoušet, kolikrát chceš.',
+    'Vyřeš příklad a napiš výsledek. Klepni na Ověřit a ve sloupci s tímto číslem se objeví políčko. Nápověda může ukázat písmeno řádku. K chybnému příkladu se vrátíš po dalších příkladech. Když zbývá poslední políčko, nejdřív si procvičíš jiný příklad bez nového políčka. Na obrázek klikat nemusíš!',
+  gentle: 'Nespěchej. Pěkně příklad za příkladem.',
   installTitle: 'Zabydli se u nás',
   installBody:
     'Na iPhonu nebo iPadu otevři stránku v Safari. Klepni na Sdílet a pak Přidat na plochu. Pokud se zobrazí Otevřít jako webovou aplikaci, zapni tuto volbu a klepni na Přidat. V jiném prohlížeči použij nabídku instalace aplikace.',
@@ -45,7 +48,7 @@ export const cs: Messages = {
   resetAll: 'Smazat všechna moje zvířátka',
   resetTitle: 'Začít sbírku znovu?',
   resetBody:
-    'Smažou se všechny uložené obrázky a odznaky v Mathogramu. Jazyk zůstane stejný. Ostatních aplikací se to nedotkne.',
+    'Smažou se všechny uložené obrázky a odznaky v Mathogramu. Jazyk a nastavení nápovědy řádku zůstanou stejné. Ostatních aplikací se to nedotkne.',
   restart: 'Začít tento obrázek znovu',
   restartTitle: 'Začít obrázek znovu?',
   restartBody:
@@ -58,9 +61,14 @@ export const cs: Messages = {
   answer: 'Tvůj výsledek',
   check: 'Ověřit',
   erase: 'Smazat poslední číslici',
-  retry: 'Ještě to není ono. Zkus to znovu!',
-  range: 'Zkus číslo od 1 do 20.',
+  retry: 'Ještě to není ono. Zkusíme jiný příklad a k tomuhle se vrátíme.',
+  range: 'Výsledky jsou od 1 do 20. Nejdřív zkusíme jiný příklad.',
+  retryOnly: 'Ještě to není ono. V klidu si příklad promysli.',
   correct: 'Výborně! Nové políčko!',
+  practice: 'MALÉ PROCVIČENÍ',
+  practiceHint:
+    'Procvičovací příklad, pak zpátky k poslednímu políčku. Tady nové nepřibude.',
+  practiceCorrect: 'Výborně! Zpátky k poslednímu políčku.',
   filled: 'odhalených políček',
   hiddenGrid:
     'Skryté zvířátko. Všechna prázdná políčka vypadají stejně. Řešením příkladů odhalíš jeho barvy.',

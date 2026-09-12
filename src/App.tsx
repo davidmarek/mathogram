@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { puzzles } from './content/animals';
-import { createAttempt, isComplete, submitAnswer } from './domain/game';
+import {
+  createAttempt,
+  currentExercise,
+  deferExercise,
+  isComplete,
+  submitAnswer,
+} from './domain/game';
 import { PixelArt, PixelGrid } from './components/PixelArt';
 import { Modal } from './components/Modal';
 import { detectLanguage, messages } from './i18n';
@@ -40,13 +46,18 @@ export function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<
-    'retry' | 'range' | 'correct' | null
+    'retry' | 'range' | 'correct' | 'practiceCorrect' | 'retryOnly' | null
   >(null);
   const [latest, setLatest] = useState<string>();
-  const [pending, setPending] = useState(false);
+  const [pendingExercise, setPendingExercise] = useState<{
+    exercise: NonNullable<ReturnType<typeof currentExercise>>;
+    review: boolean;
+  }>();
+  const pending = pendingExercise !== undefined;
   const locked = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [modal, setModal] = useState<'help' | 'restart' | 'reset' | null>(null);
+  const modalOpen = useRef(false);
   const [persistent, setPersistent] = useState<
     'persisted' | 'notPersisted' | 'persistError' | null
   >(null);
@@ -59,8 +70,15 @@ export function App() {
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
-  const current = attempt?.queue[attempt.solved.length - (pending ? 1 : 0)];
-  const activeRow = current ? Number(current.pixelId.split(':')[0]) : undefined;
+  const current =
+    pendingExercise?.exercise ??
+    (attempt ? currentExercise(attempt) : undefined);
+  const reviewing =
+    pendingExercise?.review ?? attempt?.reviewPixelId !== undefined;
+  const activeRow =
+    current && progress.showRowHints && !reviewing
+      ? Number(current.pixelId.split(':')[0])
+      : undefined;
   const standalone =
     window.matchMedia('(display-mode: standalone)').matches ||
     ('standalone' in navigator && navigator.standalone === true);
@@ -68,6 +86,9 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = progress.language;
   }, [progress.language]);
+  useEffect(() => {
+    modalOpen.current = modal !== null;
+  }, [modal]);
   useEffect(() => {
     if (activeId && !complete)
       answerRef.current?.focus({ preventScroll: true });
@@ -97,7 +118,7 @@ export function App() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     locked.current = false;
-    setPending(false);
+    setPendingExercise(undefined);
     setAnswer('');
     setFeedback(null);
     setLatest(undefined);
@@ -130,20 +151,24 @@ export function App() {
   }
   function checkAnswer() {
     if (locked.current || !attempt || !current || !answer || !activeId) return;
-    if (Number(answer) < 1 || Number(answer) > 20) {
-      setFeedback('range');
-      return;
-    }
-    const next = submitAnswer(attempt, answer, current.pixelId);
-    if (next === attempt) {
-      setFeedback('retry');
-      answerRef.current?.focus({ preventScroll: true });
-      return;
-    }
+    const answered = submitAnswer(attempt, answer, current.pixelId);
+    const correct = answered !== attempt;
+    const next = correct ? answered : deferExercise(attempt, current.pixelId);
+    const revealed = next.solved.length > attempt.solved.length;
     locked.current = true;
-    setPending(true);
-    setFeedback('correct');
-    setLatest(current.pixelId);
+    setPendingExercise({ exercise: current, review: reviewing });
+    setFeedback(
+      correct
+        ? revealed
+          ? 'correct'
+          : 'practiceCorrect'
+        : next === attempt
+          ? 'retryOnly'
+          : Number(answer) < 1 || Number(answer) > 20
+            ? 'range'
+            : 'retry',
+    );
+    setLatest(revealed ? current.pixelId : undefined);
     const previous = progressRef.current;
     store({
       ...previous,
@@ -152,14 +177,18 @@ export function App() {
         ? [...new Set([...previous.completed, activeId])]
         : previous.completed,
     });
-    timer.current = setTimeout(() => {
-      locked.current = false;
-      setPending(false);
-      setAnswer('');
-      setFeedback(null);
-      setLatest(undefined);
-      answerRef.current?.focus({ preventScroll: true });
-    }, 650);
+    timer.current = setTimeout(
+      () => {
+        locked.current = false;
+        setPendingExercise(undefined);
+        setAnswer('');
+        setFeedback(null);
+        setLatest(undefined);
+        if (!modalOpen.current)
+          answerRef.current?.focus({ preventScroll: true });
+      },
+      correct ? 650 : 900,
+    );
   }
   async function update() {
     if (!persist(progressRef.current)) {
@@ -400,7 +429,9 @@ export function App() {
                   latest={latest}
                   t={t}
                 />
-                <p className="picture-caption">{t.playHint}</p>
+                <p className="picture-caption">
+                  {reviewing ? t.practiceHint : t.playHint}
+                </p>
               </div>
               <form
                 className="equation-panel"
@@ -429,13 +460,15 @@ export function App() {
                 }}
               >
                 <div className="equation-heading">
-                  <span className="eyebrow">{t.solve}</span>
-                  <span className="row-pill">
-                    {t.row}{' '}
-                    <strong>
-                      {activeRow ? String.fromCharCode(64 + activeRow) : ''}
-                    </strong>
+                  <span className="eyebrow">
+                    {reviewing ? t.practice : t.solve}
                   </span>
+                  {activeRow !== undefined && (
+                    <span className="row-pill">
+                      {t.row}{' '}
+                      <strong>{String.fromCharCode(64 + activeRow)}</strong>
+                    </span>
+                  )}
                 </div>
                 <div className="sum-line" aria-live="off">
                   <span data-testid="equation">
@@ -447,7 +480,7 @@ export function App() {
                     =
                   </span>
                   <label
-                    className={`answer-wrap ${feedback === 'retry' || feedback === 'range' ? 'answer-retry' : ''}`}
+                    className={`answer-wrap ${feedback === 'retry' || feedback === 'range' || feedback === 'retryOnly' ? 'answer-retry' : ''}`}
                   >
                     <span className="sr-only">{t.answer}</span>
                     <input
@@ -466,7 +499,7 @@ export function App() {
                 </div>
                 <div
                   id="game-feedback"
-                  className={`feedback ${feedback === 'correct' ? 'positive' : ''}`}
+                  className={`feedback ${feedback === 'correct' || feedback === 'practiceCorrect' ? 'positive' : ''}`}
                   role="status"
                   aria-live="polite"
                   aria-atomic="true"
@@ -474,7 +507,7 @@ export function App() {
                   {feedback ? (
                     <>
                       {t[feedback]}
-                      {feedback === 'correct' && latest
+                      {feedback === 'correct' && latest && progress.showRowHints
                         ? ` ${t.coordinate} ${String.fromCharCode(64 + Number(latest.split(':')[0]))}${latest.split(':')[1]}.`
                         : ''}
                     </>
@@ -570,6 +603,21 @@ export function App() {
                   <option value="cs">Čeština</option>
                 </select>
               </label>
+              <label className="hint-setting">
+                <input
+                  type="checkbox"
+                  checked={progress.showRowHints}
+                  aria-describedby="row-hints-help"
+                  onChange={(event) =>
+                    store({
+                      ...progressRef.current,
+                      showRowHints: event.target.checked,
+                    })
+                  }
+                />
+                {t.showRowHints}
+              </label>
+              <p id="row-hints-help">{t.rowHintsHelp}</p>
               <h3>{t.howTitle}</h3>
               <p>{t.howBody}</p>
               <p>{t.gentle}</p>

@@ -10,6 +10,7 @@ export type Language = 'en' | 'cs';
 export interface Progress {
   version: 1;
   language: Language;
+  showRowHints: boolean;
   attempts: Record<string, Attempt>;
   completed: string[];
 }
@@ -20,7 +21,13 @@ export interface LoadResult {
 }
 
 export function emptyProgress(language: Language): Progress {
-  return { version: 1, language, attempts: {}, completed: [] };
+  return {
+    version: 1,
+    language,
+    showRowHints: true,
+    attempts: {},
+    completed: [],
+  };
 }
 
 function recover(value: unknown, fallbackLanguage: Language): LoadResult {
@@ -31,6 +38,13 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
     progress.language = value.language;
   } else {
     recovered = true;
+  }
+  if ('showRowHints' in value) {
+    if (typeof value.showRowHints === 'boolean') {
+      progress.showRowHints = value.showRowHints;
+    } else {
+      recovered = true;
+    }
   }
   if (isRecord(value.attempts)) {
     for (const [id, attempt] of Object.entries(value.attempts)) {
@@ -53,6 +67,9 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
           },
         })),
         solved: [...attempt.solved],
+        ...(attempt.reviewPixelId !== undefined
+          ? { reviewPixelId: attempt.reviewPixelId }
+          : {}),
       };
     }
   } else {
@@ -117,7 +134,7 @@ export function saveProgress(
   progress: Progress,
 ): { ok: true } | { ok: false; reason: 'unavailable' } {
   const validated = recover(progress, 'en');
-  if (validated.notice !== null) {
+  if (validated.notice !== null || typeof progress.showRowHints !== 'boolean') {
     throw new TypeError('Cannot save invalid progress.');
   }
   const serialized = JSON.stringify(validated.progress);
@@ -140,5 +157,8 @@ export function resetPuzzle(progress: Progress, puzzleId: string): Progress {
 }
 
 export function resetAllProgress(progress: Progress): Progress {
-  return emptyProgress(progress.language);
+  return {
+    ...emptyProgress(progress.language),
+    showRowHints: progress.showRowHints,
+  };
 }
