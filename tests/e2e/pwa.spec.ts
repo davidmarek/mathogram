@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { answerEquation } from './helpers';
+import { expect } from '@playwright/test';
+import { answerEquation, test } from './helpers';
 
 test.describe('real Workbox lifecycle', () => {
   test.skip(
@@ -9,6 +9,7 @@ test.describe('real Workbox lifecycle', () => {
   test('successful precache supports cold offline reopening, animals and food, both locales and scoped caches', async ({
     page,
     context,
+    analyticsRequests,
   }) => {
     await page.goto('./');
     await expect(page.getByText('Ready for offline play')).toBeVisible();
@@ -27,6 +28,7 @@ test.describe('real Workbox lifecycle', () => {
           .queue,
     );
     await page.close();
+    const onlineEvents = analyticsRequests.length;
     await context.setOffline(true);
     const cold = await context.newPage();
     await cold.goto('http://127.0.0.1:4173/mathogram/');
@@ -105,6 +107,10 @@ test.describe('real Workbox lifecycle', () => {
       ),
     );
     expect(scopes).toEqual(['http://127.0.0.1:4173/mathogram/']);
+    expect(analyticsRequests).toHaveLength(onlineEvents);
+    await context.setOffline(false);
+    await cold.getByRole('button', { name: 'Nastavení' }).click();
+    expect(analyticsRequests).toHaveLength(onlineEvents);
   });
 
   test('waiting update never reloads midgame, saves on acceptance, and precaches updated shell', async ({

@@ -1,6 +1,6 @@
 # Mathogram
 
-**Little sums. Lovely discoveries.** A bright, touch-first pixel-picture game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No accounts, ads, trackers, external assets, penalties, timers, or sound.
+**Little sums. Lovely discoveries.** A bright, touch-first pixel-picture game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No player accounts, ads, external assets, penalties, timers, or sound. Analytics is off by default; deployments may explicitly enable the limited, cookieless usage statistics described below.
 
 Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Twilight owl (61), and Biscuit pup (63). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
@@ -50,6 +50,7 @@ The header language switch works during a puzzle without changing its queue. On 
 | `src\i18n\`                                     | Typed English/Czech messages and first-use language detection                      |
 | `src\storage\progress.ts`                       | Versioned local progress, field-level validation and isolated recovery             |
 | `src\pwa\usePwa.ts`, `vite.config.ts`           | Consent-driven worker lifecycle and Workbox-generated precaching                   |
+| `src\analytics.ts`                              | Optional production-only, best-effort Umami event reporting                        |
 | `public\icons\`, `scripts\generate-icons.mjs`   | Locally generated original PNG/SVG app icons                                       |
 | `tests\e2e\`, `tests\fixtures\`                 | Built-artifact browser and real service-worker acceptance                          |
 
@@ -79,9 +80,76 @@ Every correct answer, deferral, practice transition, fresh attempt, reset and pr
 
 Progress is **not permanent or synchronized**. Browser/device cleanup can remove it. Home Screen and browser contexts may not share the same storage. Optional persistent-storage permission is requested only from Settings; denial is normal and reported. Back up nothing to a server: there is no server.
 
+## Optional usage analytics
+
+Analytics is **disabled unless explicitly enabled at build time**, and always disabled in the Vite development server. The integration uses **Umami**, with no added dependencies or third-party scripts. It sends best-effort JSON POST requests to a configured HTTPS `/api/send` endpoint. Use Umami Cloud's free Hobby plan or your own self-hosted Umami instance; hosting and database maintenance are your responsibility for self-hosting. Check [current Cloud plans](https://umami.is/pricing) for quotas and retention. Custom-event data also contributes to Cloud usage.
+
+| Event                    | Meaning                                                                                                        | Custom properties                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Pageview (no event name) | One online app load/reload, not each gallery/puzzle navigation                                                 | None                                                    |
+| `Puzzle started`         | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `puzzleId`: a stable ID from the current puzzle catalog |
+| `Puzzle completed`       | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `puzzleId`: the same stable puzzle ID                   |
+| `Puzzle time spent`      | A non-overlapping interval of approximate active online solving time                                           | `puzzleId`, `activeSeconds`: positive whole seconds     |
+
+The dashboard provides visits and estimated visitors over time. Custom events show starts/completions, and their `puzzleId` property shows popular puzzles regardless of whether the picture is an animal or another subject. IDs are checked against the bundled catalog, not a separate animal-only list. These are aggregate counts, not identifiable players or individual learning histories. Starts and completions can occur on different days; their ratio is not a per-player completion rate.
+
+The earlier analytics implementation used `animal` for this property. New events use only `puzzleId`; existing Umami data is not rewritten. If the earlier build collected data, update dashboard property filters and account for both property names when comparing historical periods. Event names and puzzle IDs have not changed.
+
+### Solving time
+
+`Puzzle time spent` reports time while an unfinished puzzle is open, including resumed attempts, practice and brief answer feedback. It pauses in the gallery, completed-picture screen, all dialogs, hidden/background pages, and offline. After 60 seconds without a pointer press or key press, timing stops until another interaction. This is an approximation: thinking without interaction beyond one minute is excluded, while the first idle minute can still count.
+
+Intervals are sent every 60 seconds and when leaving play, opening a dialog, completing a puzzle, or hiding/leaving the page. Each interval is rounded down to whole seconds; zero-length intervals are omitted. Periodic intervals and final flushes do not overlap. Timing resumes with a fresh interval when returning to play. Network failures are not retried; going offline discards the current unsent interval. Closing or terminating the app may still lose the final interval.
+
+To measure total reported solving time per picture, **sum `activeSeconds` grouped by `puzzleId`** in Umami event-data reporting or exported data. Counting events measures intervals, not seconds; averaging intervals does not give average puzzle completion time. These totals include unfinished attempts, replays and restarts. No attempt/player identifier or timing data is persisted with saved progress, so this does not measure an individual attempt's full time across reloads. No visible timer or time pressure is added to the game.
+
+### iOS Home Screen use
+
+Online launches from an iPhone/iPad Home Screen run the same analytics code as browser visits, provided the installed build has analytics enabled and requests are not blocked. A fresh app load/reload sends a pageview; merely returning to an already-running app does not. Puzzle starts, completions and active solving time are reported in either context; background time is excluded. Adding the site to the Home Screen is not tracked, and no property currently distinguishes standalone use from browser use. Offline launches and gameplay are not reported or backfilled. An older installed copy needs to accept the analytics-enabled update first.
+
+Browser acceptance simulates the iOS standalone flag to verify this code path; it is not physical iPhone/iPad or live-provider acceptance.
+
+### Enable for GitHub Pages
+
+1. **Review privacy and consent requirements first**, especially because this is a children's game. This implementation does not provide a consent banner or parental-consent flow. Cookieless does not automatically mean consent-free; leave analytics disabled if consent is required until an appropriate flow is implemented. Review the provider's processing terms, retention and access controls.
+2. Add a website for `davidmarek.github.io` in Umami and copy its **Website ID** (UUID) from its settings/tracking code. You do not need to install the provided script. Events `Puzzle started`, `Puzzle completed` and `Puzzle time spent` appear automatically after receipt; inspect their event data to break down activity by `puzzleId`.
+3. In repository **Settings → Secrets and variables → Actions → Variables**, set all three public build settings:
+   - `VITE_ANALYTICS_ENABLED`: the exact string `true`.
+   - `VITE_UMAMI_WEBSITE_ID`: the Website ID from Umami, **not** an API key.
+   - `VITE_UMAMI_ENDPOINT`: `https://cloud.umami.is/api/send` for Cloud, or `https://analytics.example.com/api/send` for your own instance. Self-hosted base paths such as `/umami/api/send` are supported. Use a trusted HTTPS endpoint without credentials, query strings or fragments; custom collection paths not ending in `/api/send` are not supported.
+
+   These values are bundled into public JavaScript. Do not put API keys or secrets in any `VITE_` variable.
+
+4. Publish through the existing owner-gated Pages workflow. It passes these variables to validation and builds, then deploys the tested artifact. Missing/invalid Website ID or endpoint settings, or any enable value other than `true`, leave analytics off. To disable, remove the enable variable or set it to `false` and redeploy. Installed copies retain their prior configuration until they accept the app update.
+5. Check a real online visit in the Umami dashboard and its Events view. Browser blockers and provider filtering can drop events; a successful HTTP response alone is not proof an event was recorded. Automated tests intercept analytics and never intentionally submit events to Umami. Self-hosted proxies must permit CORS POST requests and OPTIONS preflights with `Content-Type: application/json` from the site; no credentials or authentication headers are sent.
+
+### Privacy and limitations
+
+- Event payloads contain only the configured Website ID, site hostname, canonical `/mathogram/` path, event name, stable puzzle ID and, for timing events, active seconds. Current URL paths, query strings, fragments, answers, equations, screen size, page title, language, saved progress and completion badges are not added to the payload. Pointer/key interactions only reset a local idle timer; their content and individual timestamps are never sent. HTTP referrers are suppressed.
+- Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage. Umami's returned cache/session/visit IDs are discarded; no `identify` calls or custom visitor IDs are used.
+- Like any receiving service, Umami receives the connection's IP address and browser information. It derives visitor/session identifiers server-side from the website, IP and User-Agent with a rotating salt; these are estimates, not exact counts of people. The [Umami documentation](https://docs.umami.is/docs/metric-definitions) states raw IP addresses are not stored by analytics, but separately configured proxy/server logs may retain them. Review hosting and retention settings. Ignoring the response cache can split visits at hour boundaries.
+- Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and a link to Umami's privacy-related FAQ when analytics is configured.
+- Offline events are discarded, not queued or replayed on reconnect. Network failures, blocked requests and HTTP errors do not interrupt gameplay and are not retried. Offline use, privacy preferences, blockers and network failures therefore undercount usage.
+- For self-hosting, maintain Umami and its database separately; this repository deploys only the game. Review disclosure, logging and retention for your chosen host before enabling collection.
+
+### Analytics acceptance
+
+Run `npm run validate` with analytics variables unset to verify the default local-only build. Also validate an enabled build with all three variables set in the same shell (PowerShell; the example UUID below is test-only):
+
+```powershell
+$env:VITE_ANALYTICS_ENABLED = 'true'
+$env:VITE_UMAMI_WEBSITE_ID = '00000000-0000-4000-8000-000000000001'
+$env:VITE_UMAMI_ENDPOINT = 'https://cloud.umami.is/api/send'
+npm run validate
+```
+
+Enabled browser tests mock the exact configured Umami endpoint, check event payloads, repeat protection, omitted cookies/referrers, privacy signals, failures and offline play. Keep the same variables for build and browser tests. Do not manually browse an enabled preview unless you intend it to send analytics; development via `npm run dev` never does.
+
+Dedicated analytics browser tests block service workers so requests remain interceptable in both browsers. Other WebKit tests opt out with Do Not Track because worker-controlled fetches can bypass Playwright routing. Chromium's real service-worker tests additionally verify that offline play sends no events and reconnecting does not replay them.
+
 ## Offline installation and updates
 
-Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all nineteen puzzles. There are no runtime API requests or external font/CDN dependencies.
+Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all nineteen puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 

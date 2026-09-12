@@ -1,10 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Progress } from '../../src/storage/progress';
 import { currentExercise } from '../../src/domain/game';
 import { messages } from '../../src/i18n';
-import { answerEquation } from './helpers';
+import {
+  analyticsEndpoint,
+  analyticsExpected,
+  answerEquation,
+  test,
+} from './helpers';
 
 async function saved(page: Page): Promise<Progress> {
   return page.evaluate(() =>
@@ -218,6 +223,10 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   browser,
 }) => {
   const context = await browser.newContext({ locale: 'cs-CZ' });
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'doNotTrack', { get: () => '1' });
+  });
+  await context.route(analyticsEndpoint, (route) => route.abort());
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4173/mathogram/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
@@ -358,7 +367,7 @@ for (const [name, width, height] of [
   });
 }
 
-test('production subpath serves local assets and scoped manifest icons without errors', async ({
+test('production subpath serves local assets and only configured analytics without errors', async ({
   page,
   request,
 }) => {
@@ -395,6 +404,9 @@ test('production subpath serves local assets and scoped manifest icons without e
   }
   const apple = await request.get('/mathogram/icons/apple-touch-icon.png');
   expect((await apple.body()).readUInt32BE(16)).toBe(180);
-  expect(external).toEqual([]);
+  const optedOut = await page.evaluate(() => navigator.doNotTrack === '1');
+  expect(external).toEqual(
+    analyticsExpected && !optedOut ? [analyticsEndpoint] : [],
+  );
   expect(errors).toEqual([]);
 });

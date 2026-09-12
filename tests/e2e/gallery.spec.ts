@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './helpers';
 import { puzzles } from '../../src/content/animals';
 import { createAttempt } from '../../src/domain/game';
 import { emptyProgress, STORAGE_KEY } from '../../src/storage/progress';
