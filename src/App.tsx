@@ -333,10 +333,10 @@ export function App() {
               <h2>{t.collection}</h2>
               <span>
                 <span aria-hidden="true">✦ </span>
-                {progress.completed.length} / 6 {t.friends}
+                {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
-            <div className="animal-gallery">
+            <div className="picture-gallery">
               {puzzles.map((animal, index) => {
                 const saved = progress.attempts[animal.id];
                 const done = saved && isComplete(saved);
@@ -344,12 +344,12 @@ export function App() {
                 return (
                   <button
                     key={animal.id}
-                    className={`animal-card animal-${animal.id}`}
+                    className={`picture-card picture-${animal.id}`}
                     onClick={() => openPuzzle(animal.id)}
                     aria-label={`${t[animal.name]} · ${done ? t.completed : saved ? t.continue : t.start}`}
                   >
                     <div className="card-art">
-                      <span className="animal-number" aria-hidden="true">
+                      <span className="picture-number" aria-hidden="true">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       {badge && (
@@ -405,7 +405,7 @@ export function App() {
               {t.completeTitle}
             </h1>
             <div
-              className={`celebration-art animal-${puzzle.id}`}
+              className={`celebration-art picture-${puzzle.id}`}
               role="img"
               aria-label={`${t.fullGrid}: ${t[puzzle.name]}`}
             >

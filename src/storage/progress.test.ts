@@ -19,7 +19,7 @@ import {
 import type { Progress } from './progress';
 
 const fish = puzzles[0]!;
-const cat = puzzles[2]!;
+const cat = puzzles.find(({ id }) => id === 'cat')!;
 
 function memoryStorage(raw: string | null = null) {
   const values = new Map<string, string>([['unrelated-app', 'leave me alone']]);
@@ -83,6 +83,32 @@ describe('progress persistence', () => {
     expect(storage.values.get('unrelated-app')).toBe('leave me alone');
     expect(storage.values.size).toBe(2);
   });
+
+  it.each(puzzles)(
+    'preserves saved repeated exercises in $name without regenerating them',
+    (puzzle) => {
+      const attempt = createAttempt(puzzle, () => 0);
+      for (const entry of attempt.queue) {
+        entry.equation = {
+          a: entry.equation.c,
+          op: '+',
+          b: 0,
+          c: entry.equation.c,
+        };
+      }
+      attempt.solved = [attempt.queue[0]!.pixelId];
+      const original = {
+        ...emptyProgress('en'),
+        attempts: { [puzzle.id]: attempt },
+      };
+      const storage = memoryStorage();
+      expect(saveProgress(storage, original)).toEqual({ ok: true });
+      expect(loadProgress(storage, 'en')).toEqual({
+        progress: original,
+        notice: null,
+      });
+    },
+  );
 
   it.each(puzzles)(
     'can persist and resume after every correct pixel in $name',
