@@ -250,6 +250,7 @@ main {
 .picture-fish,
 .picture-bee,
 .picture-duck,
+.picture-cheetah,
 .picture-fries {
   --picture-bg: #f9ebcf;
   --halo: #f5dda9;
@@ -261,6 +262,7 @@ main {
 }
 .picture-cat,
 .picture-fox,
+.picture-ferrari,
 .picture-cheddar-fingers {
   --picture-bg: #f8e3d5;
   --halo: #f2cfb5;
@@ -272,6 +274,7 @@ main {
   --halo: #d6e4c9;
 }
 .picture-dog,
+.picture-german-shepherd,
 .picture-hamburger {
   --picture-bg: #f4eada;
   --halo: #e9d8bb;
@@ -559,6 +562,14 @@ progress::-moz-progress-bar {
 }
 .equals {
   color: #747768;
+}
+.sum-line.three-number-sum {
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 1.5rem;
+}
+.three-number-sum .answer-wrap input {
+  width: 64px;
 }
 .answer-wrap input {
   width: 78px;

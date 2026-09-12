@@ -22,6 +22,10 @@ describe('runtime puzzle validation', () => {
     { ...fish, height: 21 },
     { ...fish, height: NaN },
     { ...fish, intro: 'true' },
+    { ...fish, threeNumbers: true },
+    { ...fish, threeNumbers: 'false' },
+    { ...fish, threeNumbers: undefined },
+    { ...fish, threeNumbers: null },
     { ...fish, width: 11 },
     { ...fish, palette: null },
     { ...fish, palette: [] },
@@ -64,4 +68,30 @@ describe('runtime puzzle validation', () => {
     ).toBe(false);
     expect(validatePuzzle({ ...fish, pixels: Array(2) })).toBe(false);
   });
+
+  it('keeps omitted and explicit false flags compatible with legacy puzzles', () => {
+    expect(validatePuzzle(fish)).toBe(true);
+    expect(validatePuzzle({ ...fish, threeNumbers: false })).toBe(true);
+  });
+
+  it.each(['cheetah', 'german-shepherd', 'ferrari'])(
+    'accepts the new name %s and only solvable three-number columns',
+    (name) => {
+      const puzzle = {
+        ...fish,
+        name,
+        intro: false,
+        threeNumbers: true,
+        width: 20,
+        pixels: [{ id: '1:19', row: 1, col: 19, color: 'F' }],
+      };
+      expect(validatePuzzle(puzzle)).toBe(true);
+      expect(
+        validatePuzzle({
+          ...puzzle,
+          pixels: [{ id: '1:20', row: 1, col: 20, color: 'F' }],
+        }),
+      ).toBe(false);
+    },
+  );
 });
