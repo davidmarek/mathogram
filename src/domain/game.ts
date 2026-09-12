@@ -39,16 +39,16 @@ export function createAttempt(
   let previousOp: Equation['op'] | undefined;
   const queue = pixels.map((pixel) => {
     let choices = candidates.filter(({ c }) => c === pixel.col);
-    const nonzero = choices.filter(({ a, b }) => a !== 0 && b !== 0);
-    if (nonzero.length > 0) choices = nonzero;
-    const alternating = choices.filter(({ op }) => op !== previousOp);
-    if (alternating.length > 0) choices = alternating;
     const leastUsed = Math.min(
       ...choices.map((equation) => uses.get(equationKey(equation)) ?? 0),
     );
     choices = choices.filter(
       (equation) => (uses.get(equationKey(equation)) ?? 0) === leastUsed,
     );
+    const nonzero = choices.filter(({ a, b }) => a !== 0 && b !== 0);
+    if (nonzero.length > 0) choices = nonzero;
+    const alternating = choices.filter(({ op }) => op !== previousOp);
+    if (alternating.length > 0) choices = alternating;
     const equation = { ...choices[randomIndex(choices.length, random)]! };
     const key = equationKey(equation);
     uses.set(key, (uses.get(key) ?? 0) + 1);
