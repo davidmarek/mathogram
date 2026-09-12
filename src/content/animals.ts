@@ -8,13 +8,14 @@ function picture(
   palette: Puzzle['palette'],
   rows: string[],
   threeNumbers = false,
+  version = 1,
 ): Puzzle {
   if (rows.some((row) => row.length > width)) {
     throw new Error(`Artwork exceeds the grid: ${name}`);
   }
   const puzzle: Puzzle = {
     id: name,
-    version: 1,
+    version,
     name,
     width,
     height: rows.length,
@@ -400,10 +401,10 @@ export const puzzles: Puzzle[] = [
     { P: '#B47CC8', E: '#28364A' },
     [
       '......PPP......',
-      '.....PPPPPPP...',
-      '.....PPEPEPP...',
-      '.....PPPPPPP...',
-      '......PPPPP....',
+      '....PPPPPPP....',
+      '....PPEPEPP....',
+      '....PPPPPPP....',
+      '...PPPPPPPPP...',
       '...P.P.P.P.P...',
       '...P.P.P.P.P...',
       '..PP.P.P.P.PP..',
@@ -411,6 +412,7 @@ export const puzzles: Puzzle[] = [
       '....PP.........',
     ],
     true,
+    2,
   ),
   picture(
     'dinosaur',

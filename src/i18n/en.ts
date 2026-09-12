@@ -40,16 +40,7 @@ export const en = {
   medium: 'Medium · 41–70',
   large: 'Large · 71–100',
   extraLarge: 'Extra-large · 101+',
-  difficulty: 'Difficulty',
-  length: 'Length (exercises)',
-  allDifficulties: 'All difficulties',
-  allSizes: 'All lengths',
-  clearFilters: 'Clear filters',
-  matchingPictures: 'Matching pictures',
-  noPictures: 'No pictures match yet. Try another difficulty or length.',
   exercises: 'exercises',
-  categoryHelp:
-    'Beginner: two numbers within 10. Standard: two numbers within 20. Advanced: three numbers below 20. Each step avoids crossing a ten. One colored pixel = one exercise; retries and practice may add more.',
   threeNumbersHelp:
     'For three-number sums, work from left to right. Each step stays below 20 without crossing a ten. Landing on 10 lets the next step go below it: 14 − 4 − 3 = 7.',
   pixels: 'pixels',

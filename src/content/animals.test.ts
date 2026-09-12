@@ -174,8 +174,8 @@ describe('original picture content', () => {
       },
       {
         id: 'octopus',
-        version: 1,
-        length: 50,
+        version: 2,
+        length: 54,
         difficulty: 'advanced',
         size: 'medium',
       },
@@ -229,6 +229,26 @@ describe('original picture content', () => {
         size: 'medium',
       },
     ]);
+  });
+
+  it('connects every octopus tentacle to the body along pixel edges', () => {
+    const octopus = puzzles.find(({ id }) => id === 'octopus')!;
+    const remaining = new Set(octopus.pixels.map(({ id }) => id));
+    const pending = [octopus.pixels[0]!.id];
+    while (pending.length) {
+      const id = pending.pop()!;
+      if (!remaining.delete(id)) continue;
+      const [row, col] = id.split(':').map(Number) as [number, number];
+      for (const neighbor of [
+        `${row - 1}:${col}`,
+        `${row + 1}:${col}`,
+        `${row}:${col - 1}`,
+        `${row}:${col + 1}`,
+      ]) {
+        if (remaining.has(neighbor)) pending.push(neighbor);
+      }
+    }
+    expect(remaining.size).toBe(0);
   });
 
   it.each(puzzles)(

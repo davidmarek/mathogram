@@ -42,17 +42,7 @@ export const cs: Messages = {
   medium: 'Střední · 41–70',
   large: 'Velký · 71–100',
   extraLarge: 'Obří · 101+',
-  difficulty: 'Obtížnost',
-  length: 'Délka (počet příkladů)',
-  allDifficulties: 'Všechny obtížnosti',
-  allSizes: 'Všechny délky',
-  clearFilters: 'Zrušit filtry',
-  matchingPictures: 'Odpovídající obrázky',
-  noPictures:
-    'Tady zatím žádné obrázky nejsou. Zkus jinou obtížnost nebo délku.',
   exercises: 'příkladů',
-  categoryHelp:
-    'Pro začátečníky: dvě čísla do 10. Běžná obtížnost: dvě čísla do 20. Pro pokročilé: tři čísla pod 20. Jednotlivé kroky nepřecházejí přes desítku. Jedno barevné políčko = jeden příklad; opakování a procvičování mohou přidat další.',
   threeNumbersHelp:
     'Příklady se třemi čísly počítej zleva doprava. Každý krok zůstává pod 20 a nepřechází přes desítku. Když vyjde 10, další krok může jít pod ni: 14 − 4 − 3 = 7.',
   pixels: 'políček',

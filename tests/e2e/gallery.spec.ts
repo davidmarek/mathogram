@@ -1,12 +1,13 @@
 import { expect } from '@playwright/test';
 import { test } from './helpers';
 import { puzzles } from '../../src/content/animals';
+import { difficulties, getDifficulty } from '../../src/domain/categories';
 import { createAttempt } from '../../src/domain/game';
 import { emptyProgress, STORAGE_KEY } from '../../src/storage/progress';
 import { messages } from '../../src/i18n';
 
 for (const language of ['en', 'cs'] as const) {
-  test(`gallery filters, short advanced play and artwork fit phones (${language})`, async ({
+  test(`gallery groups, short advanced play and artwork fit phones (${language})`, async ({
     page,
   }) => {
     const t = messages[language];
@@ -17,29 +18,31 @@ for (const language of ['en', 'cs'] as const) {
     );
     await page.setViewportSize({ width: 320, height: 740 });
     await page.goto('./');
-    await page
-      .getByRole('combobox', { name: t.difficulty, exact: true })
-      .selectOption('advanced');
-    await page
-      .getByRole('combobox', { name: t.length, exact: true })
-      .selectOption('small');
-    await expect(page.locator('.picture-card')).toHaveCount(2);
-    await expect(page.getByText(`${t.matchingPictures}: 2 / 29`)).toBeVisible();
+    await expect(page.getByRole('combobox')).toHaveCount(0);
+    await expect(page.locator('.difficulty-group h2')).toHaveText(
+      difficulties.map((difficulty) => t[difficulty]),
+    );
+    for (const difficulty of difficulties) {
+      const group = page.getByRole('region', {
+        name: t[difficulty],
+        exact: true,
+      });
+      const expected = puzzles
+        .filter((puzzle) => getDifficulty(puzzle) === difficulty)
+        .sort((a, b) => a.pixels.length - b.pixels.length);
+      await expect(group.locator('.picture-card h3')).toHaveText(
+        expected.map((puzzle) => t[puzzle.name]),
+      );
+      await expect(group.locator('.card-exercises')).toHaveText(
+        expected.map((puzzle) => `${puzzle.pixels.length} ${t.exercises}`),
+      );
+    }
     await page.getByRole('button', { name: new RegExp(t.rocket) }).click();
     await expect(page.getByTestId('equation')).toHaveText(
       /^\d+ [+−] \d+ [+−] \d+$/,
     );
     await page.getByRole('button', { name: t.gallery, exact: true }).click();
-    await expect(
-      page.getByRole('combobox', { name: t.difficulty, exact: true }),
-    ).toHaveValue('advanced');
-    await page
-      .getByRole('combobox', { name: t.difficulty, exact: true })
-      .selectOption('standard');
-    await expect(page.locator('.picture-card')).toHaveCount(0);
-    await expect(page.getByText(t.noPictures)).toBeVisible();
-    await page.getByRole('button', { name: t.clearFilters }).click();
-    await expect(page.locator('.picture-card')).toHaveCount(29);
+    await expect(page.locator('.picture-card')).toHaveCount(puzzles.length);
     const artwork = await page.locator('.card-art svg').evaluateAll((images) =>
       images.map((image) => ({
         viewBox: image.getAttribute('viewBox'),
@@ -53,8 +56,12 @@ for (const language of ['en', 'cs'] as const) {
       })),
     );
     expect(artwork).toEqual(
-      [...puzzles]
-        .sort((a, b) => a.pixels.length - b.pixels.length)
+      difficulties
+        .flatMap((difficulty) =>
+          puzzles
+            .filter((puzzle) => getDifficulty(puzzle) === difficulty)
+            .sort((a, b) => a.pixels.length - b.pixels.length),
+        )
         .map((puzzle) => ({
           viewBox: `0 0 ${puzzle.width} ${puzzle.height}`,
           pixels: puzzle.pixels.map((pixel) => ({
@@ -66,9 +73,6 @@ for (const language of ['en', 'cs'] as const) {
           })),
         })),
     );
-    const counts = await page.locator('.card-exercises').allTextContents();
-    const lengths = counts.map((count) => Number(count.split(' ')[0]));
-    expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

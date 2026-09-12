@@ -2,7 +2,9 @@ import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Progress } from '../../src/storage/progress';
-import { currentExercise } from '../../src/domain/game';
+import { createAttempt, currentExercise } from '../../src/domain/game';
+import { puzzles } from '../../src/content/animals';
+import { emptyProgress, STORAGE_KEY } from '../../src/storage/progress';
 import { messages } from '../../src/i18n';
 import {
   analyticsEndpoint,
@@ -15,6 +17,78 @@ async function saved(page: Page): Promise<Progress> {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem('mathogram.progress')!),
   );
+}
+
+for (const showRowHints of [true, false]) {
+  test(`white pixels stay distinct after revealing and resuming (hints ${showRowHints})`, async ({
+    page,
+  }) => {
+    const puzzle = puzzles.find(({ id }) => id === 'rocket')!;
+    const white = puzzle.pixels.find(({ color }) => color === 'W')!;
+    const attempt = createAttempt(puzzle);
+    const first = attempt.queue.findIndex(
+      ({ pixelId }) => pixelId === white.id,
+    );
+    [attempt.queue[0], attempt.queue[first]] = [
+      attempt.queue[first]!,
+      attempt.queue[0]!,
+    ];
+    const next = attempt.queue.findIndex(
+      ({ pixelId }, index) => index > 0 && pixelId.startsWith(`${white.row}:`),
+    );
+    [attempt.queue[1], attempt.queue[next]] = [
+      attempt.queue[next]!,
+      attempt.queue[1]!,
+    ];
+    const progress = {
+      ...emptyProgress('en'),
+      showRowHints,
+      attempts: { [puzzle.id]: attempt },
+    };
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto('./');
+    await page.evaluate(
+      ({ key, progress }) =>
+        localStorage.setItem(key, JSON.stringify(progress)),
+      { key: STORAGE_KEY, progress },
+    );
+    await page.reload();
+    await page.getByRole('button', { name: /Rocket/ }).click();
+    const cell = page.getByTestId(`cell-${white.id}`);
+    const empty = page.getByTestId('cell-1:1');
+    const blankColor = await empty.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    );
+    await expect(cell).toHaveCSS('background-color', blankColor);
+    const blankColors = await page
+      .locator('.grid-cell')
+      .evaluateAll((cells) => [
+        ...new Set(
+          cells.map((element) => getComputedStyle(element).backgroundColor),
+        ),
+      ]);
+    expect(blankColors).toEqual([blankColor]);
+    await answerEquation(page);
+    await expect(page.locator('.new-pixel')).toHaveCount(0);
+    for (const width of [320, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(cell).toHaveAttribute('data-filled', 'true');
+      await expect(cell).not.toHaveCSS('background-color', blankColor);
+      await expect(cell).toHaveCSS(
+        'box-shadow',
+        'rgb(99, 113, 108) 0px 0px 0px 1px inset',
+      );
+    }
+    await page.reload();
+    await page.getByRole('button', { name: /Rocket/ }).click();
+    await expect(cell).toHaveAttribute('data-filled', 'true');
+    await expect(cell).not.toHaveCSS('background-color', blankColor);
+    await expect(cell).toHaveCSS(
+      'box-shadow',
+      'rgb(99, 113, 108) 0px 0px 0px 1px inset',
+    );
+    await expect(empty).toHaveCSS('box-shadow', 'none');
+  });
 }
 
 for (const [id, name] of [

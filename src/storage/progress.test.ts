@@ -151,6 +151,21 @@ describe('progress persistence', () => {
     expect(loadProgress(storage, 'cs').progress).toEqual(progress);
   });
 
+  it('recovers old octopus artwork without losing other attempts or badges', () => {
+    const octopus = puzzles.find(({ id }) => id === 'octopus')!;
+    const progress = inProgress();
+    progress.completed.push('octopus');
+    progress.attempts.octopus = createAttempt({ ...octopus, version: 1 });
+    const restored = load(progress);
+    expect(restored.notice).toBe('recovered');
+    expect(restored.progress.attempts.octopus).toBeUndefined();
+    expect(restored.progress.attempts.fish).toEqual(progress.attempts.fish);
+    expect(restored.progress.attempts.cat).toEqual(progress.attempts.cat);
+    expect(restored.progress.completed).toEqual(progress.completed);
+    expect(restored.progress.language).toBe(progress.language);
+    expect(restored.progress.showRowHints).toBe(progress.showRowHints);
+  });
+
   it.each([true, false])('persists row hint preference %s', (showRowHints) => {
     const progress = { ...inProgress(), showRowHints };
     const storage = memoryStorage();
