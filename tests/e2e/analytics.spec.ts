@@ -38,7 +38,9 @@ test.describe('enabled analytics', () => {
     await expect.poll(() => events().length).toBe(1);
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await expect.poll(() => events().length).toBe(2);
-    await page.getByRole('button', { name: 'My pictures', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'My pictures', exact: true })
+      .click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await page.evaluate(() => {
       const progress: Progress = JSON.parse(
@@ -54,7 +56,9 @@ test.describe('enabled analytics', () => {
     await answerEquation(page);
     await page.keyboard.press('Enter');
     await expect.poll(() => events().length).toBe(4);
-    await page.getByRole('button', { name: 'My pictures', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'My pictures', exact: true })
+      .click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await page.getByRole('button', { name: 'Play again' }).click();
     await expect.poll(() => events().length).toBe(5);
@@ -107,7 +111,9 @@ test.describe('enabled analytics', () => {
     await page.clock.runFor(120_000);
     await page.getByRole('button', { name: 'Back to play' }).click();
     await page.clock.runFor(5_000);
-    await page.getByRole('button', { name: 'My pictures', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'My pictures', exact: true })
+      .click();
     await expect.poll(() => durations().length).toBe(2);
     expect(durations()[1].data).toEqual({ puzzleId: 'fish', activeSeconds: 5 });
     await page.clock.runFor(120_000);
