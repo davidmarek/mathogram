@@ -33,24 +33,22 @@ describe('original animal content', () => {
       false,
     ]);
   });
-
   it('bridges the difficulty gaps without changing existing puzzle lengths', () => {
-    expect(
-      Object.fromEntries(
-        puzzles
-          .filter(({ name }) =>
-            ['fish', 'butterfly', 'cat', 'rabbit', 'dog', 'owl'].includes(name),
-          )
-          .map(({ name, pixels }) => [name, pixels.length]),
-      ),
-    ).toEqual({
+    const originalLengths = {
       fish: 28,
       butterfly: 32,
       cat: 48,
       rabbit: 54,
-      dog: 63,
       owl: 61,
-    });
+      dog: 63,
+    };
+    expect(
+      Object.fromEntries(
+        puzzles
+          .filter(({ name }) => Object.hasOwn(originalLengths, name))
+          .map(({ name, pixels }) => [name, pixels.length]),
+      ),
+    ).toEqual(originalLengths);
     const lengths = puzzles
       .map(({ pixels }) => pixels.length)
       .sort((a, b) => a - b);
