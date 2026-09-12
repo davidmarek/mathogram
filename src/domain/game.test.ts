@@ -75,13 +75,48 @@ describe('attempt generation', () => {
     expect(() => createAttempt({ ...fish, pixels: [] })).toThrow(TypeError);
   });
 
-  it('favors nonzero operands and alternating operations whenever possible', () => {
+  it.each(puzzles)(
+    'selects a different exercise for every pixel in $name',
+    (puzzle) => {
+      for (let seed = 0; seed < 30; seed += 1) {
+        const attempt = createAttempt(puzzle, seededRandom(seed));
+        expect(
+          new Set(attempt.queue.map(({ equation }) => JSON.stringify(equation)))
+            .size,
+        ).toBe(puzzle.pixels.length);
+      }
+    },
+  );
+
+  it.each(puzzles)(
+    'randomizes the exercise subset for $name, not just its order',
+    (puzzle) => {
+      const selected = (seed: number) =>
+        createAttempt(puzzle, seededRandom(seed))
+          .queue.map(({ equation }) => JSON.stringify(equation))
+          .sort();
+      expect(selected(1)).not.toEqual(selected(2));
+    },
+  );
+
+  it('favors nonzero operands and alternating operations among least-used exercises', () => {
     for (const puzzle of puzzles) {
       const attempt = createAttempt(puzzle, seededRandom(12));
       let previousOp: '+' | '-' | undefined;
       const candidates = enumerateEquations(puzzle.intro);
+      const uses = new Map<string, number>();
       for (const { equation } of attempt.queue) {
         let available = candidates.filter(({ c }) => c === equation.c);
+        const leastUsed = Math.min(
+          ...available.map(
+            (candidate) => uses.get(JSON.stringify(candidate)) ?? 0,
+          ),
+        );
+        expect(uses.get(JSON.stringify(equation)) ?? 0).toBe(leastUsed);
+        available = available.filter(
+          (candidate) =>
+            (uses.get(JSON.stringify(candidate)) ?? 0) === leastUsed,
+        );
         const nonzero = available.filter(({ a, b }) => a > 0 && b > 0);
         if (nonzero.length > 0) {
           expect(equation.a).toBeGreaterThan(0);
@@ -92,36 +127,46 @@ describe('attempt generation', () => {
           expect(equation.op).not.toBe(previousOp);
         }
         previousOp = equation.op;
+        uses.set(JSON.stringify(equation), leastUsed + 1);
       }
     }
   });
 
-  it('avoids repeating expressions until same-operation alternatives are used', () => {
-    const puzzle: Puzzle = {
-      ...fish,
-      width: 10,
-      height: 20,
-      pixels: Array.from({ length: 20 }, (_, i) => ({
-        id: `${i + 1}:5`,
-        row: i + 1,
-        col: 5,
-        color: 'F',
-      })),
-    };
-    const attempt = createAttempt(puzzle, () => 0);
-    const additions = attempt.queue.filter(
-      ({ equation }) => equation.op === '+',
-    );
-    const subtractions = attempt.queue.filter(
-      ({ equation }) => equation.op === '-',
-    );
-    expect(
-      new Set(additions.slice(0, 4).map(({ equation }) => equation.a)).size,
-    ).toBe(4);
-    expect(
-      new Set(subtractions.slice(0, 5).map(({ equation }) => equation.a)).size,
-    ).toBe(5);
-  });
+  it.each([true, false])(
+    'uses the entire result pool before repeating, including zero operands (intro=%s)',
+    (intro) => {
+      for (let col = 1; col <= (intro ? 10 : 20); col += 1) {
+        const puzzle: Puzzle = {
+          ...fish,
+          intro,
+          width: intro ? 10 : 20,
+          height: 20,
+          pixels: Array.from({ length: 20 }, (_, i) => ({
+            id: `${i + 1}:${col}`,
+            row: i + 1,
+            col,
+            color: 'F',
+          })),
+        };
+        const pool = enumerateEquations(intro).filter(({ c }) => c === col);
+        for (const random of [
+          () => 0,
+          () => 0.9999999999999999,
+          seededRandom(12),
+        ]) {
+          const attempt = createAttempt(puzzle, random);
+          expect(validateAttempt(attempt, puzzle)).toBe(true);
+          const used = new Set<string>();
+          for (const { equation } of attempt.queue) {
+            if (used.size === pool.length) used.clear();
+            const key = JSON.stringify(equation);
+            expect(used.has(key)).toBe(false);
+            used.add(key);
+          }
+        }
+      }
+    },
+  );
 
   it('supports every result column and favors nonzero addition at column 20', () => {
     const puzzle: Puzzle = {
