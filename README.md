@@ -2,7 +2,7 @@
 
 **Little sums. Lovely discoveries.** A bright, touch-first pixel-animal game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No accounts, ads, trackers, external assets, penalties, timers, or sound.
 
-Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Biscuit pup (63), and Twilight owl (61). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
+Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Biscuit pup (63), and Twilight owl (61). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels; the final two are comparable in length. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
 ## Run locally
 
