@@ -17,7 +17,7 @@ test.describe('real Workbox lifecycle', () => {
       const other = await caches.open('other-project-precaches-v1');
       await other.put('/other-project/keep', new Response('keep me'));
     });
-    await page.getByRole('button', { name: 'Help & settings' }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByRole('checkbox', { name: 'Show row hints' }).uncheck();
     await page.getByRole('button', { name: 'Back to play' }).click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
@@ -132,7 +132,7 @@ test.describe('real Workbox lifecycle', () => {
     );
     await page.getByRole('button', { name: 'Later', exact: true }).click();
     await expect(page.getByTestId('equation')).toBeVisible();
-    await page.getByRole('button', { name: 'Help & settings' }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByRole('button', { name: 'Save & update' }).click();
     await expect(
       page.locator('meta[name="mathogram-release"]'),

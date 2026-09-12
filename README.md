@@ -26,13 +26,13 @@ Open **http://127.0.0.1:4173/mathogram/**. HTTPS is required when not on localho
 
 Pick any animal. The answer to the equation is the column number. Enter up to two digits on the built-in keypad or a physical keyboard and press **Check / Ověřit** or Enter. Backspace works in either mode. Wrong answers (including out-of-range numbers) move the exercise to the back of the remaining queue without revealing a pixel. After brief feedback, the answer clears and another exercise appears; the missed exercise comes back later. Correct answers save immediately, reveal exactly one coordinate, then release a short duplicate-submission guard.
 
-In **Help & settings**, disable **Show row hints / Zobrazovat nápovědu řádku** to hide both the active-row highlight and the equation's row letter, including screen-reader row hints. Permanent grid coordinates remain visible. Hints default to on, including for existing saves; your choice is remembered across puzzles, reloads and collection resets.
+In **Settings / Nastavení** (the gear button), disable **Show row hints / Zobrazovat nápovědu řádku** to hide both the active-row highlight and the equation's row letter, including screen-reader row hints. Permanent grid coordinates remain visible. Hints default to on, including for existing saves; your choice is remembered across puzzles, reloads and collection resets.
 
 If only one pixel remains when an answer is wrong, a previously solved exercise becomes a clearly labeled practice round. Practice has no row hint, never adds another pixel, and returns to the final exercise when answered correctly. A wrong practice answer moves to another practice exercise. Neither missed exercises nor practice rounds cost progress. Exercise order and practice state are saved immediately, so reopening continues from the deferred exercise rather than permitting an immediate repeat.
 
 Return to **My animals / Moje zvířátka** at any point to resume later with the same equations. Completed animals have a discovery badge and can be replayed without losing it. Restarting an unfinished picture or resetting the collection requires confirmation.
 
-The header language switch works during a puzzle without changing its queue. On first use, Czech is chosen if the browser's preferred languages include Czech; otherwise English is used. The saved choice takes precedence thereafter. Help and settings include the row hint toggle, installation, storage limitations, and optional persistent-storage permission.
+The header language switch works during a puzzle without changing its queue. On first use, Czech is chosen if the browser's preferred languages include Czech; otherwise English is used. The saved choice takes precedence thereafter. **Settings** contains language, row hints, local-data controls, deferred app updates, and collection reset. The separate **Help / Nápověda** question-mark button contains game instructions, installation guidance, and offline-play advice.
 
 ## Architecture and arithmetic
 
@@ -71,7 +71,7 @@ Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope
 
 Every correct answer, deferral, practice transition, fresh attempt, reset and preference change is saved synchronously, before animation. Quota/security failures show a persistent warning and allow in-memory play without claiming it was saved. Update acceptance is blocked if that save fails. No unload event is required, and neither reset action calls `localStorage.clear()` or deletes any origin-wide cache.
 
-Progress is **not permanent or synchronized**. Browser/device cleanup can remove it. Home Screen and browser contexts may not share the same storage. Optional persistent-storage permission is requested only from the help button; denial is normal and reported. Back up nothing to a server: there is no server.
+Progress is **not permanent or synchronized**. Browser/device cleanup can remove it. Home Screen and browser contexts may not share the same storage. Optional persistent-storage permission is requested only from Settings; denial is normal and reported. Back up nothing to a server: there is no server.
 
 ## Offline installation and updates
 
@@ -81,7 +81,7 @@ Wait for **Ready for offline play / Připraveno na hraní offline** before disco
 
 On iPhone/iPad (target **iOS/iPadOS 17+**), open the site in Safari, tap **Share → Add to Home Screen**, enable **Open as Web App** if shown, then Add. Install instructions are hidden when standalone is detected. This is a native-like Home Screen web app, **not an App Store app**.
 
-Updates install in a waiting worker. **Later** leaves the current game alone; the update remains accessible in help. **Save & update** first saves progress, then sends Workbox's `SKIP_WAITING` message and reloads after the worker takes control. Another tab accepting an update does not trigger an unsolicited reload here. Registration, caching, messaging, and activation-timeout failures are surfaced. Workbox cache names and navigation fallback are scoped to Mathogram; obsolete-cache cleanup does not sweep other projects' storage.
+Updates install in a waiting worker. **Later** leaves the current game alone; the update remains accessible in Settings. **Save & update** first saves progress, then sends Workbox's `SKIP_WAITING` message and reloads after the worker takes control. Another tab accepting an update does not trigger an unsolicited reload here. Registration, caching, messaging, and activation-timeout failures are surfaced. Workbox cache names and navigation fallback are scoped to Mathogram; obsolete-cache cleanup does not sweep other projects' storage.
 
 If changing the hosting path, change `base`, manifest ID/start URL/scope, and navigation fallback/allowlist together, then update and rerun the subpath acceptance tests.
 

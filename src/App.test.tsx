@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { puzzles } from './content/animals';
@@ -95,15 +95,19 @@ describe('bilingual gallery and settings', () => {
     enter(firstAnswer());
     submit();
     const before = saved();
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
-    expect(screen.getByRole('dialog')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    expect(screen.getByRole('dialog', { name: 'Help' })).toBeVisible();
     expect(screen.getByText(/Turn on Open as Web App/)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+    expect(screen.getByText(messages.en.storageBody)).toBeVisible();
     fireEvent.click(
       screen.getByRole('button', { name: 'Reset all my animals' }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
     expect(saved()).toEqual(before);
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Reset all my animals' }),
     );
@@ -114,7 +118,7 @@ describe('bilingual gallery and settings', () => {
   it('hides installation instructions in standalone mode', () => {
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
     expect(screen.queryByText('Make yourself at home')).not.toBeInTheDocument();
   });
   it('persists row hints and hides the active row visually and from screen readers', () => {
@@ -123,7 +127,7 @@ describe('bilingual gallery and settings', () => {
     expect(document.querySelector('.row-pill')).toBeVisible();
     expect(document.querySelector('.active-row')).toBeVisible();
     const before = saved().attempts.fish;
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const setting = screen.getByRole('checkbox', { name: 'Show row hints' });
     expect(setting).toBeChecked();
     fireEvent.click(setting);
@@ -144,9 +148,7 @@ describe('bilingual gallery and settings', () => {
     expect(screen.getByText('Lovely! A new pixel!')).toBeVisible();
     expect(screen.queryByText(/Pixel revealed:/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Nápověda a nastavení' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Nastavení' }));
     const translated = screen.getByRole('checkbox', {
       name: 'Zobrazovat nápovědu řádku',
     });
@@ -163,11 +165,81 @@ describe('bilingual gallery and settings', () => {
     openFish();
     enter(firstAnswer() === '1' ? '2' : '1');
     submit();
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const setting = screen.getByRole('checkbox', { name: 'Show row hints' });
     act(() => setting.focus());
     act(() => vi.advanceTimersByTime(900));
     expect(setting).toHaveFocus();
+  });
+  it.each(['en', 'cs'] as const)(
+    'separates labeled help and settings and restores their focus in %s',
+    (language) => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(emptyProgress(language)),
+      );
+      pwa.waiting = true;
+      const t = messages[language];
+      render(<App />);
+      const helpButton = screen.getByRole('button', {
+        name: t.help,
+      });
+      const settingsButton = screen.getByRole('button', {
+        name: t.settings,
+      });
+      expect(helpButton).toHaveTextContent(t.help);
+      expect(settingsButton).toHaveTextContent(t.settings);
+      fireEvent.click(helpButton);
+      const help = within(screen.getByRole('dialog', { name: t.help }));
+      expect(help.getByText(t.howBody)).toBeVisible();
+      expect(help.getByText(t.installBody)).toBeVisible();
+      expect(help.getByText(t.offlineHelp)).toBeVisible();
+      expect(help.queryByRole('checkbox')).not.toBeInTheDocument();
+      expect(help.queryByRole('combobox')).not.toBeInTheDocument();
+      expect(
+        help.queryByRole('button', { name: t.resetAll }),
+      ).not.toBeInTheDocument();
+      expect(
+        help.queryByRole('button', { name: t.update }),
+      ).not.toBeInTheDocument();
+      fireEvent.click(help.getByRole('button', { name: t.close }));
+      expect(helpButton).toHaveFocus();
+      fireEvent.click(settingsButton);
+      const settings = within(screen.getByRole('dialog', { name: t.settings }));
+      expect(settings.getByRole('combobox', { name: t.language })).toHaveValue(
+        language,
+      );
+      expect(
+        settings.getByRole('checkbox', { name: t.showRowHints }),
+      ).toBeChecked();
+      expect(settings.getByRole('button', { name: t.resetAll })).toBeVisible();
+      expect(settings.getByRole('button', { name: t.update })).toBeVisible();
+      expect(settings.queryByText(t.howBody)).not.toBeInTheDocument();
+      expect(settings.queryByText(t.installBody)).not.toBeInTheDocument();
+      fireEvent.click(settings.getByRole('button', { name: t.close }));
+      expect(settingsButton).toHaveFocus();
+    },
+  );
+  it('keeps local-data permission controls in settings, not help', async () => {
+    const persist = vi.fn().mockResolvedValue(false);
+    vi.stubGlobal('navigator', {
+      languages: ['en'],
+      storage: { persist },
+    });
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    expect(
+      screen.queryByRole('button', { name: 'Ask to keep local data' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Ask to keep local data' }),
+      );
+    });
+    expect(persist).toHaveBeenCalledOnce();
+    expect(screen.getByText(messages.en.notPersisted)).toBeVisible();
   });
 });
 
@@ -439,7 +511,7 @@ describe('visible persistence and PWA failures', () => {
     expect(
       screen.queryByRole('button', { name: 'Save & update' }),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Help & settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save & update' }));
     expect(pwa.acceptUpdate).toHaveBeenCalledOnce();
     expect(saved().attempts.fish).toBeDefined();

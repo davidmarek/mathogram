@@ -20,7 +20,8 @@ export const cs: Messages = {
   replay: 'Hrát znovu',
   completed: 'Objeveno',
   gallery: 'Moje zvířátka',
-  settings: 'Nápověda a nastavení',
+  settings: 'Nastavení',
+  help: 'Nápověda',
   language: 'Jazyk',
   showRowHints: 'Zobrazovat nápovědu řádku',
   rowHintsHelp:

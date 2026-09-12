@@ -64,7 +64,7 @@ test('row hints are optional, accessible, translated and remembered after reopen
   await page.goto('./');
   await page.getByRole('button', { name: /Sunny fish/ }).click();
   await expect(page.locator('.row-pill')).toBeVisible();
-  await page.getByRole('button', { name: 'Help & settings' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const hints = page.getByRole('checkbox', { name: 'Show row hints' });
   await expect(hints).toBeChecked();
   const label = hints.locator('..');
@@ -87,7 +87,7 @@ test('row hints are optional, accessible, translated and remembered after reopen
   ).toHaveCount(0);
   expect((await saved(page)).showRowHints).toBe(false);
   await page.getByRole('button', { name: 'Language: Čeština' }).click();
-  await page.getByRole('button', { name: 'Nápověda a nastavení' }).click();
+  await page.getByRole('button', { name: 'Nastavení' }).click();
   const translated = page.getByRole('checkbox', {
     name: 'Zobrazovat nápovědu řádku',
   });
@@ -194,8 +194,8 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   await expect(page.getByRole('alert')).toContainText(
     'Některá data nešla přečíst',
   );
-  await page.getByRole('button', { name: 'Nápověda a nastavení' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Nápověda' }).click();
+  await expect(page.getByRole('dialog', { name: 'Nápověda' })).toBeVisible();
   await expect(page.getByText(/Otevřít jako webovou aplikaci/)).toBeVisible();
   await page.getByRole('button', { name: 'Zpátky ke hře' }).focus();
   await page.keyboard.press('Tab');
@@ -205,10 +205,9 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
       .evaluate((dialog) => dialog.contains(document.activeElement)),
   ).toBe(true);
   await page.keyboard.press('Escape');
-  await expect(
-    page.getByRole('button', { name: 'Nápověda a nastavení' }),
-  ).toBeFocused();
-  await page.getByRole('button', { name: 'Nápověda a nastavení' }).click();
+  await expect(page.getByRole('button', { name: 'Nápověda' })).toBeFocused();
+  await page.getByRole('button', { name: 'Nastavení' }).click();
+  await expect(page.getByRole('dialog', { name: 'Nastavení' })).toBeVisible();
   await page
     .getByRole('button', { name: 'Smazat všechna moje zvířátka' })
     .click();
@@ -280,6 +279,34 @@ for (const [name, width, height] of [
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
         .analyze();
       expect(results.violations).toEqual([]);
+    }
+    for (const name of [messages.cs.settings, messages.cs.help]) {
+      const opener = page.getByRole('button', { name, exact: true });
+      await expect(opener).toHaveText(new RegExp(name));
+      await opener.click();
+      const dialog = page.getByRole('dialog', { name, exact: true });
+      await expect(dialog).toBeVisible();
+      if (name === messages.cs.settings) {
+        await expect(dialog.getByRole('checkbox')).toBeVisible();
+        await expect(dialog.getByText(messages.cs.howBody)).toHaveCount(0);
+      } else {
+        await expect(dialog.getByText(messages.cs.howBody)).toBeVisible();
+        await expect(dialog.getByRole('checkbox')).toHaveCount(0);
+        await expect(
+          dialog.getByRole('button', { name: messages.cs.resetAll }),
+        ).toHaveCount(0);
+      }
+      const bounds = await dialog.boundingBox();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+      if (width === 390) {
+        const results = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+          .analyze();
+        expect(results.violations).toEqual([]);
+      }
+      await page.keyboard.press('Escape');
+      await expect(opener).toBeFocused();
     }
     await page.screenshot({
       path: test.info().outputPath(`${name}.png`),

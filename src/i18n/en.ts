@@ -18,7 +18,8 @@ export const en = {
   replay: 'Play again',
   completed: 'Discovered',
   gallery: 'My animals',
-  settings: 'Help & settings',
+  settings: 'Settings',
+  help: 'Help',
   language: 'Language',
   showRowHints: 'Show row hints',
   rowHintsHelp:

@@ -88,6 +88,7 @@ p {
 }
 .app-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -131,8 +132,11 @@ p {
 }
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 .language-toggle {
   background: transparent;
@@ -140,13 +144,24 @@ p {
   font-size: 0.9rem;
   padding: 0 10px;
 }
-.help-button {
-  width: 44px;
+.header-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
   border: 1px solid #dedacc;
   background: #fffcf5;
-  border-radius: 50%;
-  font-weight: 800;
-  font-size: 1.2rem;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.header-tool-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: 1.25rem;
+  line-height: 1;
 }
 main {
   flex: 1;

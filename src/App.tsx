@@ -56,7 +56,9 @@ export function App() {
   const pending = pendingExercise !== undefined;
   const locked = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [modal, setModal] = useState<'help' | 'restart' | 'reset' | null>(null);
+  const [modal, setModal] = useState<
+    'help' | 'settings' | 'restart' | 'reset' | null
+  >(null);
   const modalOpen = useRef(false);
   const [persistent, setPersistent] = useState<
     'persisted' | 'notPersisted' | 'persistError' | null
@@ -244,14 +246,28 @@ export function App() {
             {progress.language === 'en' ? 'Česky' : 'English'}
           </button>
           <button
-            className="help-button"
-            aria-label={t.settings}
+            className="header-tool"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setModal('settings');
+            }}
+          >
+            <span className="header-tool-icon" aria-hidden="true">
+              ⚙
+            </span>
+            {t.settings}
+          </button>
+          <button
+            className="header-tool"
             onClick={(event) => {
               event.currentTarget.focus();
               setModal('help');
             }}
           >
-            ?
+            <span className="header-tool-icon" aria-hidden="true">
+              ?
+            </span>
+            {t.help}
           </button>
         </div>
       </header>
@@ -581,15 +597,32 @@ export function App() {
         <Modal
           title={
             modal === 'help'
-              ? t.settings
-              : modal === 'reset'
-                ? t.resetTitle
-                : t.restartTitle
+              ? t.help
+              : modal === 'settings'
+                ? t.settings
+                : modal === 'reset'
+                  ? t.resetTitle
+                  : t.restartTitle
           }
           onClose={() => setModal(null)}
-          closeLabel={modal === 'help' ? t.close : t.cancel}
+          closeLabel={
+            modal === 'help' || modal === 'settings' ? t.close : t.cancel
+          }
         >
           {modal === 'help' ? (
+            <>
+              <h3>{t.howTitle}</h3>
+              <p>{t.howBody}</p>
+              <p>{t.gentle}</p>
+              {!standalone && (
+                <>
+                  <h3>{t.installTitle}</h3>
+                  <p>{t.installBody}</p>
+                </>
+              )}
+              <p>{t.offlineHelp}</p>
+            </>
+          ) : modal === 'settings' ? (
             <>
               <label className="language-setting">
                 {t.language}
@@ -618,18 +651,8 @@ export function App() {
                 {t.showRowHints}
               </label>
               <p id="row-hints-help">{t.rowHintsHelp}</p>
-              <h3>{t.howTitle}</h3>
-              <p>{t.howBody}</p>
-              <p>{t.gentle}</p>
-              {!standalone && (
-                <>
-                  <h3>{t.installTitle}</h3>
-                  <p>{t.installBody}</p>
-                </>
-              )}
               <h3>{t.storageTitle}</h3>
               <p>{t.storageBody}</p>
-              <p>{t.offlineHelp}</p>
               {typeof navigator.storage?.persist === 'function' && (
                 <button
                   className="secondary"
