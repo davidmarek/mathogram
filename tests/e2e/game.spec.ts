@@ -50,7 +50,7 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
   for (let index = 1; index < initial.queue.length; index++)
     await answerEquation(page, index % 2 === 0);
   await expect(
-    page.getByRole('heading', { name: 'Look who you found!' }),
+    page.getByRole('heading', { name: 'Look what you found!' }),
   ).toBeFocused();
   expect((await saved(page)).completed).toContain('fish');
   await page.getByRole('button', { name: 'Play again' }).click();
@@ -133,7 +133,7 @@ test('last missed pixel returns after a saved practice exercise without filling 
   expect((await saved(page)).completed).toEqual([]);
   await answerEquation(page);
   await expect(
-    page.getByRole('heading', { name: 'Look who you found!' }),
+    page.getByRole('heading', { name: 'Look what you found!' }),
   ).toBeVisible();
   expect((await saved(page)).attempts.fish!.solved).toHaveLength(
     before.queue.length,
@@ -147,7 +147,7 @@ test('later animal reveals columns above ten and keeps other attempts on confirm
   await page.getByRole('button', { name: /Sunny fish/ }).click();
   await answerEquation(page);
   const fish = (await saved(page)).attempts.fish;
-  await page.getByRole('button', { name: 'My animals', exact: true }).click();
+  await page.getByRole('button', { name: 'My pictures', exact: true }).click();
   await page.getByRole('button', { name: /Twilight owl/ }).click();
   let aboveTen = false;
   const count = (await saved(page)).attempts.owl!.queue.length;
@@ -209,7 +209,7 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   await page.getByRole('button', { name: 'Nastavení' }).click();
   await expect(page.getByRole('dialog', { name: 'Nastavení' })).toBeVisible();
   await page
-    .getByRole('button', { name: 'Smazat všechna moje zvířátka' })
+    .getByRole('button', { name: 'Smazat všechny moje obrázky' })
     .click();
   await page.getByRole('button', { name: 'Ano, začít znovu' }).click();
   expect((await saved(page)).completed).toEqual([]);

@@ -57,7 +57,7 @@ afterEach(() => {
 });
 
 describe('bilingual gallery and settings', () => {
-  it('offers all eleven animals without locks and switches every translation', () => {
+  it('offers all sixteen pictures without locks and switches every translation', () => {
     render(<App />);
     for (const puzzle of puzzles)
       expect(
@@ -75,7 +75,7 @@ describe('bilingual gallery and settings', () => {
         }),
       ).toBeVisible();
     expect(
-      screen.getByRole('heading', { name: 'Koho dnes objevíš?' }),
+      screen.getByRole('heading', { name: 'Co dnes objevíš?' }),
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Slunečná rybka/ }));
     expect(
@@ -109,13 +109,13 @@ describe('bilingual gallery and settings', () => {
     expect(screen.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     expect(screen.getByText(messages.en.storageBody)).toBeVisible();
     fireEvent.click(
-      screen.getByRole('button', { name: 'Reset all my animals' }),
+      screen.getByRole('button', { name: 'Reset all my pictures' }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
     expect(saved()).toEqual(before);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(
-      screen.getByRole('button', { name: 'Reset all my animals' }),
+      screen.getByRole('button', { name: 'Reset all my pictures' }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
     expect(saved()).toEqual(emptyProgress('en'));
@@ -311,7 +311,7 @@ describe('pixel game', () => {
     enter(firstAnswer());
     submit();
     expect(
-      screen.getByRole('heading', { name: 'Look who you found!' }),
+      screen.getByRole('heading', { name: 'Look what you found!' }),
     ).toBeVisible();
     view.unmount();
   });
@@ -423,7 +423,7 @@ describe('pixel game', () => {
     enter(firstAnswer());
     submit();
     const before = saved();
-    fireEvent.click(screen.getByRole('button', { name: 'My animals' }));
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
     openFish();
     expect(saved()).toEqual(before);
     fireEvent.click(
@@ -448,7 +448,7 @@ describe('pixel game', () => {
     enter(firstAnswer());
     submit();
     expect(
-      screen.getByRole('heading', { name: 'Look who you found!' }),
+      screen.getByRole('heading', { name: 'Look what you found!' }),
     ).toHaveFocus();
     expect(saved().completed).toEqual(['fish']);
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
@@ -471,7 +471,7 @@ describe('visible persistence and PWA failures', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Některá data nešla přečíst',
     );
-    expect(screen.getByText(/1 \/ 11/)).toBeVisible();
+    expect(screen.getByText(/1 \/ 16/)).toBeVisible();
   });
   it('allows in-memory play but does not claim saving after quota failure', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {

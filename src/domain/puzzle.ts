@@ -14,6 +14,11 @@ const puzzleNames = [
   'fox',
   'dog',
   'owl',
+  'watermelon',
+  'fries',
+  'cheddar-fingers',
+  'hamburger',
+  'sushi',
 ] as const;
 
 type PuzzleName = (typeof puzzleNames)[number];

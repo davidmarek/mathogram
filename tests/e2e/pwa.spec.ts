@@ -6,7 +6,7 @@ test.describe('real Workbox lifecycle', () => {
     ({ browserName }) => browserName !== 'chromium',
     'Real SW lifecycle is exercised in Chromium; WebKit game tests are separate from physical iOS acceptance.',
   );
-  test('successful precache supports cold offline reopening, every animal, both locales and scoped caches', async ({
+  test('successful precache supports cold offline reopening, animals and food, both locales and scoped caches', async ({
     page,
     context,
   }) => {
@@ -31,7 +31,7 @@ test.describe('real Workbox lifecycle', () => {
     const cold = await context.newPage();
     await cold.goto('http://127.0.0.1:4173/mathogram/');
     await expect(
-      cold.getByRole('heading', { name: 'Who will you discover?' }),
+      cold.getByRole('heading', { name: 'What will you discover?' }),
     ).toBeVisible();
     for (const name of [
       'Sunny fish',
@@ -40,6 +40,11 @@ test.describe('real Workbox lifecycle', () => {
       'Clover bunny',
       'Biscuit pup',
       'Twilight owl',
+      'Watermelon',
+      'Fries',
+      'Cheddar fingers',
+      'Hamburger',
+      'Sushi',
     ]) {
       await cold.getByRole('button', { name: new RegExp(name) }).click();
       await expect(
@@ -49,7 +54,7 @@ test.describe('real Workbox lifecycle', () => {
       await answerEquation(cold);
       await expect(cold.locator('[data-filled="true"]')).toHaveCount(1);
       await cold
-        .getByRole('button', { name: 'My animals', exact: true })
+        .getByRole('button', { name: 'My pictures', exact: true })
         .click();
     }
     expect(
@@ -62,7 +67,7 @@ test.describe('real Workbox lifecycle', () => {
     await cold.getByRole('button', { name: 'Language: Čeština' }).click();
     await cold.reload();
     await expect(
-      cold.getByRole('heading', { name: 'Koho dnes objevíš?' }),
+      cold.getByRole('heading', { name: 'Co dnes objevíš?' }),
     ).toBeVisible();
     for (const name of [
       'Slunečná rybka',
@@ -71,6 +76,11 @@ test.describe('real Workbox lifecycle', () => {
       'Jetelový králíček',
       'Sušenkový pejsek',
       'Soumračná sovička',
+      'Meloun',
+      'Hranolky',
+      'Čedarové tyčinky',
+      'Hamburger',
+      'Sushi',
     ]) {
       await cold.getByRole('button', { name: new RegExp(name) }).click();
       await expect(
@@ -79,7 +89,7 @@ test.describe('real Workbox lifecycle', () => {
       await answerEquation(cold);
       await expect(cold.locator('[data-filled="true"]')).toHaveCount(2);
       await cold
-        .getByRole('button', { name: 'Moje zvířátka', exact: true })
+        .getByRole('button', { name: 'Moje obrázky', exact: true })
         .click();
     }
     expect(
