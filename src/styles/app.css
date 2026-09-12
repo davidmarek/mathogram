@@ -10,7 +10,7 @@
   --green: #306950;
   --cream: #fff8ec;
   --border: #e9e4d8;
-  --animal-bg: #f9ebcf;
+  --picture-bg: #f9ebcf;
   --halo: #f5dda9;
 }
 
@@ -227,12 +227,12 @@ main {
   font-size: 0.75rem;
   font-weight: 700;
 }
-.animal-gallery {
+.picture-gallery {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
-.animal-card {
+.picture-card {
   display: flex;
   flex-direction: column;
   text-align: left;
@@ -243,48 +243,48 @@ main {
   overflow: hidden;
   box-shadow: 0 4px 0 #eae3d64d;
 }
-.animal-card:hover {
+.picture-card:hover {
   box-shadow: 0 8px 20px #77664217;
   transform: translateY(-3px);
 }
-.animal-fish,
-.animal-bee,
-.animal-duck,
-.animal-fries {
-  --animal-bg: #f9ebcf;
+.picture-fish,
+.picture-bee,
+.picture-duck,
+.picture-fries {
+  --picture-bg: #f9ebcf;
   --halo: #f5dda9;
 }
-.animal-butterfly,
-.animal-snail {
-  --animal-bg: #f0e7f5;
+.picture-butterfly,
+.picture-snail {
+  --picture-bg: #f0e7f5;
   --halo: #e3d4ee;
 }
-.animal-cat,
-.animal-fox,
-.animal-cheddar-fingers {
-  --animal-bg: #f8e3d5;
+.picture-cat,
+.picture-fox,
+.picture-cheddar-fingers {
+  --picture-bg: #f8e3d5;
   --halo: #f2cfb5;
 }
-.animal-rabbit,
-.animal-turtle,
-.animal-watermelon {
-  --animal-bg: #e7efdf;
+.picture-rabbit,
+.picture-turtle,
+.picture-watermelon {
+  --picture-bg: #e7efdf;
   --halo: #d6e4c9;
 }
-.animal-dog,
-.animal-hamburger {
-  --animal-bg: #f4eada;
+.picture-dog,
+.picture-hamburger {
+  --picture-bg: #f4eada;
   --halo: #e9d8bb;
 }
-.animal-owl,
-.animal-sushi {
-  --animal-bg: #e6eaf5;
+.picture-owl,
+.picture-sushi {
+  --picture-bg: #e6eaf5;
   --halo: #d3daee;
 }
 .card-art {
   height: 162px;
   flex-shrink: 0;
-  background: var(--animal-bg);
+  background: var(--picture-bg);
   position: relative;
   display: grid;
   place-items: center;
@@ -304,7 +304,7 @@ main {
   border-radius: 48% 52% 54% 46%;
   transform: rotate(-15deg);
 }
-.animal-number {
+.picture-number {
   position: absolute;
   left: 16px;
   top: 14px;
@@ -686,7 +686,7 @@ progress::-moz-progress-bar {
   margin: 35px auto 0;
   width: min(100%, 320px);
   aspect-ratio: 1;
-  background: var(--animal-bg);
+  background: var(--picture-bg);
   border-radius: 45% 55% 48% 52%;
   animation: arrive 600ms ease-out;
 }
@@ -851,7 +851,7 @@ progress::-moz-progress-bar {
   .hero-spark {
     display: none;
   }
-  .animal-gallery {
+  .picture-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }

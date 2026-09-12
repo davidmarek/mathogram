@@ -21,7 +21,7 @@ for (const language of ['en', 'cs'] as const) {
         { key: STORAGE_KEY, progress },
       );
       await page.goto('./');
-      const cards = page.locator('.animal-card');
+      const cards = page.locator('.picture-card');
       await expect(cards).toHaveCount(puzzles.length);
       await expect(cards.locator('progress')).toHaveCount(hasProgress ? 1 : 0);
 
