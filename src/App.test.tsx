@@ -11,12 +11,15 @@ import { StrictMode } from 'react';
 const analytics = vi.hoisted(() => ({
   enabled: false,
   trackPuzzle: vi.fn(),
+  trackPuzzleTime: vi.fn(),
 }));
 vi.mock('./analytics', () => ({
   get analyticsEnabled() {
     return analytics.enabled;
   },
   trackPuzzle: analytics.trackPuzzle,
+  trackPuzzleTime: analytics.trackPuzzleTime,
+  analyticsAllowed: () => analytics.enabled,
 }));
 
 const pwa = vi.hoisted(() => ({
@@ -63,6 +66,7 @@ beforeEach(() => {
   pwa.acceptUpdate.mockClear();
   analytics.enabled = false;
   analytics.trackPuzzle.mockClear();
+  analytics.trackPuzzleTime.mockClear();
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -71,6 +75,44 @@ afterEach(() => {
 });
 
 describe('aggregate puzzle analytics', () => {
+  it('times solving but excludes dialogs, gallery and completed pictures', () => {
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'performance',
+      ],
+    });
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    analytics.enabled = true;
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!);
+    attempt.solved = attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId);
+    progress.attempts.fish = attempt;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    const view = render(<App />);
+    openFish();
+    act(() => vi.advanceTimersByTime(10_000));
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    expect(analytics.trackPuzzleTime.mock.calls).toEqual([['fish', 10]]);
+    act(() => vi.advanceTimersByTime(120_000));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    act(() => vi.advanceTimersByTime(5_000));
+    enter(firstAnswer());
+    submit();
+    expect(analytics.trackPuzzleTime.mock.calls).toEqual([
+      ['fish', 10],
+      ['fish', 5],
+    ]);
+    act(() => vi.advanceTimersByTime(120_000));
+    fireEvent.click(screen.getByRole('button', { name: 'My animals' }));
+    act(() => vi.advanceTimersByTime(120_000));
+    view.unmount();
+    expect(analytics.trackPuzzleTime).toHaveBeenCalledTimes(2);
+  });
+
   it('counts fresh attempts, confirmed restarts and replays, but not resumes or cancelled restarts', () => {
     const view = render(
       <StrictMode>

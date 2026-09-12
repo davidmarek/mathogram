@@ -20,6 +20,7 @@ import {
 import type { Language, LoadResult, Progress } from './storage/progress';
 import { usePwa } from './pwa/usePwa';
 import { analyticsEnabled, trackPuzzle } from './analytics';
+import { usePuzzleTime } from './usePuzzleTime';
 
 function browserStorage(): Storage | null {
   try {
@@ -73,6 +74,7 @@ export function App() {
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
+  usePuzzleTime(attempt && !complete && modal === null ? activeId : null);
   const current =
     pendingExercise?.exercise ??
     (attempt ? currentExercise(attempt) : undefined);

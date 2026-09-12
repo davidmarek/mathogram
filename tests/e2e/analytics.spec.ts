@@ -19,6 +19,11 @@ test.describe('enabled analytics', () => {
     context,
     analyticsRequests,
   }) => {
+    const events = () =>
+      analyticsRequests.filter(
+        (request) =>
+          request.postDataJSON().payload.name !== 'Puzzle time spent',
+      );
     await context.addCookies([
       {
         name: 'unrelated',
@@ -30,9 +35,9 @@ test.describe('enabled analytics', () => {
       },
     ]);
     await page.goto('./?private=value#secret');
-    await expect.poll(() => analyticsRequests.length).toBe(1);
+    await expect.poll(() => events().length).toBe(1);
     await page.getByRole('button', { name: /Sunny fish/ }).click();
-    await expect.poll(() => analyticsRequests.length).toBe(2);
+    await expect.poll(() => events().length).toBe(2);
     await page.getByRole('button', { name: 'My animals', exact: true }).click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await page.evaluate(() => {
@@ -44,16 +49,16 @@ test.describe('enabled analytics', () => {
       localStorage.setItem('mathogram.progress', JSON.stringify(progress));
     });
     await page.reload();
-    await expect.poll(() => analyticsRequests.length).toBe(3);
+    await expect.poll(() => events().length).toBe(3);
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await answerEquation(page);
     await page.keyboard.press('Enter');
-    await expect.poll(() => analyticsRequests.length).toBe(4);
+    await expect.poll(() => events().length).toBe(4);
     await page.getByRole('button', { name: 'My animals', exact: true }).click();
     await page.getByRole('button', { name: /Sunny fish/ }).click();
     await page.getByRole('button', { name: 'Play again' }).click();
-    await expect.poll(() => analyticsRequests.length).toBe(5);
-    expect(analyticsRequests.map((request) => request.postDataJSON())).toEqual(
+    await expect.poll(() => events().length).toBe(5);
+    expect(events().map((request) => request.postDataJSON())).toEqual(
       [
         'pageview',
         'Puzzle started',
@@ -76,6 +81,37 @@ test.describe('enabled analytics', () => {
       expect(headers.cookie).toBeUndefined();
       expect(headers.referer).toBeUndefined();
     }
+  });
+
+  test('reports active seconds, excluding time in Help and the gallery', async ({
+    page,
+    analyticsRequests,
+  }) => {
+    await page.clock.install();
+    await page.goto('./');
+    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.clock.runFor(10_000);
+    await page.getByRole('button', { name: 'Help' }).click();
+    const durations = () =>
+      analyticsRequests
+        .map((request) => request.postDataJSON().payload)
+        .filter((payload) => payload.name === 'Puzzle time spent');
+    await expect.poll(() => durations().length).toBe(1);
+    expect(durations()[0]).toEqual({
+      website: process.env.VITE_UMAMI_WEBSITE_ID,
+      hostname: '127.0.0.1',
+      url: '/mathogram/',
+      name: 'Puzzle time spent',
+      data: { puzzleId: 'fish', activeSeconds: 10 },
+    });
+    await page.clock.runFor(120_000);
+    await page.getByRole('button', { name: 'Back to play' }).click();
+    await page.clock.runFor(5_000);
+    await page.getByRole('button', { name: 'My animals', exact: true }).click();
+    await expect.poll(() => durations().length).toBe(2);
+    expect(durations()[1].data).toEqual({ puzzleId: 'fish', activeSeconds: 5 });
+    await page.clock.runFor(120_000);
+    expect(durations()).toHaveLength(2);
   });
 
   test('reports online Home Screen-style launches without adding a launch-mode property', async ({

@@ -24,6 +24,28 @@ afterEach(() => {
 });
 
 describe('optional analytics', () => {
+  it('sends only positive whole-second durations for known puzzles', async () => {
+    const { trackPuzzleTime } = await import('./analytics');
+    for (const seconds of [
+      0,
+      -1,
+      1.5,
+      NaN,
+      Infinity,
+      Number.MAX_SAFE_INTEGER + 1,
+    ])
+      trackPuzzleTime('fish', seconds);
+    trackPuzzleTime('unknown', 20);
+    expect(request).not.toHaveBeenCalled();
+    trackPuzzleTime('fish', 42);
+    expect(JSON.parse(request.mock.calls[0]![1].body).payload).toEqual({
+      website,
+      hostname: window.location.hostname,
+      url: '/mathogram/',
+      name: 'Puzzle time spent',
+      data: { puzzleId: 'fish', activeSeconds: 42 },
+    });
+  });
   it.each([
     ['PROD', false],
     ['VITE_ANALYTICS_ENABLED', ''],
@@ -48,6 +70,7 @@ describe('optional analytics', () => {
     expect(analytics.analyticsEnabled).toBe(false);
     analytics.trackPageview();
     analytics.trackPuzzle('Puzzle started', 'fish');
+    analytics.trackPuzzleTime('fish', 10);
     expect(request).not.toHaveBeenCalled();
   });
 
@@ -162,6 +185,7 @@ describe('optional analytics', () => {
       const analytics = await import('./analytics');
       analytics.trackPageview();
       analytics.trackPuzzle('Puzzle completed', 'fish');
+      analytics.trackPuzzleTime('fish', 10);
       expect(request).not.toHaveBeenCalled();
       vi.stubGlobal('navigator', { onLine: true });
       await Promise.resolve();

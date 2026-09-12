@@ -27,16 +27,22 @@ export const analyticsEnabled =
     website,
   );
 
-function send(name?: string, data?: { puzzleId: string }) {
+export function analyticsAllowed(): boolean {
+  return (
+    analyticsEnabled &&
+    navigator.onLine &&
+    navigator.doNotTrack !== '1' &&
+    (navigator as Navigator & { globalPrivacyControl?: boolean })
+      .globalPrivacyControl !== true
+  );
+}
+
+function send(
+  name?: string,
+  data?: { puzzleId: string; activeSeconds?: number },
+) {
   try {
-    if (
-      !analyticsEnabled ||
-      !navigator.onLine ||
-      navigator.doNotTrack === '1' ||
-      (navigator as Navigator & { globalPrivacyControl?: boolean })
-        .globalPrivacyControl === true
-    )
-      return;
+    if (!analyticsAllowed()) return;
 
     // Never send the current query, fragment, referrer, or saved game state.
     void fetch(endpoint!, {
@@ -71,4 +77,13 @@ export function trackPuzzle(
 ) {
   if (puzzles.some((puzzle) => puzzle.id === puzzleId))
     send(event, { puzzleId });
+}
+
+export function trackPuzzleTime(puzzleId: string, activeSeconds: number) {
+  if (
+    puzzles.some((puzzle) => puzzle.id === puzzleId) &&
+    Number.isSafeInteger(activeSeconds) &&
+    activeSeconds > 0
+  )
+    send('Puzzle time spent', { puzzleId, activeSeconds });
 }

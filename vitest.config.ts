@@ -15,6 +15,7 @@ export default defineConfig({
         'src/App.tsx',
         'src/pwa/*.ts',
         'src/analytics.ts',
+        'src/usePuzzleTime.ts',
       ],
       reporter: ['text', 'html'],
       thresholds: {
