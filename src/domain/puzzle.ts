@@ -12,7 +12,18 @@ export interface Pixel {
 export interface Puzzle {
   id: string;
   version: number;
-  name: 'fish' | 'butterfly' | 'cat' | 'rabbit' | 'dog' | 'owl';
+  name:
+    | 'fish'
+    | 'butterfly'
+    | 'bee'
+    | 'snail'
+    | 'turtle'
+    | 'cat'
+    | 'duck'
+    | 'rabbit'
+    | 'fox'
+    | 'dog'
+    | 'owl';
   width: number;
   height: number;
   intro: boolean;
@@ -39,9 +50,19 @@ export function validatePuzzle(value: unknown): value is Puzzle {
     typeof value.id !== 'string' ||
     !/^[a-z][a-z0-9-]*$/.test(value.id) ||
     !boundedInteger(value.version, Number.MAX_SAFE_INTEGER) ||
-    !['fish', 'butterfly', 'cat', 'rabbit', 'dog', 'owl'].includes(
-      typeof value.name === 'string' ? value.name : '',
-    ) ||
+    ![
+      'fish',
+      'butterfly',
+      'bee',
+      'snail',
+      'turtle',
+      'cat',
+      'duck',
+      'rabbit',
+      'fox',
+      'dog',
+      'owl',
+    ].includes(typeof value.name === 'string' ? value.name : '') ||
     !boundedInteger(value.width, 20) ||
     !boundedInteger(value.height, 20) ||
     typeof value.intro !== 'boolean' ||

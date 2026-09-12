@@ -328,7 +328,7 @@ export function App() {
               <h2>{t.collection}</h2>
               <span>
                 <span aria-hidden="true">✦ </span>
-                {progress.completed.length} / 6 {t.friends}
+                {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
             <div className="animal-gallery">

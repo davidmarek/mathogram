@@ -57,7 +57,7 @@ afterEach(() => {
 });
 
 describe('bilingual gallery and settings', () => {
-  it('offers all six animals without locks and switches every translation', () => {
+  it('offers all eleven animals without locks and switches every translation', () => {
     render(<App />);
     for (const puzzle of puzzles)
       expect(
@@ -68,6 +68,12 @@ describe('bilingual gallery and settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
     expect(document.documentElement.lang).toBe('cs');
     expect(saved().language).toBe('cs');
+    for (const puzzle of puzzles)
+      expect(
+        screen.getByRole('button', {
+          name: new RegExp(messages.cs[puzzle.name]),
+        }),
+      ).toBeVisible();
     expect(
       screen.getByRole('heading', { name: 'Koho dnes objevíš?' }),
     ).toBeVisible();
@@ -465,7 +471,7 @@ describe('visible persistence and PWA failures', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Některá data nešla přečíst',
     );
-    expect(screen.getByText(/1 \/ 6/)).toBeVisible();
+    expect(screen.getByText(/1 \/ 11/)).toBeVisible();
   });
   it('allows in-memory play but does not claim saving after quota failure', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {

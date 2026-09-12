@@ -11,7 +11,7 @@ describe('runtime puzzle validation', () => {
     {},
     { ...fish, id: '' },
     { ...fish, id: '__proto__' },
-    { ...fish, name: 'fox' },
+    { ...fish, name: 'unknown-animal' },
     { ...fish, version: 0 },
     { ...fish, version: 1.5 },
     { ...fish, version: Number.MAX_SAFE_INTEGER + 1 },
