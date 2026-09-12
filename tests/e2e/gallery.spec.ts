@@ -40,6 +40,32 @@ for (const language of ['en', 'cs'] as const) {
     await expect(page.getByText(t.noPictures)).toBeVisible();
     await page.getByRole('button', { name: t.clearFilters }).click();
     await expect(page.locator('.picture-card')).toHaveCount(29);
+    const artwork = await page.locator('.card-art svg').evaluateAll((images) =>
+      images.map((image) => ({
+        viewBox: image.getAttribute('viewBox'),
+        pixels: [...image.querySelectorAll('rect')].map((pixel) => ({
+          x: pixel.getAttribute('x'),
+          y: pixel.getAttribute('y'),
+          width: pixel.getAttribute('width'),
+          height: pixel.getAttribute('height'),
+          fill: pixel.getAttribute('fill'),
+        })),
+      })),
+    );
+    expect(artwork).toEqual(
+      [...puzzles]
+        .sort((a, b) => a.pixels.length - b.pixels.length)
+        .map((puzzle) => ({
+          viewBox: `0 0 ${puzzle.width} ${puzzle.height}`,
+          pixels: puzzle.pixels.map((pixel) => ({
+            x: String(pixel.col - 1),
+            y: String(pixel.row - 1),
+            width: '1',
+            height: '1',
+            fill: puzzle.palette[pixel.color],
+          })),
+        })),
+    );
     const counts = await page.locator('.card-exercises').allTextContents();
     const lengths = counts.map((count) => Number(count.split(' ')[0]));
     expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
