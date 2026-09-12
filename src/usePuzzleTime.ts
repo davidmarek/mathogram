@@ -62,6 +62,11 @@ export function usePuzzleTime(puzzleId: string | null) {
     function offline() {
       start = undefined;
     }
+    function online() {
+      const now = performance.now();
+      if (eligible() && start === undefined && now < lastActivity + INTERVAL_MS)
+        start = now;
+    }
 
     resume();
     const timer = window.setInterval(() => {
@@ -75,7 +80,7 @@ export function usePuzzleTime(puzzleId: string | null) {
     window.addEventListener('pagehide', hide);
     window.addEventListener('pageshow', show);
     window.addEventListener('offline', offline);
-    window.addEventListener('online', resume);
+    window.addEventListener('online', online);
     return () => {
       window.clearInterval(timer);
       document.removeEventListener('pointerdown', activity);
@@ -84,7 +89,7 @@ export function usePuzzleTime(puzzleId: string | null) {
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       window.removeEventListener('offline', offline);
-      window.removeEventListener('online', resume);
+      window.removeEventListener('online', online);
       flush();
     };
   }, [puzzleId]);

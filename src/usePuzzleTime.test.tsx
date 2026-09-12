@@ -105,9 +105,25 @@ it('discards unsent offline time and never backfills it on reconnect', () => {
   advance(120_000);
   analytics.allowed = true;
   event(window, 'online');
+  advance(120_000);
+  expect(analytics.trackPuzzleTime).not.toHaveBeenCalled();
+  event(document, 'keydown');
   advance(4_000);
   view.unmount();
   expect(analytics.trackPuzzleTime.mock.calls).toEqual([['fish', 4]]);
+});
+
+it('resumes after a brief outage without extending the last interaction deadline', () => {
+  const view = renderHook(() => usePuzzleTime('fish'));
+  advance(10_000);
+  analytics.allowed = false;
+  event(window, 'offline');
+  advance(10_000);
+  analytics.allowed = true;
+  event(window, 'online');
+  advance(100_000);
+  view.unmount();
+  expect(analytics.trackPuzzleTime.mock.calls).toEqual([['fish', 40]]);
 });
 
 it('discards time when privacy signals block reporting', () => {
