@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { puzzles } from './content/animals';
 import {
+  difficulties,
+  sizes,
+  getDifficulty,
+  getSize,
+} from './domain/categories';
+import type { Difficulty, PuzzleSize } from './domain/categories';
+import {
   createAttempt,
   currentExercise,
   deferExercise,
@@ -46,6 +53,8 @@ export function App() {
   const progressRef = useRef(progress);
   const [notice, setNotice] = useState(initial.notice);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty | 'all'>('all');
+  const [size, setSize] = useState<PuzzleSize | 'all'>('all');
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<
     'retry' | 'range' | 'correct' | 'practiceCorrect' | 'retryOnly' | null
@@ -71,6 +80,15 @@ export function App() {
   const answerRef = useRef<HTMLInputElement>(null);
   const pwa = usePwa();
   const t = messages[progress.language];
+  const matchingDifficulty = puzzles.filter(
+    (item) => difficulty === 'all' || getDifficulty(item) === difficulty,
+  );
+  const matchingSize = puzzles.filter(
+    (item) => size === 'all' || getSize(item) === size,
+  );
+  const visiblePuzzles = matchingDifficulty
+    .filter((item) => size === 'all' || getSize(item) === size)
+    .sort((a, b) => a.pixels.length - b.pixels.length);
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
@@ -336,8 +354,72 @@ export function App() {
                 {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
+            <div className="gallery-filters">
+              <label>
+                {t.difficulty}
+                <select
+                  value={difficulty}
+                  onChange={(event) =>
+                    setDifficulty(event.target.value as Difficulty | 'all')
+                  }
+                >
+                  <option value="all">
+                    {t.allDifficulties} ({matchingSize.length})
+                  </option>
+                  {difficulties.map((value) => (
+                    <option key={value} value={value}>
+                      {t[value]} (
+                      {
+                        matchingSize.filter(
+                          (item) => getDifficulty(item) === value,
+                        ).length
+                      }
+                      )
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t.length}
+                <select
+                  value={size}
+                  onChange={(event) =>
+                    setSize(event.target.value as PuzzleSize | 'all')
+                  }
+                >
+                  <option value="all">
+                    {t.allSizes} ({matchingDifficulty.length})
+                  </option>
+                  {sizes.map((value) => (
+                    <option key={value} value={value}>
+                      {t[value]} (
+                      {
+                        matchingDifficulty.filter(
+                          (item) => getSize(item) === value,
+                        ).length
+                      }
+                      )
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="secondary"
+                onClick={() => {
+                  setDifficulty('all');
+                  setSize('all');
+                }}
+              >
+                {t.clearFilters}
+              </button>
+            </div>
+            <p className="gallery-summary" role="status">
+              {t.matchingPictures}: {visiblePuzzles.length} / {puzzles.length}
+            </p>
+            <p className="gallery-guidance">{t.categoryHelp}</p>
+            {visiblePuzzles.length === 0 && <p>{t.noPictures}</p>}
             <div className="picture-gallery">
-              {puzzles.map((animal, index) => {
+              {visiblePuzzles.map((animal) => {
                 const saved = progress.attempts[animal.id];
                 const done = saved && isComplete(saved);
                 const badge = progress.completed.includes(animal.id);
@@ -347,10 +429,11 @@ export function App() {
                     className={`picture-card picture-${animal.id}`}
                     onClick={() => openPuzzle(animal.id)}
                     aria-label={`${t[animal.name]} · ${done ? t.completed : saved ? t.continue : t.start}`}
+                    aria-describedby={`category-${animal.id}`}
                   >
                     <div className="card-art">
                       <span className="picture-number" aria-hidden="true">
-                        {String(index + 1).padStart(2, '0')}
+                        {String(puzzles.indexOf(animal) + 1).padStart(2, '0')}
                       </span>
                       {badge && (
                         <span
@@ -367,14 +450,11 @@ export function App() {
                       </span>
                     </div>
                     <div className="card-copy">
-                      <span className="card-level">
-                        {animal.threeNumbers
-                          ? t.challenging
-                          : animal.intro
-                            ? t.easy
-                            : t.adventurous}{' '}
-                        <span aria-hidden="true">·</span> {animal.pixels.length}{' '}
-                        {t.pixels}
+                      <span className="card-level" id={`category-${animal.id}`}>
+                        {t[getDifficulty(animal)]} · {t[getSize(animal)]}
+                        <span className="card-exercises">
+                          {animal.pixels.length} {t.exercises}
+                        </span>
                       </span>
                       <h3>{t[animal.name]}</h3>
                       <div className="card-action">
@@ -440,13 +520,7 @@ export function App() {
               <button className="back-button" onClick={goHome}>
                 <span aria-hidden="true">←</span> {t.gallery}
               </button>
-              <span className="level-pill">
-                {puzzle.threeNumbers
-                  ? t.challenging
-                  : puzzle.intro
-                    ? t.easy
-                    : t.adventurous}
-              </span>
+              <span className="level-pill">{t[getDifficulty(puzzle)]}</span>
             </div>
             <h1 id="game-title">{t[puzzle.name]}</h1>
             <div className="game-layout">

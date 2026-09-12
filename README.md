@@ -6,7 +6,24 @@ Eleven original animals are available from the start: Sunny fish (28 pixels), Be
 
 Five original food pictures are also available: Watermelon (32 pixels), Fries (39), Cheddar fingers (48), Hamburger (57), and Sushi (60). Watermelon and Fries use introductory arithmetic within 10; the other three include columns above 10.
 
-The **Big adventure · 3 numbers** tier adds three larger original pictures: Cheetah (106 pixels), German shepherd (133), and Ferrari sports car (119). Their three-number sums add a second calculation without carrying or borrowing across a ten. All nineteen pictures are unlocked and available offline after caching.
+The **Advanced** difficulty includes three extra-large original pictures: Cheetah (106 pixels), German shepherd (133), and Ferrari sports car (119). Their three-number sums add a second calculation without carrying or borrowing across a ten.
+
+Ten more original pictures separate arithmetic difficulty from puzzle length: Rocket and Robot face offer small advanced puzzles; Octopus and Dinosaur offer medium advanced puzzles; Train, Lighthouse, and Hot-air balloon offer large standard puzzles; Dragon and Space shuttle offer large advanced puzzles; Sunflower offers a medium beginner puzzle. All twenty-nine pictures are unlocked and available offline after caching.
+
+### Difficulty and length
+
+Difficulty is derived from the existing arithmetic mode: **Beginner** uses two numbers within 10, **Standard** uses two numbers within 20, and **Advanced** uses three numbers below 20. Each individual calculation step avoids crossing through a ten. “Advanced” is relative to the other modes in this game.
+
+Length counts colored pixels, not grid dimensions: one colored pixel requires one exercise. Background squares do not count; retries and practice can add to the actual solving work.
+
+| Difficulty | Small (1–40) | Medium (41–70) | Large (71–100) | Extra-large (101+) | Total  |
+| ---------- | ------------ | -------------- | -------------- | ------------------ | ------ |
+| Beginner   | 6            | 1              | 0              | 0                  | 7      |
+| Standard   | 0            | 10             | 3              | 0                  | 13     |
+| Advanced   | 2            | 2              | 2              | 3                  | 9      |
+| **Total**  | **8**        | **13**         | **5**          | **3**              | **29** |
+
+The gallery displays difficulty, length band, and exact exercise count independently. Filter by either or both dimensions; option counts reflect the other selected filter, including empty categories. Matching pictures appear in ascending exercise-count order. Clear filters to see the full collection. Filters remain selected when returning from play or changing language, but reset on reload; they do not change saved attempts or discovery badges.
 
 ## Run locally
 
@@ -67,6 +84,8 @@ Each new attempt randomly selects exercises from the full valid pool for each re
 ### Changing content or translations
 
 Define a puzzle with a unique stable ID, positive integer content version, palette and rectangular dimensions at most 20×20. Rows and columns are **one-based**; pixel IDs are `row:column`, and only target pixels belong in `pixels`. Palette values are hex colors. Every target column must have a valid equation, and coordinates must be unique. `validatePuzzle` is run when bundled content loads.
+
+Difficulty and length are derived in `src/domain/categories.ts`; do not store separate category or exercise-count fields. Beginner artwork must fit within 10 columns, and advanced artwork cannot use column 20. Length is independent of arithmetic difficulty. When adding content, update the catalog/category coverage tests and translations; preserve boundary tests for 40/41, 70/71, and 100/101 exercises.
 
 Keep small puzzles recognizable at phone size and review the full original sprite, not only its data. Bump a puzzle's `version` whenever its artwork, target coordinates, dimensions, or arithmetic mode change; this safely invalidates only that saved attempt. Independent attempts, valid language and discovery badges remain. Do not reuse removed IDs for different pictures.
 

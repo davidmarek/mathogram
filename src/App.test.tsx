@@ -209,7 +209,80 @@ describe('aggregate puzzle analytics', () => {
 });
 
 describe('bilingual gallery and settings', () => {
-  it('offers all nineteen pictures without locks and switches every translation', () => {
+  it('filters difficulty and length independently, orders by exercises, and clears empty results', () => {
+    const { container } = render(<App />);
+    const counts = () =>
+      [...container.querySelectorAll('.card-exercises')].map((element) =>
+        Number(element.textContent!.split(' ')[0]),
+      );
+    expect(counts()).toHaveLength(29);
+    expect(counts()).toEqual([...counts()].sort((a, b) => a - b));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
+      target: { value: 'advanced' },
+    });
+    expect(counts()).toHaveLength(9);
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Length (exercises)' }),
+      {
+        target: { value: 'small' },
+      },
+    );
+    expect(counts()).toHaveLength(2);
+    expect(
+      screen.getByRole('button', { name: /Rocket/ }),
+    ).toHaveAccessibleDescription(/Advanced · Small · 1–40.*exercises/);
+    expect(screen.getByRole('button', { name: /Robot face/ })).toBeVisible();
+    expect(screen.getByText('Matching pictures: 2 / 29')).toBeVisible();
+    expect(
+      screen.getByRole('option', { name: 'Advanced (2)' }),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
+      target: { value: 'standard' },
+    });
+    expect(counts()).toHaveLength(0);
+    expect(screen.getByText(messages.en.noPictures)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(counts()).toHaveLength(29);
+  });
+
+  it('keeps filters across play and language changes without changing existing saves', () => {
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!);
+    attempt.solved = [attempt.queue[0]!.pixelId];
+    progress.attempts.fish = attempt;
+    progress.completed = ['butterfly'];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    render(<App />);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
+      target: { value: 'beginner' },
+    });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Length (exercises)' }),
+      {
+        target: { value: 'small' },
+      },
+    );
+    expect(saved()).toEqual(progress);
+    openFish();
+    expect(screen.getByTestId('equation')).toHaveTextContent(/^\d+ [+−] \d+$/);
+    expect(saved().attempts.fish).toEqual(attempt);
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
+    expect(screen.getByRole('combobox', { name: 'Difficulty' })).toHaveValue(
+      'beginner',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    expect(screen.getByRole('combobox', { name: 'Obtížnost' })).toHaveValue(
+      'beginner',
+    );
+    expect(
+      screen.getByRole('combobox', { name: 'Délka (počet příkladů)' }),
+    ).toHaveValue('small');
+    expect(screen.getByText('Odpovídající obrázky: 6 / 29')).toBeVisible();
+    expect(saved().attempts.fish).toEqual(attempt);
+    expect(saved().completed).toEqual(['butterfly']);
+  });
+
+  it('offers all pictures without locks and switches every translation', () => {
     render(<App />);
     for (const puzzle of puzzles)
       expect(
@@ -260,7 +333,7 @@ describe('bilingual gallery and settings', () => {
     );
     let view = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /Cheetah/ }));
-    expect(screen.getByText(messages.en.challenging)).toBeVisible();
+    expect(screen.getByText(messages.en.advanced)).toBeVisible();
     expect(screen.getByTestId('equation')).toHaveTextContent('14 − 4 − 3');
     enter('7');
     submit();
@@ -275,7 +348,7 @@ describe('bilingual gallery and settings', () => {
       /^\d+ [+−] \d+ [+−] \d+$/,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
-    expect(screen.getByText(messages.cs.challenging)).toBeVisible();
+    expect(screen.getByText(messages.cs.advanced)).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Gepard' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Nápověda' }));
     expect(screen.getByText(messages.cs.threeNumbersHelp)).toBeVisible();
