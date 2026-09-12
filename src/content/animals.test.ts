@@ -4,7 +4,7 @@ import { validatePuzzle } from '../domain/puzzle';
 import { puzzles } from './animals';
 
 describe('original picture content', () => {
-  it('keeps the eleven animals and adds five distinct food pictures', () => {
+  it('keeps existing pictures and adds three challenging pictures', () => {
     expect(puzzles.map(({ name }) => name)).toEqual([
       'fish',
       'butterfly',
@@ -22,9 +22,12 @@ describe('original picture content', () => {
       'cheddar-fingers',
       'hamburger',
       'sushi',
+      'cheetah',
+      'german-shepherd',
+      'ferrari',
     ]);
-    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(16);
-    expect(puzzles.map(({ intro }) => intro)).toEqual([
+    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(19);
+    expect(puzzles.slice(0, 16).map(({ intro }) => intro)).toEqual([
       true,
       true,
       true,
@@ -45,7 +48,7 @@ describe('original picture content', () => {
   });
   it('offers five food puzzle lengths across both arithmetic levels', () => {
     expect(
-      puzzles.slice(11).map(({ id, version, pixels, intro }) => ({
+      puzzles.slice(11, 16).map(({ id, version, pixels, intro }) => ({
         id,
         version,
         length: pixels.length,
@@ -57,6 +60,42 @@ describe('original picture content', () => {
       { id: 'cheddar-fingers', version: 1, length: 48, intro: false },
       { id: 'hamburger', version: 1, length: 57, intro: false },
       { id: 'sushi', version: 1, length: 60, intro: false },
+    ]);
+  });
+  it('puts the new detailed pictures above the existing difficulty range', () => {
+    expect(
+      puzzles.slice(0, 16).every(({ threeNumbers }) => !threeNumbers),
+    ).toBe(true);
+    expect(
+      puzzles.slice(16).map(({ id, version, pixels, intro, threeNumbers }) => ({
+        id,
+        version,
+        length: pixels.length,
+        intro,
+        threeNumbers,
+      })),
+    ).toEqual([
+      {
+        id: 'cheetah',
+        version: 1,
+        length: 106,
+        intro: false,
+        threeNumbers: true,
+      },
+      {
+        id: 'german-shepherd',
+        version: 1,
+        length: 133,
+        intro: false,
+        threeNumbers: true,
+      },
+      {
+        id: 'ferrari',
+        version: 1,
+        length: 119,
+        intro: false,
+        threeNumbers: true,
+      },
     ]);
   });
   it('bridges the difficulty gaps without changing existing puzzle lengths', () => {
@@ -76,6 +115,7 @@ describe('original picture content', () => {
       ),
     ).toEqual(originalLengths);
     const lengths = puzzles
+      .filter(({ threeNumbers }) => !threeNumbers)
       .map(({ pixels }) => pixels.length)
       .sort((a, b) => a - b);
     for (let index = 1; index < lengths.length; index++) {
@@ -88,13 +128,15 @@ describe('original picture content', () => {
     (puzzle) => {
       expect(validatePuzzle(puzzle)).toBe(true);
       expect(puzzle.pixels.length).toBeGreaterThanOrEqual(
-        puzzle.intro ? 20 : 40,
+        puzzle.threeNumbers ? 100 : puzzle.intro ? 20 : 40,
       );
-      expect(puzzle.pixels.length).toBeLessThanOrEqual(puzzle.intro ? 40 : 65);
+      expect(puzzle.pixels.length).toBeLessThanOrEqual(
+        puzzle.threeNumbers ? 150 : puzzle.intro ? 40 : 65,
+      );
       expect(puzzle.width).toBeLessThanOrEqual(20);
       expect(puzzle.height).toBeLessThanOrEqual(20);
       const answers = new Set(
-        enumerateEquations(puzzle.intro).map(({ c }) => c),
+        enumerateEquations(puzzle.intro, puzzle.threeNumbers).map(({ c }) => c),
       );
       for (const pixel of puzzle.pixels) {
         expect(answers.has(pixel.col)).toBe(true);

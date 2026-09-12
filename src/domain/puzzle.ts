@@ -1,5 +1,3 @@
-import { enumerateEquations } from './arithmetic';
-
 export type { Equation } from './arithmetic';
 
 const puzzleNames = [
@@ -19,6 +17,9 @@ const puzzleNames = [
   'cheddar-fingers',
   'hamburger',
   'sushi',
+  'cheetah',
+  'german-shepherd',
+  'ferrari',
 ] as const;
 
 type PuzzleName = (typeof puzzleNames)[number];
@@ -37,6 +38,7 @@ export interface Puzzle {
   width: number;
   height: number;
   intro: boolean;
+  threeNumbers?: boolean;
   palette: Record<string, string>;
   pixels: Pixel[];
 }
@@ -64,6 +66,8 @@ export function validatePuzzle(value: unknown): value is Puzzle {
     !boundedInteger(value.width, 20) ||
     !boundedInteger(value.height, 20) ||
     typeof value.intro !== 'boolean' ||
+    ('threeNumbers' in value && typeof value.threeNumbers !== 'boolean') ||
+    (value.intro && value.threeNumbers === true) ||
     (value.intro && value.width > 10) ||
     !isRecord(value.palette) ||
     Object.keys(value.palette).length === 0 ||
@@ -82,7 +86,8 @@ export function validatePuzzle(value: unknown): value is Puzzle {
       return false;
     }
   }
-  const columns = new Set(enumerateEquations(value.intro).map(({ c }) => c));
+  // Every column in this range has a valid equation in the selected mode.
+  const maximumColumn = value.intro ? 10 : value.threeNumbers ? 19 : 20;
   const seen = new Set<string>();
   for (const pixel of value.pixels) {
     if (
@@ -92,7 +97,7 @@ export function validatePuzzle(value: unknown): value is Puzzle {
       pixel.id !== `${pixel.row}:${pixel.col}` ||
       typeof pixel.color !== 'string' ||
       !Object.hasOwn(value.palette, pixel.color) ||
-      !columns.has(pixel.col) ||
+      pixel.col > maximumColumn ||
       seen.has(pixel.id)
     ) {
       return false;

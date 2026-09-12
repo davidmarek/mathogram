@@ -209,7 +209,7 @@ describe('aggregate puzzle analytics', () => {
 });
 
 describe('bilingual gallery and settings', () => {
-  it('offers all sixteen pictures without locks and switches every translation', () => {
+  it('offers all nineteen pictures without locks and switches every translation', () => {
     render(<App />);
     for (const puzzle of puzzles)
       expect(
@@ -234,6 +234,52 @@ describe('bilingual gallery and settings', () => {
       screen.getByRole('textbox', { name: 'Tvůj výsledek' }),
     ).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Ověřit' })).toBeDisabled();
+  });
+  it('displays and resumes a three-number equation after landing on ten', () => {
+    const puzzle = puzzles.find(({ id }) => id === 'cheetah')!;
+    const attempt = createAttempt(puzzle, () => 0.4);
+    const index = attempt.queue.findIndex(({ equation }) => equation.c === 7);
+    [attempt.queue[0], attempt.queue[index]] = [
+      attempt.queue[index]!,
+      attempt.queue[0]!,
+    ];
+    attempt.queue[0]!.equation = {
+      a: 14,
+      op: '-',
+      b: 4,
+      op2: '-',
+      d: 3,
+      c: 7,
+    };
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...emptyProgress('en'),
+        attempts: { cheetah: attempt },
+      }),
+    );
+    let view = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Cheetah/ }));
+    expect(screen.getByText(messages.en.challenging)).toBeVisible();
+    expect(screen.getByTestId('equation')).toHaveTextContent('14 − 4 − 3');
+    enter('7');
+    submit();
+    expect(saved().attempts.cheetah!.solved).toEqual([
+      attempt.queue[0]!.pixelId,
+    ]);
+    view.unmount();
+    view = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Cheetah/ }));
+    expect(saved().attempts.cheetah!.queue).toEqual(attempt.queue);
+    expect(screen.getByTestId('equation').textContent).toMatch(
+      /^\d+ [+−] \d+ [+−] \d+$/,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    expect(screen.getByText(messages.cs.challenging)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Gepard' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Nápověda' }));
+    expect(screen.getByText(messages.cs.threeNumbersHelp)).toBeVisible();
+    view.unmount();
   });
   it('detects Czech device languages and respects saved English', () => {
     expect(detectLanguage(['sk', 'cs-CZ'])).toBe('cs');
@@ -623,7 +669,7 @@ describe('visible persistence and PWA failures', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Některá data nešla přečíst',
     );
-    expect(screen.getByText(/1 \/ 16/)).toBeVisible();
+    expect(screen.getByText(new RegExp(`1 / ${puzzles.length}`))).toBeVisible();
   });
   it('allows in-memory play but does not claim saving after quota failure', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {

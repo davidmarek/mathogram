@@ -64,6 +64,9 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
             op: equation.op,
             b: equation.b,
             c: equation.c,
+            ...(equation.op2 !== undefined
+              ? { op2: equation.op2, d: equation.d }
+              : {}),
           },
         })),
         solved: [...attempt.solved],

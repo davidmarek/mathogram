@@ -17,6 +17,49 @@ async function saved(page: Page): Promise<Progress> {
   );
 }
 
+for (const [id, name] of [
+  ['cheetah', 'Cheetah'],
+  ['german-shepherd', 'German shepherd'],
+  ['ferrari', 'Ferrari sports car'],
+] as const) {
+  test(`${name} has three-number sums that fit a narrow phone and resume`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto('./');
+    await page.getByRole('button', { name: new RegExp(name) }).click();
+    await expect(page.getByText(messages.en.challenging)).toBeVisible();
+    await expect(page.getByTestId('equation')).toHaveText(
+      /^\d+ [+−] \d+ [+−] \d+$/,
+    );
+    const attempt = (await saved(page)).attempts[id]!;
+    expect(attempt.queue.length).toBeGreaterThan(100);
+    const exercise = currentExercise(attempt)!;
+    await answerEquation(page, true);
+    await expect(page.getByTestId(`cell-${exercise.pixelId}`)).toHaveAttribute(
+      'data-filled',
+      'true',
+    );
+    await page.reload();
+    await page.getByRole('button', { name: new RegExp(name) }).click();
+    const resumed = (await saved(page)).attempts[id]!;
+    expect(resumed.queue).toEqual(attempt.queue);
+    expect(resumed.solved).toEqual([exercise.pixelId]);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(overflow).toBe(false);
+    const sum = await page.getByTestId('equation').boundingBox();
+    const input = await page.getByRole('textbox').boundingBox();
+    expect(sum!.x).toBeGreaterThanOrEqual(0);
+    expect(input!.x + input!.width).toBeLessThanOrEqual(320);
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
+}
+
 test('complete introductory animal, retry, repeat guard, reload, resume and replay', async ({
   page,
 }) => {

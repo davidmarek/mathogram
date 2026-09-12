@@ -368,7 +368,11 @@ export function App() {
                     </div>
                     <div className="card-copy">
                       <span className="card-level">
-                        {animal.intro ? t.easy : t.adventurous}{' '}
+                        {animal.threeNumbers
+                          ? t.challenging
+                          : animal.intro
+                            ? t.easy
+                            : t.adventurous}{' '}
                         <span aria-hidden="true">·</span> {animal.pixels.length}{' '}
                         {t.pixels}
                       </span>
@@ -437,7 +441,11 @@ export function App() {
                 <span aria-hidden="true">←</span> {t.gallery}
               </button>
               <span className="level-pill">
-                {puzzle.intro ? t.easy : t.adventurous}
+                {puzzle.threeNumbers
+                  ? t.challenging
+                  : puzzle.intro
+                    ? t.easy
+                    : t.adventurous}
               </span>
             </div>
             <h1 id="game-title">{t[puzzle.name]}</h1>
@@ -491,11 +499,21 @@ export function App() {
                     </span>
                   )}
                 </div>
-                <div className="sum-line" aria-live="off">
+                <div
+                  className={`sum-line${puzzle.threeNumbers ? ' three-number-sum' : ''}`}
+                  aria-live="off"
+                >
                   <span data-testid="equation">
                     {current?.equation.a}{' '}
                     {current?.equation.op === '-' ? '−' : '+'}{' '}
                     {current?.equation.b}
+                    {current?.equation.op2 !== undefined && (
+                      <>
+                        {' '}
+                        {current.equation.op2 === '-' ? '−' : '+'}{' '}
+                        {current.equation.d}
+                      </>
+                    )}
                   </span>
                   <span className="equals" aria-hidden="true">
                     =
@@ -618,6 +636,7 @@ export function App() {
             <>
               <h3>{t.howTitle}</h3>
               <p>{t.howBody}</p>
+              <p>{t.threeNumbersHelp}</p>
               <p>{t.gentle}</p>
               {!standalone && (
                 <>

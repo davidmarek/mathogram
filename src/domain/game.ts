@@ -18,8 +18,8 @@ function randomIndex(length: number, random: () => number): number {
   return Math.floor(value * length);
 }
 
-function equationKey({ a, op, b }: Equation): string {
-  return `${a}${op}${b}`;
+function equationKey({ a, op, b, op2, d }: Equation): string {
+  return `${a}${op}${b}${op2 === undefined ? '' : `${op2}${d}`}`;
 }
 
 export function createAttempt(
@@ -34,7 +34,7 @@ export function createAttempt(
     pixels[index] = pixels[other]!;
     pixels[other] = current;
   }
-  const candidates = enumerateEquations(puzzle.intro);
+  const candidates = enumerateEquations(puzzle.intro, puzzle.threeNumbers);
   const uses = new Map<string, number>();
   let previousOp: Equation['op'] | undefined;
   const queue = pixels.map((pixel) => {
@@ -45,7 +45,9 @@ export function createAttempt(
     choices = choices.filter(
       (equation) => (uses.get(equationKey(equation)) ?? 0) === leastUsed,
     );
-    const nonzero = choices.filter(({ a, b }) => a !== 0 && b !== 0);
+    const nonzero = choices.filter(
+      ({ a, b, d }) => a !== 0 && b !== 0 && d !== 0,
+    );
     if (nonzero.length > 0) choices = nonzero;
     const alternating = choices.filter(({ op }) => op !== previousOp);
     if (alternating.length > 0) choices = alternating;
@@ -183,7 +185,7 @@ export function validateAttempt(
       !isRecord(entry) ||
       typeof entry.pixelId !== 'string' ||
       seen.has(entry.pixelId) ||
-      !isValidEquation(entry.equation, puzzle.intro) ||
+      !isValidEquation(entry.equation, puzzle.intro, puzzle.threeNumbers) ||
       entry.equation.c !== pixels.get(entry.pixelId)?.col
     ) {
       return false;

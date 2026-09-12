@@ -4,7 +4,9 @@
 
 Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Twilight owl (61), and Biscuit pup (63). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
-Five original food pictures are also available: Watermelon (32 pixels), Fries (39), Cheddar fingers (48), Hamburger (57), and Sushi (60). Watermelon and Fries use introductory arithmetic within 10; the other three include columns above 10. All sixteen pictures are unlocked and available offline after caching.
+Five original food pictures are also available: Watermelon (32 pixels), Fries (39), Cheddar fingers (48), Hamburger (57), and Sushi (60). Watermelon and Fries use introductory arithmetic within 10; the other three include columns above 10.
+
+The **Big adventure · 3 numbers** tier adds three larger original pictures: Cheetah (106 pixels), German shepherd (133), and Ferrari sports car (119). Their three-number sums add a second calculation without carrying or borrowing across a ten. All nineteen pictures are unlocked and available offline after caching.
 
 ## Run locally
 
@@ -43,7 +45,7 @@ The header language switch works during a puzzle without changing its queue. On 
 | `src\domain\arithmetic.ts`                      | Exhaustive finite enumeration and independent validity checks                      |
 | `src\domain\puzzle.ts`                          | Typed content and runtime validation                                               |
 | `src\domain\game.ts`                            | Stable shuffled attempts, equation selection, pure guarded transitions             |
-| `src\content\animals.ts`                        | Original coordinate-based animal and food artwork, palettes, and content versions  |
+| `src\content\animals.ts`                        | Original coordinate-based picture artwork, palettes, and content versions          |
 | `src\App.tsx`, `src\components\`, `src\styles\` | Gallery, game, keypad, live feedback, completion, modal help and responsive layout |
 | `src\i18n\`                                     | Typed English/Czech messages and first-use language detection                      |
 | `src\storage\progress.ts`                       | Versioned local progress, field-level validation and isolated recovery             |
@@ -58,7 +60,9 @@ For `a op b = c`, all values are integers, `a` is 0–20, `b` is 0–10, and `c`
 
 Allowed: `12+5`, `8+2`, `10-3`, `13-3`, `20-5`, `10+10`, `20-0`. Forbidden: `7+8`, `12-5`, `0+20`, and every zero answer.
 
-Each new attempt randomly selects exercises from the full valid pool for each result. No expression repeats until every alternative for that result has been used; if the pool is exhausted, reuse stays balanced. Among equally used candidates, selection favors nonzero operands and alternating operations. All six bundled images have enough alternatives for every pixel to receive a different expression. Replays select a fresh subset, although exercises can recur across attempts. Selection never retries randomly until something works. Injected randomness makes tests reproducible. Each attempt persists its exact pixel/equation pairs, so existing saves keep their equations; deferral reorders only unsolved entries, preserving the solved prefix. A different displayed expression is preferred for the next exercise when available. Final-pixel practice references an already solved entry. Transitions check the expected current pixel ID, so stale submissions cannot skip an equation.
+Puzzles with `threeNumbers: true` use `a op b op2 d = c`, evaluated from left to right. Every operand, intermediate result, and final answer is **strictly below 20**; `b` and `d` are at most 10, intermediate results may be zero, and the final answer must be positive. Each individual step must stay in one closed ten band (`[0,10]` or `[10,19]`). Landing exactly on 10 allows the next step to move to the other band: `14-4-3 = 7` and `8+2+5 = 15` are allowed; `14-5-2`, `7+8-3`, and `18+2-1` are not. Existing pictures keep their original two-number equations and saves.
+
+Each new attempt randomly selects exercises from the full valid pool for each result. No expression repeats until every alternative for that result has been used; if the pool is exhausted, reuse stays balanced. Among equally used candidates, selection favors nonzero operands and alternating operations. All bundled images have enough alternatives for every pixel to receive a different expression. Replays select a fresh subset, although exercises can recur across attempts. Selection never retries randomly until something works. Injected randomness makes tests reproducible. Each attempt persists its exact pixel/equation pairs, so existing saves keep their equations; deferral reorders only unsolved entries, preserving the solved prefix. A different displayed expression is preferred for the next exercise when available. Final-pixel practice references an already solved entry. Transitions check the expected current pixel ID, so stale submissions cannot skip an equation.
 
 ### Changing content or translations
 
@@ -145,7 +149,7 @@ Dedicated analytics browser tests block service workers so requests remain inter
 
 ## Offline installation and updates
 
-Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all sixteen puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
+Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all nineteen puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 

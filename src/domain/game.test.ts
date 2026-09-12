@@ -22,6 +22,158 @@ function seededRandom(seed: number): () => number {
 
 const fish = puzzles[0]!;
 
+describe('three-number attempts', () => {
+  function fixture(equations: Equation[], solvedCount = 0) {
+    const puzzle: Puzzle = {
+      ...fish,
+      intro: false,
+      threeNumbers: true,
+      width: 19,
+      height: equations.length,
+      pixels: equations.map(({ c }, index) => ({
+        id: `${index + 1}:${c}`,
+        row: index + 1,
+        col: c,
+        color: 'F',
+      })),
+    };
+    const attempt: Attempt = {
+      puzzleId: puzzle.id,
+      puzzleVersion: puzzle.version,
+      queue: equations.map((equation, index) => ({
+        pixelId: puzzle.pixels[index]!.id,
+        equation: { ...equation },
+      })),
+      solved: puzzle.pixels.slice(0, solvedCount).map(({ id }) => id),
+    };
+    expect(validateAttempt(attempt, puzzle)).toBe(true);
+    return { puzzle, attempt };
+  }
+
+  const repeated: Equation = { a: 4, op: '+', b: 1, op2: '+', d: 0, c: 5 };
+
+  it.each([
+    { ...repeated, op2: '-' as const },
+    { ...repeated, d: 1, c: 6 },
+  ])(
+    'distinguishes the second operator and third operand when deferring %j',
+    (different) => {
+      const { puzzle, attempt } = fixture([
+        repeated,
+        repeated,
+        different,
+        repeated,
+      ]);
+      const next = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+      expect(next.queue).toEqual([
+        attempt.queue[2],
+        attempt.queue[1],
+        attempt.queue[3],
+        attempt.queue[0],
+      ]);
+      expect(validateAttempt(next, puzzle)).toBe(true);
+
+      const last = {
+        ...attempt,
+        solved: attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId),
+      };
+      const review = deferExercise(last, currentExercise(last)!.pixelId);
+      expect(review.reviewPixelId).toBe(attempt.queue[2]!.pixelId);
+      expect(validateAttempt(review, puzzle)).toBe(true);
+      const active = currentExercise(review)!;
+      const resumed = submitAnswer(
+        review,
+        String(active.equation.c),
+        active.pixelId,
+      );
+      expect(resumed).toEqual(last);
+      const completed = submitAnswer(
+        resumed,
+        '5',
+        currentExercise(resumed)!.pixelId,
+      );
+      expect(isComplete(completed)).toBe(true);
+      expect(validateAttempt(completed, puzzle)).toBe(true);
+    },
+  );
+
+  it('generates nonzero three-operand equations for all 19 result columns', () => {
+    const { puzzle } = fixture(
+      Array.from({ length: 19 }, (_, index) => ({
+        a: index + 1,
+        op: '+',
+        b: 0,
+        op2: '+',
+        d: 0,
+        c: index + 1,
+      })),
+    );
+    for (const random of [
+      () => 0,
+      () => 0.9999999999999999,
+      seededRandom(42),
+    ]) {
+      const attempt = createAttempt(puzzle, random);
+      expect(validateAttempt(attempt, puzzle)).toBe(true);
+      for (const { equation } of attempt.queue) {
+        expect(isValidEquation(equation, false, true)).toBe(true);
+        expect(equation.a).toBeGreaterThan(0);
+        expect(equation.b).toBeGreaterThan(0);
+        expect(equation.d).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('does not share generated equations with other attempts or enumeration pools', () => {
+    const { puzzle } = fixture([repeated]);
+    const first = createAttempt(puzzle, () => 0);
+    const second = createAttempt(puzzle, () => 0);
+    first.queue[0]!.equation.d = 999;
+    expect(validateAttempt(second, puzzle)).toBe(true);
+    expect(createAttempt(puzzle, () => 0)).toEqual(second);
+  });
+
+  it.each([
+    { a: 4, op: '+', b: 1, c: 5 },
+    { a: 4, op: '+', b: 1, c: 5, op2: '+' },
+    { a: 4, op: '+', b: 1, c: 5, d: 0 },
+    { a: 14, op: '-', b: 9, op2: '+', d: 0, c: 5 },
+    { ...repeated, c: 6 },
+  ])(
+    'rejects malformed, wrong-mode, or mismatched saved equations %j',
+    (equation) => {
+      const { puzzle, attempt } = fixture([repeated]);
+      expect(
+        validateAttempt(
+          {
+            ...attempt,
+            queue: [{ ...attempt.queue[0], equation }],
+          },
+          puzzle,
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it('keeps legacy attempt validation unchanged and rejects mixed modes', () => {
+    const legacy = createAttempt(fish, () => 0);
+    expect(validateAttempt(legacy, { ...fish, threeNumbers: false })).toBe(
+      true,
+    );
+    expect(
+      legacy.queue.every(
+        ({ equation }) => !('op2' in equation) && !('d' in equation),
+      ),
+    ).toBe(true);
+    const { puzzle, attempt } = fixture([repeated]);
+    expect(validateAttempt(attempt, { ...puzzle, threeNumbers: false })).toBe(
+      false,
+    );
+    expect(validateAttempt(attempt, { ...puzzle, intro: true })).toBe(false);
+    expect(() => createAttempt({ ...puzzle, intro: true })).toThrow(TypeError);
+  });
+});
+
 describe('attempt generation', () => {
   it.each(puzzles)(
     'generates exact stable queues for $name across seeds',
@@ -38,7 +190,9 @@ describe('attempt generation', () => {
           puzzle.pixels.map(({ id }) => id).sort(),
         );
         for (const { pixelId, equation } of attempt.queue) {
-          expect(isValidEquation(equation, puzzle.intro)).toBe(true);
+          expect(
+            isValidEquation(equation, puzzle.intro, puzzle.threeNumbers),
+          ).toBe(true);
           expect(equation.c).toBe(
             puzzle.pixels.find(({ id }) => id === pixelId)!.col,
           );
@@ -103,7 +257,7 @@ describe('attempt generation', () => {
     for (const puzzle of puzzles) {
       const attempt = createAttempt(puzzle, seededRandom(12));
       let previousOp: '+' | '-' | undefined;
-      const candidates = enumerateEquations(puzzle.intro);
+      const candidates = enumerateEquations(puzzle.intro, puzzle.threeNumbers);
       const uses = new Map<string, number>();
       for (const { equation } of attempt.queue) {
         let available = candidates.filter(({ c }) => c === equation.c);
@@ -117,10 +271,13 @@ describe('attempt generation', () => {
           (candidate) =>
             (uses.get(JSON.stringify(candidate)) ?? 0) === leastUsed,
         );
-        const nonzero = available.filter(({ a, b }) => a > 0 && b > 0);
+        const nonzero = available.filter(
+          ({ a, b, d }) => a > 0 && b > 0 && (d === undefined || d > 0),
+        );
         if (nonzero.length > 0) {
           expect(equation.a).toBeGreaterThan(0);
           expect(equation.b).toBeGreaterThan(0);
+          if (puzzle.threeNumbers) expect(equation.d).toBeGreaterThan(0);
           available = nonzero;
         }
         if (available.some(({ op }) => op !== previousOp)) {

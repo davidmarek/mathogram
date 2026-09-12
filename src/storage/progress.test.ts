@@ -94,6 +94,7 @@ describe('progress persistence', () => {
           op: '+',
           b: 0,
           c: entry.equation.c,
+          ...(puzzle.threeNumbers ? { op2: '+' as const, d: 0 } : {}),
         };
       }
       attempt.solved = [attempt.queue[0]!.pixelId];
@@ -167,6 +168,117 @@ describe('progress persistence', () => {
     };
     expect(load(legacy)).toEqual({ progress, notice: null });
   });
+
+  it('resumes a legacy two-number queue without adding optional equation fields', () => {
+    const progress = inProgress();
+    expect(load(progress)).toEqual({ progress, notice: null });
+    for (const attempt of Object.values(load(progress).progress.attempts)) {
+      for (const { equation } of attempt.queue) {
+        expect(Object.keys(equation).sort()).toEqual(['a', 'b', 'c', 'op']);
+      }
+      const current = currentExercise(attempt)!;
+      expect(
+        submitAnswer(attempt, String(current.equation.c), current.pixelId)
+          .solved,
+      ).toHaveLength(attempt.solved.length + 1);
+    }
+  });
+
+  it.each(['cheetah', 'german-shepherd', 'ferrari'])(
+    'preserves three-number equations, deferral, and review through saves for %s',
+    (id) => {
+      const puzzle = puzzles.find((candidate) => candidate.id === id)!;
+      expect(puzzle.threeNumbers).toBe(true);
+      let attempt = createAttempt(puzzle, () => 0.4);
+      const originalQueue = structuredClone(attempt.queue);
+      attempt = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+      const progress = {
+        ...inProgress(),
+        attempts: { ...inProgress().attempts, [id]: attempt },
+      };
+      const storage = memoryStorage();
+      expect(saveProgress(storage, progress)).toEqual({ ok: true });
+      expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+      attempt = loadProgress(storage, 'en').progress.attempts[id]!;
+      expect(attempt.queue).not.toEqual(originalQueue);
+      expect(
+        attempt.queue.every(
+          ({ equation }) =>
+            equation.op2 !== undefined && equation.d !== undefined,
+        ),
+      ).toBe(true);
+      const current = currentExercise(attempt)!;
+      attempt = submitAnswer(
+        attempt,
+        String(current.equation.c),
+        current.pixelId,
+      );
+      expect(attempt.solved).toEqual([current.pixelId]);
+      attempt = {
+        ...attempt,
+        solved: attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId),
+      };
+      attempt = deferExercise(attempt, currentExercise(attempt)!.pixelId);
+      expect(attempt.reviewPixelId).toBeDefined();
+      progress.attempts[id] = attempt;
+      saveProgress(storage, progress);
+      const restored = loadProgress(storage, 'en');
+      expect(restored).toEqual({ progress, notice: null });
+      const review = currentExercise(restored.progress.attempts[id]!)!;
+      const resumed = submitAnswer(
+        restored.progress.attempts[id]!,
+        String(review.equation.c),
+        review.pixelId,
+      );
+      expect(resumed.solved).toEqual(attempt.solved);
+      expect(resumed.reviewPixelId).toBeUndefined();
+    },
+  );
+
+  it('restores 14 - 4 - 3 exactly while discarding unknown saved equation fields', () => {
+    const puzzle = puzzles.find(({ id }) => id === 'cheetah')!;
+    const attempt = createAttempt(puzzle, () => 0);
+    const target = attempt.queue.find(({ equation }) => equation.c === 7)!;
+    target.equation = { a: 14, op: '-', b: 4, c: 7, op2: '-', d: 3 };
+    const progress = {
+      ...emptyProgress('en'),
+      attempts: { [puzzle.id]: attempt },
+    };
+    const untrusted = structuredClone(progress);
+    for (const { equation } of untrusted.attempts[puzzle.id]!.queue) {
+      Object.assign(equation, { ignored: true });
+    }
+    expect(load(untrusted)).toEqual({ progress, notice: null });
+    const storage = memoryStorage();
+    expect(saveProgress(storage, untrusted)).toEqual({ ok: true });
+    expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+  });
+
+  it.each([
+    { op2: '+' },
+    { d: 0 },
+    { op2: undefined, d: undefined },
+    { op2: '*', d: 0 },
+    { op2: '+', d: 11 },
+  ])(
+    'discards malformed new-mode extras independently on load and rejects save %j',
+    (extra) => {
+      const puzzle = puzzles.find(({ id }) => id === 'cheetah')!;
+      const attempt = createAttempt(puzzle, () => 0);
+      const first = attempt.queue[0]!;
+      const { a, op, b, c } = first.equation;
+      Object.assign(first, { equation: { a, op, b, c, ...extra } });
+      const valid = inProgress();
+      const progress = {
+        ...valid,
+        attempts: { ...valid.attempts, [puzzle.id]: attempt },
+      };
+      expect(load(progress)).toEqual({ progress: valid, notice: 'recovered' });
+      const storage = memoryStorage();
+      expect(() => saveProgress(storage, progress)).toThrow(TypeError);
+      expect(storage.setItem).not.toHaveBeenCalled();
+    },
+  );
 
   it('persists exact reordered queues and review state through resumption', () => {
     const progress = inProgress();
