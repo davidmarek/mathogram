@@ -4,24 +4,57 @@ import { validatePuzzle } from '../domain/puzzle';
 import { puzzles } from './animals';
 
 describe('original animal content', () => {
-  it('contains the six distinct animals in increasing introductory order', () => {
+  it('contains eleven distinct animals with introductory puzzles first', () => {
     expect(puzzles.map(({ name }) => name)).toEqual([
       'fish',
       'butterfly',
+      'bee',
+      'snail',
+      'turtle',
       'cat',
+      'duck',
       'rabbit',
+      'fox',
       'dog',
       'owl',
     ]);
-    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(6);
+    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(11);
     expect(puzzles.map(({ intro }) => intro)).toEqual([
       true,
       true,
+      true,
+      true,
+      false,
+      false,
+      false,
       false,
       false,
       false,
       false,
     ]);
+  });
+  it('bridges the difficulty gaps without changing existing puzzle lengths', () => {
+    const originalLengths = {
+      fish: 28,
+      butterfly: 32,
+      cat: 48,
+      rabbit: 54,
+      owl: 61,
+      dog: 63,
+    };
+    expect(
+      Object.fromEntries(
+        puzzles
+          .filter(({ name }) => Object.hasOwn(originalLengths, name))
+          .map(({ name, pixels }) => [name, pixels.length]),
+      ),
+    ).toEqual(originalLengths);
+    const lengths = puzzles
+      .map(({ pixels }) => pixels.length)
+      .sort((a, b) => a - b);
+    for (let index = 1; index < lengths.length; index++) {
+      expect(lengths[index]! - lengths[index - 1]!).toBeLessThanOrEqual(4);
+    }
   });
 
   it.each(puzzles)(
@@ -31,7 +64,7 @@ describe('original animal content', () => {
       expect(puzzle.pixels.length).toBeGreaterThanOrEqual(
         puzzle.intro ? 20 : 40,
       );
-      expect(puzzle.pixels.length).toBeLessThanOrEqual(puzzle.intro ? 35 : 65);
+      expect(puzzle.pixels.length).toBeLessThanOrEqual(puzzle.intro ? 40 : 65);
       expect(puzzle.width).toBeLessThanOrEqual(20);
       expect(puzzle.height).toBeLessThanOrEqual(20);
       const answers = new Set(

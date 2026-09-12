@@ -19,7 +19,7 @@ import {
 import type { Progress } from './progress';
 
 const fish = puzzles[0]!;
-const cat = puzzles[2]!;
+const cat = puzzles.find(({ id }) => id === 'cat')!;
 
 function memoryStorage(raw: string | null = null) {
   const values = new Map<string, string>([['unrelated-app', 'leave me alone']]);

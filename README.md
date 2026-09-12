@@ -2,7 +2,7 @@
 
 **Little sums. Lovely discoveries.** A bright, touch-first pixel-animal game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No accounts, ads, trackers, external assets, penalties, timers, or sound.
 
-Six original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Ginger cat (48), Clover bunny (54), Biscuit pup (63), and Twilight owl (61). Early puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
+Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Twilight owl (61), and Biscuit pup (63). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
 ## Run locally
 
@@ -75,7 +75,7 @@ Progress is **not permanent or synchronized**. Browser/device cleanup can remove
 
 ## Offline installation and updates
 
-Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all six puzzles. There are no runtime API requests or external font/CDN dependencies.
+Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all eleven puzzles. There are no runtime API requests or external font/CDN dependencies.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 
