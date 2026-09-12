@@ -10,6 +10,8 @@
   --green: #306950;
   --cream: #fff8ec;
   --border: #e9e4d8;
+  --animal-bg: #f9ebcf;
+  --halo: #f5dda9;
 }
 
 * {
@@ -231,6 +233,8 @@ main {
   gap: 22px;
 }
 .animal-card {
+  display: flex;
+  flex-direction: column;
   text-align: left;
   padding: 0;
   border: 1px solid #e4dfd3;
@@ -243,32 +247,43 @@ main {
   box-shadow: 0 8px 20px #77664217;
   transform: translateY(-3px);
 }
-.animal-fish {
+.animal-fish,
+.animal-bee,
+.animal-duck,
+.animal-fries {
   --animal-bg: #f9ebcf;
   --halo: #f5dda9;
 }
-.animal-butterfly {
+.animal-butterfly,
+.animal-snail {
   --animal-bg: #f0e7f5;
   --halo: #e3d4ee;
 }
-.animal-cat {
+.animal-cat,
+.animal-fox,
+.animal-cheddar-fingers {
   --animal-bg: #f8e3d5;
   --halo: #f2cfb5;
 }
-.animal-rabbit {
+.animal-rabbit,
+.animal-turtle,
+.animal-watermelon {
   --animal-bg: #e7efdf;
   --halo: #d6e4c9;
 }
-.animal-dog {
+.animal-dog,
+.animal-hamburger {
   --animal-bg: #f4eada;
   --halo: #e9d8bb;
 }
-.animal-owl {
+.animal-owl,
+.animal-sushi {
   --animal-bg: #e6eaf5;
   --halo: #d3daee;
 }
 .card-art {
   height: 162px;
+  flex-shrink: 0;
   background: var(--animal-bg);
   position: relative;
   display: grid;
