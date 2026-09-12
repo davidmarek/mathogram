@@ -2,6 +2,22 @@ import { enumerateEquations } from './arithmetic';
 
 export type { Equation } from './arithmetic';
 
+const puzzleNames = [
+  'fish',
+  'butterfly',
+  'bee',
+  'snail',
+  'turtle',
+  'cat',
+  'duck',
+  'rabbit',
+  'fox',
+  'dog',
+  'owl',
+] as const;
+
+type PuzzleName = (typeof puzzleNames)[number];
+
 export interface Pixel {
   id: string;
   row: number;
@@ -12,18 +28,7 @@ export interface Pixel {
 export interface Puzzle {
   id: string;
   version: number;
-  name:
-    | 'fish'
-    | 'butterfly'
-    | 'bee'
-    | 'snail'
-    | 'turtle'
-    | 'cat'
-    | 'duck'
-    | 'rabbit'
-    | 'fox'
-    | 'dog'
-    | 'owl';
+  name: PuzzleName;
   width: number;
   height: number;
   intro: boolean;
@@ -50,19 +55,7 @@ export function validatePuzzle(value: unknown): value is Puzzle {
     typeof value.id !== 'string' ||
     !/^[a-z][a-z0-9-]*$/.test(value.id) ||
     !boundedInteger(value.version, Number.MAX_SAFE_INTEGER) ||
-    ![
-      'fish',
-      'butterfly',
-      'bee',
-      'snail',
-      'turtle',
-      'cat',
-      'duck',
-      'rabbit',
-      'fox',
-      'dog',
-      'owl',
-    ].includes(typeof value.name === 'string' ? value.name : '') ||
+    !puzzleNames.some((name) => name === value.name) ||
     !boundedInteger(value.width, 20) ||
     !boundedInteger(value.height, 20) ||
     typeof value.intro !== 'boolean' ||
