@@ -28,7 +28,7 @@ for (const [id, name] of [
     await page.setViewportSize({ width: 320, height: 740 });
     await page.goto('./');
     await page.getByRole('button', { name: new RegExp(name) }).click();
-    await expect(page.getByText(messages.en.challenging)).toBeVisible();
+    await expect(page.getByText(messages.en.advanced)).toBeVisible();
     await expect(page.getByTestId('equation')).toHaveText(
       /^\d+ [+−] \d+ [+−] \d+$/,
     );

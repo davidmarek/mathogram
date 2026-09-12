@@ -232,6 +232,42 @@ main {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
+.gallery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.gallery-filters label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.gallery-filters select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ink);
+  background: #fffef9;
+}
+.gallery-summary {
+  margin: 16px 0 8px;
+  font-weight: 700;
+}
+.gallery-guidance {
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.card-exercises {
+  display: block;
+  margin-top: 4px;
+}
 .picture-card {
   display: flex;
   flex-direction: column;
@@ -256,11 +292,15 @@ main {
   --halo: #f5dda9;
 }
 .picture-butterfly,
+.picture-octopus,
+.picture-dragon,
 .picture-snail {
   --picture-bg: #f0e7f5;
   --halo: #e3d4ee;
 }
 .picture-cat,
+.picture-train,
+.picture-hot-air-balloon,
 .picture-fox,
 .picture-ferrari,
 .picture-cheddar-fingers {
@@ -268,6 +308,8 @@ main {
   --halo: #f2cfb5;
 }
 .picture-rabbit,
+.picture-dinosaur,
+.picture-sunflower,
 .picture-turtle,
 .picture-watermelon {
   --picture-bg: #e7efdf;
@@ -280,6 +322,10 @@ main {
   --halo: #e9d8bb;
 }
 .picture-owl,
+.picture-rocket,
+.picture-robot-face,
+.picture-lighthouse,
+.picture-space-shuttle,
 .picture-sushi {
   --picture-bg: #e6eaf5;
   --halo: #d3daee;

@@ -20,6 +20,16 @@ const puzzleNames = [
   'cheetah',
   'german-shepherd',
   'ferrari',
+  'rocket',
+  'robot-face',
+  'octopus',
+  'dinosaur',
+  'train',
+  'lighthouse',
+  'hot-air-balloon',
+  'dragon',
+  'space-shuttle',
+  'sunflower',
 ] as const;
 
 type PuzzleName = (typeof puzzleNames)[number];
