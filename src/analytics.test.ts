@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const request = vi.fn().mockResolvedValue(new Response());
+const website = '00000000-0000-4000-8000-000000000001';
+const endpoint = 'https://analytics.example.com/api/send';
 
 beforeEach(() => {
   vi.resetModules();
@@ -10,7 +12,8 @@ beforeEach(() => {
   vi.stubEnv('PROD', true);
   vi.stubEnv('BASE_URL', '/mathogram/');
   vi.stubEnv('VITE_ANALYTICS_ENABLED', 'true');
-  vi.stubEnv('VITE_PLAUSIBLE_DOMAIN', 'davidmarek.github.io');
+  vi.stubEnv('VITE_UMAMI_WEBSITE_ID', website);
+  vi.stubEnv('VITE_UMAMI_ENDPOINT', endpoint);
 });
 
 afterEach(() => {
@@ -26,10 +29,18 @@ describe('optional analytics', () => {
     ['VITE_ANALYTICS_ENABLED', ''],
     ['VITE_ANALYTICS_ENABLED', 'false'],
     ['VITE_ANALYTICS_ENABLED', 'TRUE'],
-    ['VITE_PLAUSIBLE_DOMAIN', ''],
-    ['VITE_PLAUSIBLE_DOMAIN', 'https://example.com'],
-    ['VITE_PLAUSIBLE_DOMAIN', 'user@example.com'],
-    ['VITE_PLAUSIBLE_DOMAIN', 'example.com/?secret=value'],
+    ['VITE_UMAMI_WEBSITE_ID', ''],
+    ['VITE_UMAMI_WEBSITE_ID', 'not-a-uuid'],
+    ['VITE_UMAMI_ENDPOINT', ''],
+    ['VITE_UMAMI_ENDPOINT', 'not-a-url'],
+    ['VITE_UMAMI_ENDPOINT', 'http://analytics.example.com/api/send'],
+    ['VITE_UMAMI_ENDPOINT', 'https://user@analytics.example.com/api/send'],
+    [
+      'VITE_UMAMI_ENDPOINT',
+      'https://analytics.example.com/api/send?private=value',
+    ],
+    ['VITE_UMAMI_ENDPOINT', 'https://analytics.example.com/api/send#private'],
+    ['VITE_UMAMI_ENDPOINT', 'https://analytics.example.com/script.js'],
   ] as const)('does not report with %s=%s', async (key, value) => {
     if (key === 'PROD') vi.stubEnv(key, value);
     else vi.stubEnv(key, value);
@@ -54,33 +65,65 @@ describe('optional analytics', () => {
     trackPuzzle('Puzzle started', 'private-user-input');
 
     expect(request).toHaveBeenCalledTimes(3);
-    for (const [index, [name, props]] of [
-      ['pageview', undefined],
+    for (const [index, [name, data]] of [
+      [undefined, undefined],
       ['Puzzle started', { animal: 'fish' }],
       ['Puzzle completed', { animal: 'owl' }],
     ].entries()) {
-      expect(request).toHaveBeenNthCalledWith(
-        index + 1,
-        'https://plausible.io/api/event',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          credentials: 'omit',
-          referrerPolicy: 'no-referrer',
-          redirect: 'error',
-          keepalive: true,
-          body: JSON.stringify({
-            name,
-            domain: 'davidmarek.github.io',
-            url: `${window.location.origin}/mathogram/`,
-            ...(props ? { props } : {}),
-          }),
-        },
-      );
+      expect(request).toHaveBeenNthCalledWith(index + 1, endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        redirect: 'error',
+        keepalive: true,
+        body: JSON.stringify({
+          type: 'event',
+          payload: {
+            website,
+            hostname: window.location.hostname,
+            url: '/mathogram/',
+            ...(name ? { name, data } : {}),
+          },
+        }),
+      });
     }
     expect(storage).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'https://cloud.umami.is/api/send',
+    'https://analytics.example.com/umami/api/send',
+  ])('supports Cloud and self-hosted endpoints: %s', async (endpoint) => {
+    vi.stubEnv('VITE_UMAMI_ENDPOINT', endpoint);
+    const analytics = await import('./analytics');
+    expect(analytics.analyticsEnabled).toBe(true);
+    analytics.trackPageview();
+    expect(request).toHaveBeenCalledWith(endpoint, expect.any(Object));
+  });
+
+  it('does not reuse server-issued cache or visitor IDs', async () => {
+    request.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          cache: 'server-cache',
+          sessionId: 'server-session',
+          visitId: 'server-visit',
+        }),
+      ),
+    );
+    const analytics = await import('./analytics');
+    analytics.trackPageview();
+    await Promise.resolve();
+    analytics.trackPuzzle('Puzzle started', 'fish');
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[1]![1].headers).toEqual({
+      'Content-Type': 'application/json',
+    });
+    expect(request.mock.calls[1]![1].body).not.toMatch(
+      /server-|sessionId|visitId|cache/,
+    );
+  });
   it.each([
     { onLine: false },
     { onLine: true, doNotTrack: '1' },

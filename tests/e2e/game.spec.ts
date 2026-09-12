@@ -180,6 +180,9 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   browser,
 }) => {
   const context = await browser.newContext({ locale: 'cs-CZ' });
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'doNotTrack', { get: () => '1' });
+  });
   await context.route(analyticsEndpoint, (route) => route.abort());
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4173/mathogram/');
@@ -358,6 +361,9 @@ test('production subpath serves local assets and only configured analytics witho
   }
   const apple = await request.get('/mathogram/icons/apple-touch-icon.png');
   expect((await apple.body()).readUInt32BE(16)).toBe(180);
-  expect(external).toEqual(analyticsExpected ? [analyticsEndpoint] : []);
+  const optedOut = await page.evaluate(() => navigator.doNotTrack === '1');
+  expect(external).toEqual(
+    analyticsExpected && !optedOut ? [analyticsEndpoint] : [],
+  );
   expect(errors).toEqual([]);
 });

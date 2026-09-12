@@ -1,13 +1,33 @@
 import { puzzles } from './content/animals';
 
-const domain = import.meta.env.VITE_PLAUSIBLE_DOMAIN;
+const website = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+function configuredEndpoint(): string | undefined {
+  try {
+    const url = new URL(import.meta.env.VITE_UMAMI_ENDPOINT);
+    if (
+      url.protocol === 'https:' &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash &&
+      url.pathname.endsWith('/api/send')
+    )
+      return url.href;
+  } catch {
+    return undefined;
+  }
+}
+const endpoint = configuredEndpoint();
 export const analyticsEnabled =
   import.meta.env.PROD &&
   import.meta.env.VITE_ANALYTICS_ENABLED === 'true' &&
-  typeof domain === 'string' &&
-  /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/i.test(domain);
+  endpoint !== undefined &&
+  typeof website === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    website,
+  );
 
-function send(name: string, props?: { animal: string }) {
+function send(name?: string, data?: { animal: string }) {
   try {
     if (
       !analyticsEnabled ||
@@ -19,18 +39,21 @@ function send(name: string, props?: { animal: string }) {
       return;
 
     // Never send the current query, fragment, referrer, or saved game state.
-    void fetch('https://plausible.io/api/event', {
+    void fetch(endpoint!, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
       redirect: 'error',
       keepalive: true,
       body: JSON.stringify({
-        name,
-        domain,
-        url: new URL(import.meta.env.BASE_URL, window.location.origin).href,
-        ...(props ? { props } : {}),
+        type: 'event',
+        payload: {
+          website,
+          hostname: window.location.hostname,
+          url: import.meta.env.BASE_URL,
+          ...(name ? { name, data } : {}),
+        },
       }),
     }).catch(() => {});
   } catch {
@@ -39,7 +62,7 @@ function send(name: string, props?: { animal: string }) {
 }
 
 export function trackPageview() {
-  send('pageview');
+  send();
 }
 
 export function trackPuzzle(

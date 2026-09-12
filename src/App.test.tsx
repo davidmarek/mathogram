@@ -153,7 +153,7 @@ describe('aggregate puzzle analytics', () => {
       expect(screen.getByText(t.analyticsBody)).toBeVisible();
       expect(
         screen.getByRole('link', { name: t.analyticsPolicy }),
-      ).toHaveAttribute('href', 'https://plausible.io/data-policy');
+      ).toHaveAttribute('href', 'https://docs.umami.is/docs/faq');
     },
   );
 

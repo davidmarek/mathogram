@@ -660,7 +660,7 @@ export function App() {
                 <>
                   <h3>{t.analyticsTitle}</h3>
                   <p>{t.analyticsBody}</p>
-                  <a href="https://plausible.io/data-policy" rel="noreferrer">
+                  <a href="https://docs.umami.is/docs/faq" rel="noreferrer">
                     {t.analyticsPolicy}
                   </a>
                 </>

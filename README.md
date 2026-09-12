@@ -46,7 +46,7 @@ The header language switch works during a puzzle without changing its queue. On 
 | `src\i18n\`                                     | Typed English/Czech messages and first-use language detection                      |
 | `src\storage\progress.ts`                       | Versioned local progress, field-level validation and isolated recovery             |
 | `src\pwa\usePwa.ts`, `vite.config.ts`           | Consent-driven worker lifecycle and Workbox-generated precaching                   |
-| `src\analytics.ts`                              | Optional production-only, best-effort Plausible event reporting                    |
+| `src\analytics.ts`                              | Optional production-only, best-effort Umami event reporting                        |
 | `public\icons\`, `scripts\generate-icons.mjs`   | Locally generated original PNG/SVG app icons                                       |
 | `tests\e2e\`, `tests\fixtures\`                 | Built-artifact browser and real service-worker acceptance                          |
 
@@ -76,44 +76,53 @@ Progress is **not permanent or synchronized**. Browser/device cleanup can remove
 
 ## Optional usage analytics
 
-Analytics is **disabled unless explicitly enabled at build time**, and always disabled in the Vite development server. The initial integration uses **hosted Plausible**, with no added dependencies or third-party scripts. It sends best-effort POST requests directly to `https://plausible.io/api/event`.
+Analytics is **disabled unless explicitly enabled at build time**, and always disabled in the Vite development server. The integration uses **Umami**, with no added dependencies or third-party scripts. It sends best-effort JSON POST requests to a configured HTTPS `/api/send` endpoint. Use Umami Cloud's free Hobby plan or your own self-hosted Umami instance; hosting and database maintenance are your responsibility for self-hosting. Check [current Cloud plans](https://umami.is/pricing) for quotas and retention. Custom-event data also contributes to Cloud usage.
 
-| Event              | Meaning                                                                                                        | Custom properties                                                   |
-| ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `pageview`         | One online app load/reload, not each gallery/puzzle navigation                                                 | None                                                                |
-| `Puzzle started`   | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `animal`: one of `fish`, `butterfly`, `cat`, `rabbit`, `dog`, `owl` |
-| `Puzzle completed` | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `animal`: the same fixed animal ID                                  |
+| Event                    | Meaning                                                                                                        | Custom properties                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Pageview (no event name) | One online app load/reload, not each gallery/puzzle navigation                                                 | None                                                                |
+| `Puzzle started`         | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `animal`: one of `fish`, `butterfly`, `cat`, `rabbit`, `dog`, `owl` |
+| `Puzzle completed`       | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `animal`: the same fixed animal ID                                  |
 
 The dashboard provides visits and estimated visitors over time. Custom events show starts/completions, and their `animal` property shows popular puzzles. These are aggregate counts, not identifiable players or individual learning histories. Starts and completions can occur on different days; their ratio is not a per-player completion rate.
 
 ### Enable for GitHub Pages
 
 1. **Review privacy and consent requirements first**, especially because this is a children's game. This implementation does not provide a consent banner or parental-consent flow. Cookieless does not automatically mean consent-free; leave analytics disabled if consent is required until an appropriate flow is implemented. Review the provider's processing terms, retention and access controls.
-2. Create a Plausible site for `davidmarek.github.io`. In **Site settings → Goals**, create custom-event goals named exactly `Puzzle started` and `Puzzle completed` before collecting events. Confirm that your subscription supports custom events and custom-property reporting (`animal`); Plausible currently documents properties as a Business-plan feature.
-3. In repository **Settings → Secrets and variables → Actions → Variables**, set `VITE_PLAUSIBLE_DOMAIN` to `davidmarek.github.io` and `VITE_ANALYTICS_ENABLED` to the exact string `true`. These are public build settings, **not credentials**. Do not put API keys or secrets in any `VITE_` variable.
-4. Publish through the existing owner-gated Pages workflow. It passes these variables to validation and builds, then deploys the tested artifact. Missing/invalid domain settings or any enable value other than `true` leave analytics off. To disable, remove the enable variable or set it to `false` and redeploy. Installed copies retain their prior configuration until they accept the app update.
-5. Check a real online visit in the dashboard. Browser blockers and provider filtering can drop events; even an HTTP 202 is not proof an event was recorded. Automated tests intercept analytics and never intentionally submit events to Plausible.
+2. Add a website for `davidmarek.github.io` in Umami and copy its **Website ID** (UUID) from its settings/tracking code. You do not need to install the provided script. Events `Puzzle started` and `Puzzle completed` appear automatically after receipt; inspect their event data to break down activity by `animal`.
+3. In repository **Settings → Secrets and variables → Actions → Variables**, set all three public build settings:
+   - `VITE_ANALYTICS_ENABLED`: the exact string `true`.
+   - `VITE_UMAMI_WEBSITE_ID`: the Website ID from Umami, **not** an API key.
+   - `VITE_UMAMI_ENDPOINT`: `https://cloud.umami.is/api/send` for Cloud, or `https://analytics.example.com/api/send` for your own instance. Self-hosted base paths such as `/umami/api/send` are supported. Use a trusted HTTPS endpoint without credentials, query strings or fragments; custom collection paths not ending in `/api/send` are not supported.
+
+   These values are bundled into public JavaScript. Do not put API keys or secrets in any `VITE_` variable.
+
+4. Publish through the existing owner-gated Pages workflow. It passes these variables to validation and builds, then deploys the tested artifact. Missing/invalid Website ID or endpoint settings, or any enable value other than `true`, leave analytics off. To disable, remove the enable variable or set it to `false` and redeploy. Installed copies retain their prior configuration until they accept the app update.
+5. Check a real online visit in the Umami dashboard and its Events view. Browser blockers and provider filtering can drop events; a successful HTTP response alone is not proof an event was recorded. Automated tests intercept analytics and never intentionally submit events to Umami. Self-hosted proxies must permit CORS POST requests and OPTIONS preflights with `Content-Type: application/json` from the site; no credentials or authentication headers are sent.
 
 ### Privacy and limitations
 
-- Only the configured site domain, canonical origin plus `/mathogram/`, event name and fixed animal ID are sent. Current URL paths, query strings, fragments, HTTP referrers, answers, equations, language, saved progress and completion badges are not uploaded.
-- Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage.
-- Like any receiving service, Plausible receives the connection's IP address and browser information. Its [data policy](https://plausible.io/data-policy) describes daily salted visitor estimates without retaining raw IP addresses. This is not an exact count of people, nor cross-day/device identification.
-- Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and the provider's data-policy link when analytics is configured.
+- Event payloads contain only the configured Website ID, site hostname, canonical `/mathogram/` path, event name and fixed animal ID. Current URL paths, query strings, fragments, answers, equations, screen size, page title, language, saved progress and completion badges are not added to the payload. HTTP referrers are suppressed.
+- Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage. Umami's returned cache/session/visit IDs are discarded; no `identify` calls or custom visitor IDs are used.
+- Like any receiving service, Umami receives the connection's IP address and browser information. It derives visitor/session identifiers server-side from the website, IP and User-Agent with a rotating salt; these are estimates, not exact counts of people. The [Umami documentation](https://docs.umami.is/docs/metric-definitions) states raw IP addresses are not stored by analytics, but separately configured proxy/server logs may retain them. Review hosting and retention settings. Ignoring the response cache can split visits at hour boundaries.
+- Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and a link to Umami's privacy-related FAQ when analytics is configured.
 - Offline events are discarded, not queued or replayed on reconnect. Network failures, blocked requests and HTTP errors do not interrupt gameplay and are not retried. Offline use, privacy preferences, blockers and network failures therefore undercount usage.
-- No self-hosted endpoint is configured by this integration. Changing providers requires reviewing the transport, disclosure and tests together.
+- For self-hosting, maintain Umami and its database separately; this repository deploys only the game. Review disclosure, logging and retention for your chosen host before enabling collection.
 
 ### Analytics acceptance
 
-Run `npm run validate` with analytics variables unset to verify the default local-only build. Also validate an enabled build with both variables set in the same shell (PowerShell):
+Run `npm run validate` with analytics variables unset to verify the default local-only build. Also validate an enabled build with all three variables set in the same shell (PowerShell; the example UUID below is test-only):
 
 ```powershell
 $env:VITE_ANALYTICS_ENABLED = 'true'
-$env:VITE_PLAUSIBLE_DOMAIN = 'davidmarek.github.io'
+$env:VITE_UMAMI_WEBSITE_ID = '00000000-0000-4000-8000-000000000001'
+$env:VITE_UMAMI_ENDPOINT = 'https://cloud.umami.is/api/send'
 npm run validate
 ```
 
-Enabled browser tests mock the exact Plausible endpoint, check event payloads, repeat protection, omitted cookies/referrers, privacy signals, failures and offline play. Keep the same variables for build and browser tests. Do not manually browse an enabled preview unless you intend it to send analytics; development via `npm run dev` never does.
+Enabled browser tests mock the exact configured Umami endpoint, check event payloads, repeat protection, omitted cookies/referrers, privacy signals, failures and offline play. Keep the same variables for build and browser tests. Do not manually browse an enabled preview unless you intend it to send analytics; development via `npm run dev` never does.
+
+Dedicated analytics browser tests block service workers so requests remain interceptable in both browsers. Other WebKit tests opt out with Do Not Track because worker-controlled fetches can bypass Playwright routing. Chromium's real service-worker tests additionally verify that offline play sends no events and reconnecting does not replay them.
 
 ## Offline installation and updates
 

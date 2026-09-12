@@ -8,6 +8,7 @@ import {
 } from './helpers';
 
 test.describe('enabled analytics', () => {
+  test.use({ serviceWorkers: 'block' });
   test.skip(
     !analyticsExpected,
     'Run against an explicitly analytics-enabled build.',
@@ -22,7 +23,7 @@ test.describe('enabled analytics', () => {
       {
         name: 'unrelated',
         value: 'must-not-send',
-        domain: 'plausible.io',
+        domain: new URL(analyticsEndpoint).hostname,
         path: '/',
         secure: true,
         sameSite: 'None',
@@ -60,10 +61,13 @@ test.describe('enabled analytics', () => {
         'Puzzle completed',
         'Puzzle started',
       ].map((name) => ({
-        name,
-        domain: process.env.VITE_PLAUSIBLE_DOMAIN,
-        url: 'http://127.0.0.1:4173/mathogram/',
-        ...(name === 'pageview' ? {} : { props: { animal: 'fish' } }),
+        type: 'event',
+        payload: {
+          website: process.env.VITE_UMAMI_WEBSITE_ID,
+          hostname: '127.0.0.1',
+          url: '/mathogram/',
+          ...(name === 'pageview' ? {} : { name, data: { animal: 'fish' } }),
+        },
       })),
     );
     for (const request of analyticsRequests) {
@@ -86,7 +90,11 @@ test.describe('enabled analytics', () => {
           ? route.abort('blockedbyclient')
           : route.fulfill({
               status: 500,
-              headers: { 'Access-Control-Allow-Origin': '*' },
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+              },
               body: '',
             }),
       );
