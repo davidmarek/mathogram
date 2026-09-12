@@ -19,6 +19,8 @@ import {
 } from './storage/progress';
 import type { Language, LoadResult, Progress } from './storage/progress';
 import { usePwa } from './pwa/usePwa';
+import { analyticsEnabled, trackPuzzle } from './analytics';
+import { usePuzzleTime } from './usePuzzleTime';
 
 function browserStorage(): Storage | null {
   try {
@@ -72,6 +74,7 @@ export function App() {
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
+  usePuzzleTime(attempt && !complete && modal === null ? activeId : null);
   const current =
     pendingExercise?.exercise ??
     (attempt ? currentExercise(attempt) : undefined);
@@ -135,6 +138,7 @@ export function App() {
         ...previous,
         attempts: { ...previous.attempts, [id]: createAttempt(selected) },
       });
+      trackPuzzle('Puzzle started', id);
     }
     setActiveId(id);
   }
@@ -179,6 +183,7 @@ export function App() {
         ? [...new Set([...previous.completed, activeId])]
         : previous.completed,
     });
+    if (revealed && isComplete(next)) trackPuzzle('Puzzle completed', activeId);
     timer.current = setTimeout(
       () => {
         locked.current = false;
@@ -653,6 +658,15 @@ export function App() {
               <p id="row-hints-help">{t.rowHintsHelp}</p>
               <h3>{t.storageTitle}</h3>
               <p>{t.storageBody}</p>
+              {analyticsEnabled && (
+                <>
+                  <h3>{t.analyticsTitle}</h3>
+                  <p>{t.analyticsBody}</p>
+                  <a href="https://docs.umami.is/docs/faq" rel="noreferrer">
+                    {t.analyticsPolicy}
+                  </a>
+                </>
+              )}
               {typeof navigator.storage?.persist === 'function' && (
                 <button
                   className="secondary"

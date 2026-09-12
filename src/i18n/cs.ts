@@ -45,6 +45,10 @@ export const cs: Messages = {
   installBody:
     'Na iPhonu nebo iPadu otevři stránku v Safari. Klepni na Sdílet a pak Přidat na plochu. Pokud se zobrazí Otevřít jako webovou aplikaci, zapni tuto volbu a klepni na Přidat. V jiném prohlížeči použij nabídku instalace aplikace.',
   storageTitle: 'Uloženo na tomto zařízení',
+  analyticsTitle: 'Statistiky používání — pro rodiče',
+  analyticsBody:
+    'Tento web používá Umami k počítání online návštěv, zahájených nebo dokončených obrázků a přibližného aktivního času řešení v sekundách podle identifikátoru hlavolamu. Měření se pozastaví na pozadí, v dialogových oknech a po minutě bez interakce. Neposílá cookies, uložený postup ani odpovědi. Analytická služba přijímá IP adresu a informace o prohlížeči pro odhad počtu návštěvníků. Do Not Track a Global Privacy Control tyto požadavky vypnou. Offline hraní se nehlásí.',
+  analyticsPolicy: 'Jak Umami chrání soukromí',
   storageBody:
     'Obrázky se ukládají v tomto prohlížeči, ne do účtu. Smazání dat prohlížeče nebo úklid zařízení může odstranit postup i offline soubory. Aplikace na ploše a prohlížeč mohou mít oddělený postup. Mezi zařízeními se nic nesynchronizuje.',
   offlineHelp:

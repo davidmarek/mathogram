@@ -43,6 +43,10 @@ export const en = {
   installBody:
     'On iPhone or iPad, open this page in Safari. Tap Share, then Add to Home Screen. Turn on Open as Web App if shown, then tap Add. On other browsers, use their install app menu.',
   storageTitle: 'Saved on this device',
+  analyticsTitle: 'Usage statistics — for parents',
+  analyticsBody:
+    'This site uses Umami to count online visits, pictures started or completed, and approximate active solving seconds, with the puzzle ID. Timing pauses in the background, in dialogs, and after one minute without interaction. No cookies, saved progress, or answers are sent. The analytics service receives your IP address and browser information to estimate visitors. Do Not Track and Global Privacy Control stop these requests. Offline play is not reported.',
+  analyticsPolicy: 'How Umami protects privacy',
   storageBody:
     'Your pictures are saved in this browser, not an account. Clearing browser data or device cleanup can remove progress and offline files. Home Screen and browser progress may be separate. Nothing syncs to another device.',
   offlineHelp:
