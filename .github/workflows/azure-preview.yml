@@ -1,0 +1,207 @@
+name: Azure PR preview
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, closed]
+
+permissions: {}
+
+concurrency:
+  group: azure-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: Check PR revision and lifecycle
+    if: >-
+      github.repository == 'davidmarek/mathogram' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
+      sha: ${{ steps.pr.outputs.sha }}
+      operation: ${{ steps.pr.outputs.operation }}
+    steps:
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        id: pr
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const number = process.env.PR_NUMBER;
+            if (!/^[1-9][0-9]*$/.test(number) || !Number.isSafeInteger(Number(number))) {
+              throw new Error('Provide a positive PR number without leading zeroes.');
+            }
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo, pull_number: Number(number),
+            });
+            if (pr.base.repo.full_name !== 'davidmarek/mathogram' || pr.base.ref !== 'main') {
+              throw new Error('Only PRs targeting davidmarek/mathogram main are supported.');
+            }
+            const closing = context.payload.action === 'closed';
+            if (closing) {
+              if (pr.state !== 'closed') throw new Error('PR has reopened; do not delete its preview.');
+            } else {
+              if (pr.state !== 'open' || !/^[a-f0-9]{40}$/.test(process.env.HEAD_SHA) ||
+                  pr.head.sha !== process.env.HEAD_SHA) {
+                throw new Error('PR must be open at the event head SHA. Use the latest workflow run.');
+              }
+            }
+            core.setOutput('number', number);
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('operation', closing ? 'close' : 'upload');
+
+  validate:
+    name: Validate PR without deployment credentials
+    needs: resolve
+    if: needs.resolve.outputs.operation == 'upload'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      # No shared dependency cache: PR code must not poison production caches.
+      - run: npm ci --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run validate
+      - name: Keep browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: azure-preview-failure-${{ needs.resolve.outputs.number }}
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Upload validated static files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: azure-preview-${{ needs.resolve.outputs.number }}-${{ needs.resolve.outputs.sha }}
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    name: Publish validated preview
+    needs: [resolve, validate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      pull-requests: write
+    environment:
+      name: azure-preview
+      url: ${{ steps.azure.outputs.static_web_app_url }}/mathogram/
+    steps:
+      # No checkout or execution of PR code in this credential-bearing job.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: azure-preview-${{ needs.resolve.outputs.number }}-${{ needs.resolve.outputs.sha }}
+          path: preview/mathogram
+      - name: Preserve the tested hosting path
+        run: |
+          cat > preview/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <meta charset="utf-8">
+            <title>Mathogram preview</title>
+            <a href="/mathogram/">Open Mathogram preview</a>
+          </html>
+          HTML
+          cat > preview/staticwebapp.config.json <<'JSON'
+          {
+            "routes": [
+              { "route": "/", "redirect": "/mathogram/", "statusCode": 302 },
+              { "route": "/mathogram", "redirect": "/mathogram/", "statusCode": 302 }
+            ],
+            "globalHeaders": { "X-Robots-Tag": "noindex, nofollow" }
+          }
+          JSON
+      - name: Reject closed or superseded previews after approval
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+          APPROVED_SHA: ${{ needs.resolve.outputs.sha }}
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo, pull_number: Number(process.env.PR_NUMBER),
+            });
+            if (pr.state !== 'open' || pr.head.sha !== process.env.APPROVED_SHA ||
+                pr.base.ref !== 'main' || pr.base.repo.full_name !== 'davidmarek/mathogram') {
+              throw new Error('PR closed, changed target, or changed revision while awaiting deployment.');
+            }
+      - name: Deploy static files only
+        id: azure
+        uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: preview
+          config_file_location: preview
+          api_location: ''
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
+          production_branch: main
+      - name: Report preview URL
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+          HEAD_SHA: ${{ needs.resolve.outputs.sha }}
+          PREVIEW_ORIGIN: ${{ steps.azure.outputs.static_web_app_url }}
+        with:
+          script: |
+            const url = new URL('/mathogram/', process.env.PREVIEW_ORIGIN);
+            if (url.protocol !== 'https:' || !url.hostname.endsWith('.azurestaticapps.net')) {
+              throw new Error('Unexpected Azure preview URL.');
+            }
+            const body = `Azure preview for commit \`${process.env.HEAD_SHA}\`: ${url.href}\n\n` +
+              'Public preview; production on GitHub Pages is unchanged.';
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: Number(process.env.PR_NUMBER), body,
+            });
+            await core.summary.addRaw(body).write();
+
+  close:
+    name: Remove closed PR preview
+    needs: resolve
+    if: needs.resolve.outputs.operation == 'close'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pull-requests: read
+    environment:
+      name: azure-preview
+    steps:
+      - name: Confirm PR is still closed after approval
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo, pull_number: Number(process.env.PR_NUMBER),
+            });
+            if (pr.state !== 'closed') throw new Error('PR has reopened; keep its preview.');
+      - name: Delete preview environment only
+        uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close
+          app_location: /
