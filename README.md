@@ -130,6 +130,10 @@ The production URL is **https://davidmarek.github.io/mathogram/**. The protected
 
 The workflow has no default token permissions. Validation gets only `contents: read`, no persisted checkout credentials, and no Pages/OIDC write token. Only the dependent deployment job has `pages: write` and `id-token: write` and uses the `github-pages` environment. Workflow concurrency serializes releases without cancelling one mid-flight, with bounded job timeouts. All actions are pinned to full commit revisions, including the upload action used by the pinned Pages composite action. Failure artifacts expire after seven days, deployment artifacts after one day. Configure Pages uses `enablement: false`; it will not silently enable Pages.
 
+### Copilot cloud agent environment
+
+`.github\workflows\copilot-setup-steps.yml` prepares the ephemeral environment of the Copilot cloud agent before its firewall is enabled. It pins Node from `.nvmrc`, installs the locked dependencies, and downloads the Chromium and WebKit browsers, because `engine-strict=true` rejects the runner's default Node and the agent firewall blocks the browser and apt download hosts. The job keeps `contents: read` only, uses no persisted checkout credentials, and pins its actions to full commit revisions. Its own validation runs stay gated to owner-triggered `main`-repository events like the Pages workflow; the agent runs the steps regardless of that gate.
+
 ### Repository security settings
 
 Maintain the server-side controls alongside the workflow:
