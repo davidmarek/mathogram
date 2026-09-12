@@ -1,7 +1,7 @@
 import { validatePuzzle } from '../domain/puzzle';
 import type { Puzzle } from '../domain/puzzle';
 
-function animal(
+function picture(
   name: Puzzle['name'],
   width: number,
   intro: boolean,
@@ -35,14 +35,14 @@ function animal(
     ),
   };
   if (!validatePuzzle(puzzle)) {
-    throw new Error(`Invalid animal content: ${name}`);
+    throw new Error(`Invalid picture content: ${name}`);
   }
   return puzzle;
 }
 
 // Original hand-drawn sprites. Dots are background, never playable pixels.
 export const puzzles: Puzzle[] = [
-  animal('fish', 9, true, { F: '#F5A623', T: '#ED765E', E: '#28364A' }, [
+  picture('fish', 9, true, { F: '#F5A623', T: '#ED765E', E: '#28364A' }, [
     '...FF....',
     '..FFFF...',
     'T.FFEFF..',
@@ -50,7 +50,7 @@ export const puzzles: Puzzle[] = [
     'T.FFFFF..',
     '...FF....',
   ]),
-  animal('butterfly', 9, true, { P: '#B58BE3', B: '#554066' }, [
+  picture('butterfly', 9, true, { P: '#B58BE3', B: '#554066' }, [
     '...B.B...',
     'PP..B..PP',
     'PPP.B.PPP',
@@ -59,7 +59,7 @@ export const puzzles: Puzzle[] = [
     '.PP.B.PP.',
     '..P.B.P..',
   ]),
-  animal(
+  picture(
     'bee',
     10,
     true,
@@ -74,7 +74,7 @@ export const puzzles: Puzzle[] = [
       '...B..B...',
     ],
   ),
-  animal(
+  picture(
     'snail',
     10,
     true,
@@ -89,7 +89,7 @@ export const puzzles: Puzzle[] = [
       '.GGGGGG...',
     ],
   ),
-  animal(
+  picture(
     'turtle',
     12,
     false,
@@ -103,7 +103,7 @@ export const puzzles: Puzzle[] = [
       '...GG..GG...',
     ],
   ),
-  animal('cat', 13, false, { F: '#E9AC69', E: '#28364A', N: '#D96B86' }, [
+  picture('cat', 13, false, { F: '#E9AC69', E: '#28364A', N: '#D96B86' }, [
     '...F...F.....',
     '...FF.FF.....',
     '...FFFFFF....',
@@ -114,7 +114,7 @@ export const puzzles: Puzzle[] = [
     '...FFFFFF.F..',
     '...FFFFFFFF..',
   ]),
-  animal(
+  picture(
     'duck',
     13,
     false,
@@ -132,7 +132,7 @@ export const puzzles: Puzzle[] = [
       '....O.O......',
     ],
   ),
-  animal(
+  picture(
     'rabbit',
     13,
     false,
@@ -151,7 +151,7 @@ export const puzzles: Puzzle[] = [
       '....FF..FFF..',
     ],
   ),
-  animal('fox', 14, false, { F: '#DF8850', W: '#F7E4C4', E: '#28364A' }, [
+  picture('fox', 14, false, { F: '#DF8850', W: '#F7E4C4', E: '#28364A' }, [
     '...F...F......',
     '...FF.FF......',
     '...FFFFFF.....',
@@ -164,7 +164,7 @@ export const puzzles: Puzzle[] = [
     '...FFFFFFFFF..',
     '....EE..EE....',
   ]),
-  animal(
+  picture(
     'dog',
     14,
     false,
@@ -182,7 +182,7 @@ export const puzzles: Puzzle[] = [
       '....FF...FF...',
     ],
   ),
-  animal(
+  picture(
     'owl',
     15,
     false,
@@ -200,8 +200,88 @@ export const puzzles: Puzzle[] = [
       '.....N...N.....',
     ],
   ),
+  picture(
+    'watermelon',
+    9,
+    true,
+    { R: '#EF6571', S: '#493B42', W: '#DDE9A8', G: '#46956A' },
+    [
+      '....R....',
+      '...RRR...',
+      '..RSRSR..',
+      '.RRRRRRR.',
+      'WWWWWWWWW',
+      '.GGGGGGG.',
+    ],
+  ),
+  picture('fries', 9, true, { Y: '#F5C84C', R: '#DC5555', W: '#FFE8A3' }, [
+    '...Y.Y...',
+    '.Y.Y.Y...',
+    '.Y.Y.Y.Y.',
+    '.Y.Y.Y.Y.',
+    '.RRRRRRR.',
+    '.RRWWWRR.',
+    '.RRRWRRR.',
+    '..RRRRR..',
+  ]),
+  picture(
+    'cheddar-fingers',
+    12,
+    false,
+    { C: '#C88032', H: '#EDAD4F', Y: '#FFE275' },
+    [
+      '..YY..YY..YY',
+      '.CHC.CHC.CHC',
+      '.CYC.CYC.CYC',
+      '.CHC.CHC.CHC',
+      '.CHC.CHC.CHC',
+      '..CC..CC..CC',
+    ],
+  ),
+  picture(
+    'hamburger',
+    13,
+    false,
+    {
+      B: '#E8AB59',
+      S: '#FFF0BA',
+      L: '#76A84B',
+      T: '#DE5950',
+      P: '#754735',
+      Y: '#F6CE4D',
+    },
+    [
+      '...BBBBBBB...',
+      '..BBBSBBSBB..',
+      '..BBBBBBBBB..',
+      '..LLLLLLLLL..',
+      '...TTTTTTT...',
+      '..PPPPYPPPP..',
+      '...BBBBBBB...',
+    ],
+  ),
+  picture(
+    'sushi',
+    13,
+    false,
+    {
+      N: '#304D43',
+      R: '#F5E8CE',
+      S: '#EF927C',
+      A: '#AAC66C',
+      V: '#EDAA54',
+    },
+    [
+      '.NNNN...NNNN.',
+      'NRRRRN.NRRRRN',
+      'NRSSRN.NRAVRN',
+      'NRRRRN.NRRRRN',
+      '.NNNN...NNNN.',
+      '.NNNN...NNNN.',
+    ],
+  ),
 ];
 
 if (new Set(puzzles.map(({ id }) => id)).size !== puzzles.length) {
-  throw new Error('Animal IDs must be unique.');
+  throw new Error('Picture IDs must be unique.');
 }

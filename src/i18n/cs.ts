@@ -2,10 +2,10 @@ import type { Messages } from './en';
 
 export const cs: Messages = {
   tagline: 'Malé příklady. Velké objevy.',
-  galleryTitle: 'Koho dnes objevíš?',
-  galleryIntro: 'Vyber si kamaráda. Vyřeš příklad. Oživ obrázek!',
+  galleryTitle: 'Co dnes objevíš?',
+  galleryIntro: 'Vyber si obrázek. Vyřeš příklad. Oživ obrázek!',
   collection: 'TVŮJ MALÝ SVĚT',
-  friends: 'objevených kamarádů',
+  friends: 'objevených obrázků',
   fish: 'Slunečná rybka',
   butterfly: 'Borůvkový motýl',
   bee: 'Medová včelka',
@@ -17,6 +17,11 @@ export const cs: Messages = {
   fox: 'Jantarová liška',
   dog: 'Sušenkový pejsek',
   owl: 'Soumračná sovička',
+  watermelon: 'Meloun',
+  fries: 'Hranolky',
+  'cheddar-fingers': 'Čedarové tyčinky',
+  hamburger: 'Hamburger',
+  sushi: 'Sushi',
   easy: 'Malé krůčky',
   adventurous: 'Malé dobrodružství',
   pixels: 'políček',
@@ -24,7 +29,7 @@ export const cs: Messages = {
   continue: 'Pokračovat',
   replay: 'Hrát znovu',
   completed: 'Objeveno',
-  gallery: 'Moje zvířátka',
+  gallery: 'Moje obrázky',
   settings: 'Nastavení',
   help: 'Nápověda',
   language: 'Jazyk',
@@ -41,7 +46,7 @@ export const cs: Messages = {
     'Na iPhonu nebo iPadu otevři stránku v Safari. Klepni na Sdílet a pak Přidat na plochu. Pokud se zobrazí Otevřít jako webovou aplikaci, zapni tuto volbu a klepni na Přidat. V jiném prohlížeči použij nabídku instalace aplikace.',
   storageTitle: 'Uloženo na tomto zařízení',
   storageBody:
-    'Zvířátka se ukládají v tomto prohlížeči, ne do účtu. Smazání dat prohlížeče nebo úklid zařízení může odstranit postup i offline soubory. Aplikace na ploše a prohlížeč mohou mít oddělený postup. Mezi zařízeními se nic nesynchronizuje.',
+    'Obrázky se ukládají v tomto prohlížeči, ne do účtu. Smazání dat prohlížeče nebo úklid zařízení může odstranit postup i offline soubory. Aplikace na ploše a prohlížeč mohou mít oddělený postup. Mezi zařízeními se nic nesynchronizuje.',
   offlineHelp:
     'Před odpojením počkej na zprávu „Připraveno na hraní offline“. Úplně první návštěva potřebuje internet. Offline data nejsou uložená navždy.',
   persist: 'Požádat o uchování dat',
@@ -51,14 +56,14 @@ export const cs: Messages = {
     'Prohlížeč trvalé úložiště nepovolil. Hrát můžeš dál, ale úklid zařízení může data odstranit.',
   persistError:
     'Žádost o úložiště se nezdařila. Hrát můžeš dál, ale uchování dat není zaručené.',
-  resetAll: 'Smazat všechna moje zvířátka',
+  resetAll: 'Smazat všechny moje obrázky',
   resetTitle: 'Začít sbírku znovu?',
   resetBody:
     'Smažou se všechny uložené obrázky a odznaky v Mathogramu. Jazyk a nastavení nápovědy řádku zůstanou stejné. Ostatních aplikací se to nedotkne.',
   restart: 'Začít tento obrázek znovu',
   restartTitle: 'Začít obrázek znovu?',
   restartBody:
-    'Smažou se jen vybarvená políčka tohoto obrázku. Ostatní zvířátka a odznaky zůstanou.',
+    'Smažou se jen vybarvená políčka tohoto obrázku. Ostatní obrázky a odznaky zůstanou.',
   cancel: 'Hrát dál',
   confirm: 'Ano, začít znovu',
   row: 'Řádek',
@@ -77,13 +82,13 @@ export const cs: Messages = {
   practiceCorrect: 'Výborně! Zpátky k poslednímu políčku.',
   filled: 'odhalených políček',
   hiddenGrid:
-    'Skryté zvířátko. Všechna prázdná políčka vypadají stejně. Řešením příkladů odhalíš jeho barvy.',
-  fullGrid: 'Tvoje hotové pixelové zvířátko',
+    'Skrytý obrázek. Všechna prázdná políčka vypadají stejně. Řešením příkladů odhalíš jeho barvy.',
+  fullGrid: 'Tvůj hotový pixelový obrázek',
   coordinate: 'Odhalené políčko:',
-  completeTitle: 'Podívej, koho jsi objevil!',
+  completeTitle: 'Podívej, co jsi objevil!',
   completeBody: 'Příklad za příkladem. Vytvořil jsi něco krásného.',
   recovered:
-    'Některá data nešla přečíst nebo patří ke staršímu obrázku. Obnovil se jen poškozený postup. Platná zvířátka a jazyk zůstaly.',
+    'Některá data nešla přečíst nebo patří ke staršímu obrázku. Obnovil se jen poškozený postup. Platné obrázky a jazyk zůstaly.',
   unavailable:
     'Prohlížeč teď nemůže ukládat postup. Hrát můžeš dál, ale po zavření aplikace se nový postup může ztratit.',
   offlineReady: 'Připraveno na hraní offline',
