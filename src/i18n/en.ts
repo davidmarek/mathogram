@@ -33,6 +33,10 @@ export const en = {
   installBody:
     'On iPhone or iPad, open this page in Safari. Tap Share, then Add to Home Screen. Turn on Open as Web App if shown, then tap Add. On other browsers, use their install app menu.',
   storageTitle: 'Saved on this device',
+  analyticsTitle: 'Usage statistics — for parents',
+  analyticsBody:
+    'This site uses Plausible to count online visits and pictures started or completed, with the animal name. No cookies, saved progress, or answers are sent. Plausible receives your IP address and browser information to estimate visitors, without storing the raw IP address. Do Not Track and Global Privacy Control stop these requests. Offline play is not reported.',
+  analyticsPolicy: 'Plausible data policy',
   storageBody:
     'Your animals are saved in this browser, not an account. Clearing browser data or device cleanup can remove progress and offline files. Home Screen and browser progress may be separate. Nothing syncs to another device.',
   offlineHelp:

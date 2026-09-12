@@ -40,6 +40,9 @@ jobs:
       - run: npm ci --no-fund
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run validate
+        env:
+          VITE_ANALYTICS_ENABLED: ${{ vars.VITE_ANALYTICS_ENABLED }}
+          VITE_PLAUSIBLE_DOMAIN: ${{ vars.VITE_PLAUSIBLE_DOMAIN }}
       - name: Keep browser failure evidence
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

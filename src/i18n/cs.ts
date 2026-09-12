@@ -35,6 +35,10 @@ export const cs: Messages = {
   installBody:
     'Na iPhonu nebo iPadu otevři stránku v Safari. Klepni na Sdílet a pak Přidat na plochu. Pokud se zobrazí Otevřít jako webovou aplikaci, zapni tuto volbu a klepni na Přidat. V jiném prohlížeči použij nabídku instalace aplikace.',
   storageTitle: 'Uloženo na tomto zařízení',
+  analyticsTitle: 'Statistiky používání — pro rodiče',
+  analyticsBody:
+    'Tento web používá Plausible k počítání online návštěv a zahájených nebo dokončených obrázků podle zvířátka. Neposílá cookies, uložený postup ani odpovědi. Plausible přijímá IP adresu a informace o prohlížeči pro odhad počtu návštěvníků, ale neukládá samotnou IP adresu. Do Not Track a Global Privacy Control tyto požadavky vypnou. Offline hraní se nehlásí.',
+  analyticsPolicy: 'Zásady nakládání s daty Plausible',
   storageBody:
     'Zvířátka se ukládají v tomto prohlížeči, ne do účtu. Smazání dat prohlížeče nebo úklid zařízení může odstranit postup i offline soubory. Aplikace na ploše a prohlížeč mohou mít oddělený postup. Mezi zařízeními se nic nesynchronizuje.',
   offlineHelp:

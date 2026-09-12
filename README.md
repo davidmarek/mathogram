@@ -1,6 +1,6 @@
 # Mathogram
 
-**Little sums. Lovely discoveries.** A bright, touch-first pixel-animal game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No accounts, ads, trackers, external assets, penalties, timers, or sound.
+**Little sums. Lovely discoveries.** A bright, touch-first pixel-animal game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No player accounts, ads, external assets, penalties, timers, or sound. Analytics is off by default; deployments may explicitly enable the limited, cookieless usage statistics described below.
 
 Six original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Ginger cat (48), Clover bunny (54), Biscuit pup (63), and Twilight owl (61). Early puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
@@ -46,6 +46,7 @@ The header language switch works during a puzzle without changing its queue. On 
 | `src\i18n\`                                     | Typed English/Czech messages and first-use language detection                      |
 | `src\storage\progress.ts`                       | Versioned local progress, field-level validation and isolated recovery             |
 | `src\pwa\usePwa.ts`, `vite.config.ts`           | Consent-driven worker lifecycle and Workbox-generated precaching                   |
+| `src\analytics.ts`                              | Optional production-only, best-effort Plausible event reporting                    |
 | `public\icons\`, `scripts\generate-icons.mjs`   | Locally generated original PNG/SVG app icons                                       |
 | `tests\e2e\`, `tests\fixtures\`                 | Built-artifact browser and real service-worker acceptance                          |
 
@@ -73,9 +74,50 @@ Every correct answer, deferral, practice transition, fresh attempt, reset and pr
 
 Progress is **not permanent or synchronized**. Browser/device cleanup can remove it. Home Screen and browser contexts may not share the same storage. Optional persistent-storage permission is requested only from Settings; denial is normal and reported. Back up nothing to a server: there is no server.
 
+## Optional usage analytics
+
+Analytics is **disabled unless explicitly enabled at build time**, and always disabled in the Vite development server. The initial integration uses **hosted Plausible**, with no added dependencies or third-party scripts. It sends best-effort POST requests directly to `https://plausible.io/api/event`.
+
+| Event              | Meaning                                                                                                        | Custom properties                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `pageview`         | One online app load/reload, not each gallery/puzzle navigation                                                 | None                                                                |
+| `Puzzle started`   | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `animal`: one of `fish`, `butterfly`, `cat`, `rabbit`, `dog`, `owl` |
+| `Puzzle completed` | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `animal`: the same fixed animal ID                                  |
+
+The dashboard provides visits and estimated visitors over time. Custom events show starts/completions, and their `animal` property shows popular puzzles. These are aggregate counts, not identifiable players or individual learning histories. Starts and completions can occur on different days; their ratio is not a per-player completion rate.
+
+### Enable for GitHub Pages
+
+1. **Review privacy and consent requirements first**, especially because this is a children's game. This implementation does not provide a consent banner or parental-consent flow. Cookieless does not automatically mean consent-free; leave analytics disabled if consent is required until an appropriate flow is implemented. Review the provider's processing terms, retention and access controls.
+2. Create a Plausible site for `davidmarek.github.io`. In **Site settings → Goals**, create custom-event goals named exactly `Puzzle started` and `Puzzle completed` before collecting events. Confirm that your subscription supports custom events and custom-property reporting (`animal`); Plausible currently documents properties as a Business-plan feature.
+3. In repository **Settings → Secrets and variables → Actions → Variables**, set `VITE_PLAUSIBLE_DOMAIN` to `davidmarek.github.io` and `VITE_ANALYTICS_ENABLED` to the exact string `true`. These are public build settings, **not credentials**. Do not put API keys or secrets in any `VITE_` variable.
+4. Publish through the existing owner-gated Pages workflow. It passes these variables to validation and builds, then deploys the tested artifact. Missing/invalid domain settings or any enable value other than `true` leave analytics off. To disable, remove the enable variable or set it to `false` and redeploy. Installed copies retain their prior configuration until they accept the app update.
+5. Check a real online visit in the dashboard. Browser blockers and provider filtering can drop events; even an HTTP 202 is not proof an event was recorded. Automated tests intercept analytics and never intentionally submit events to Plausible.
+
+### Privacy and limitations
+
+- Only the configured site domain, canonical origin plus `/mathogram/`, event name and fixed animal ID are sent. Current URL paths, query strings, fragments, HTTP referrers, answers, equations, language, saved progress and completion badges are not uploaded.
+- Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage.
+- Like any receiving service, Plausible receives the connection's IP address and browser information. Its [data policy](https://plausible.io/data-policy) describes daily salted visitor estimates without retaining raw IP addresses. This is not an exact count of people, nor cross-day/device identification.
+- Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and the provider's data-policy link when analytics is configured.
+- Offline events are discarded, not queued or replayed on reconnect. Network failures, blocked requests and HTTP errors do not interrupt gameplay and are not retried. Offline use, privacy preferences, blockers and network failures therefore undercount usage.
+- No self-hosted endpoint is configured by this integration. Changing providers requires reviewing the transport, disclosure and tests together.
+
+### Analytics acceptance
+
+Run `npm run validate` with analytics variables unset to verify the default local-only build. Also validate an enabled build with both variables set in the same shell (PowerShell):
+
+```powershell
+$env:VITE_ANALYTICS_ENABLED = 'true'
+$env:VITE_PLAUSIBLE_DOMAIN = 'davidmarek.github.io'
+npm run validate
+```
+
+Enabled browser tests mock the exact Plausible endpoint, check event payloads, repeat protection, omitted cookies/referrers, privacy signals, failures and offline play. Keep the same variables for build and browser tests. Do not manually browse an enabled preview unless you intend it to send analytics; development via `npm run dev` never does.
+
 ## Offline installation and updates
 
-Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all six puzzles. There are no runtime API requests or external font/CDN dependencies.
+Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all six puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 

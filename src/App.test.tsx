@@ -6,6 +6,18 @@ import { createAttempt, currentExercise } from './domain/game';
 import { emptyProgress, STORAGE_KEY } from './storage/progress';
 import type { Progress } from './storage/progress';
 import { detectLanguage, messages } from './i18n';
+import { StrictMode } from 'react';
+
+const analytics = vi.hoisted(() => ({
+  enabled: false,
+  trackPuzzle: vi.fn(),
+}));
+vi.mock('./analytics', () => ({
+  get analyticsEnabled() {
+    return analytics.enabled;
+  },
+  trackPuzzle: analytics.trackPuzzle,
+}));
 
 const pwa = vi.hoisted(() => ({
   ready: false,
@@ -49,11 +61,109 @@ beforeEach(() => {
   vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB']);
   pwa.ready = pwa.waiting = pwa.error = pwa.offline = false;
   pwa.acceptUpdate.mockClear();
+  analytics.enabled = false;
+  analytics.trackPuzzle.mockClear();
 });
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+});
+
+describe('aggregate puzzle analytics', () => {
+  it('counts fresh attempts, confirmed restarts and replays, but not resumes or cancelled restarts', () => {
+    const view = render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    expect(analytics.trackPuzzle).not.toHaveBeenCalled();
+    openFish();
+    expect(analytics.trackPuzzle).toHaveBeenCalledExactlyOnceWith(
+      'Puzzle started',
+      'fish',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'My animals' }));
+    openFish();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Restart this picture' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
+    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Restart this picture' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
+    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+    view.unmount();
+    render(<App />);
+    openFish();
+    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+  });
+
+  it('counts only the final reveal once, not incorrect answers, practice or completed-picture reopening', () => {
+    vi.useFakeTimers();
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!);
+    attempt.solved = attempt.queue.slice(0, -1).map(({ pixelId }) => pixelId);
+    progress.attempts.fish = attempt;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    const view = render(<App />);
+    openFish();
+    enter(firstAnswer() === '1' ? '2' : '1');
+    submit();
+    act(() => vi.advanceTimersByTime(900));
+    enter(firstAnswer());
+    submit();
+    act(() => vi.advanceTimersByTime(650));
+    expect(analytics.trackPuzzle).not.toHaveBeenCalled();
+    enter(firstAnswer());
+    const form = screen.getByRole('textbox').closest('form')!;
+    act(() => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    expect(analytics.trackPuzzle).toHaveBeenCalledExactlyOnceWith(
+      'Puzzle completed',
+      'fish',
+    );
+    view.unmount();
+    render(<App />);
+    openFish();
+    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
+    expect(analytics.trackPuzzle).toHaveBeenLastCalledWith(
+      'Puzzle started',
+      'fish',
+    );
+    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['en', 'cs'] as const)(
+    'discloses enabled analytics in %s Settings',
+    (language) => {
+      analytics.enabled = true;
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(emptyProgress(language)),
+      );
+      render(<App />);
+      const t = messages[language];
+      fireEvent.click(screen.getByRole('button', { name: t.settings }));
+      expect(screen.getByText(t.analyticsBody)).toBeVisible();
+      expect(
+        screen.getByRole('link', { name: t.analyticsPolicy }),
+      ).toHaveAttribute('href', 'https://plausible.io/data-policy');
+    },
+  );
+
+  it('does not claim to collect analytics in the default build', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(
+      screen.queryByText(messages.en.analyticsBody),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('bilingual gallery and settings', () => {
