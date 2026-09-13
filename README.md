@@ -23,7 +23,7 @@ Length counts colored pixels, not grid dimensions: one colored pixel requires on
 | Advanced   | 2            | 2              | 2              | 3                  | 9      |
 | **Total**  | **8**        | **13**         | **5**          | **3**              | **29** |
 
-The gallery displays difficulty, length band, and exact exercise count independently. Filter by either or both dimensions; option counts reflect the other selected filter, including empty categories. Matching pictures appear in ascending exercise-count order. Clear filters to see the full collection. Filters remain selected when returning from play or changing language, but reset on reload; they do not change saved attempts or discovery badges.
+The gallery groups all pictures under Beginner, Standard, and Advanced headings. Within each group, pictures appear from smallest to largest by exercise count. Cards show their length band and exact exercise count; saved attempts and discovery badges remain available in every group.
 
 ## Run locally
 

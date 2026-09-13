@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { puzzles } from './content/animals';
-import {
-  difficulties,
-  sizes,
-  getDifficulty,
-  getSize,
-} from './domain/categories';
-import type { Difficulty, PuzzleSize } from './domain/categories';
+import { difficulties, getDifficulty, getSize } from './domain/categories';
 import {
   createAttempt,
   currentExercise,
@@ -47,14 +41,19 @@ function initialProgress(): LoadResult {
     : { progress: emptyProgress(language), notice: 'unavailable' };
 }
 
+const puzzleGroups = difficulties.map((difficulty) => ({
+  difficulty,
+  puzzles: puzzles
+    .filter((puzzle) => getDifficulty(puzzle) === difficulty)
+    .sort((a, b) => a.pixels.length - b.pixels.length),
+}));
+
 export function App() {
   const [initial] = useState(initialProgress);
   const [progress, setProgress] = useState(initial.progress);
   const progressRef = useRef(progress);
   const [notice, setNotice] = useState(initial.notice);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty | 'all'>('all');
-  const [size, setSize] = useState<PuzzleSize | 'all'>('all');
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<
     'retry' | 'range' | 'correct' | 'practiceCorrect' | 'retryOnly' | null
@@ -80,15 +79,6 @@ export function App() {
   const answerRef = useRef<HTMLInputElement>(null);
   const pwa = usePwa();
   const t = messages[progress.language];
-  const matchingDifficulty = puzzles.filter(
-    (item) => difficulty === 'all' || getDifficulty(item) === difficulty,
-  );
-  const matchingSize = puzzles.filter(
-    (item) => size === 'all' || getSize(item) === size,
-  );
-  const visiblePuzzles = matchingDifficulty
-    .filter((item) => size === 'all' || getSize(item) === size)
-    .sort((a, b) => a.pixels.length - b.pixels.length);
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
@@ -354,127 +344,84 @@ export function App() {
                 {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
-            <div className="gallery-filters">
-              <label>
-                {t.difficulty}
-                <select
-                  value={difficulty}
-                  onChange={(event) =>
-                    setDifficulty(event.target.value as Difficulty | 'all')
-                  }
-                >
-                  <option value="all">
-                    {t.allDifficulties} ({matchingSize.length})
-                  </option>
-                  {difficulties.map((value) => (
-                    <option key={value} value={value}>
-                      {t[value]} (
-                      {
-                        matchingSize.filter(
-                          (item) => getDifficulty(item) === value,
-                        ).length
-                      }
-                      )
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                {t.length}
-                <select
-                  value={size}
-                  onChange={(event) =>
-                    setSize(event.target.value as PuzzleSize | 'all')
-                  }
-                >
-                  <option value="all">
-                    {t.allSizes} ({matchingDifficulty.length})
-                  </option>
-                  {sizes.map((value) => (
-                    <option key={value} value={value}>
-                      {t[value]} (
-                      {
-                        matchingDifficulty.filter(
-                          (item) => getSize(item) === value,
-                        ).length
-                      }
-                      )
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                className="secondary"
-                onClick={() => {
-                  setDifficulty('all');
-                  setSize('all');
-                }}
+            {puzzleGroups.map((group) => (
+              <section
+                className="difficulty-group"
+                key={group.difficulty}
+                aria-labelledby={`difficulty-${group.difficulty}`}
               >
-                {t.clearFilters}
-              </button>
-            </div>
-            <p className="gallery-summary" role="status">
-              {t.matchingPictures}: {visiblePuzzles.length} / {puzzles.length}
-            </p>
-            <p className="gallery-guidance">{t.categoryHelp}</p>
-            {visiblePuzzles.length === 0 && <p>{t.noPictures}</p>}
-            <div className="picture-gallery">
-              {visiblePuzzles.map((animal) => {
-                const saved = progress.attempts[animal.id];
-                const done = saved && isComplete(saved);
-                const badge = progress.completed.includes(animal.id);
-                return (
-                  <button
-                    key={animal.id}
-                    className={`picture-card picture-${animal.id}`}
-                    onClick={() => openPuzzle(animal.id)}
-                    aria-label={`${t[animal.name]} · ${done ? t.completed : saved ? t.continue : t.start}`}
-                    aria-describedby={`category-${animal.id}`}
-                  >
-                    <div className="card-art">
-                      <span className="picture-number" aria-hidden="true">
-                        {String(puzzles.indexOf(animal) + 1).padStart(2, '0')}
-                      </span>
-                      {badge && (
-                        <span
-                          className="discovery-badge"
-                          aria-label={t.completed}
-                        >
-                          ✓
-                        </span>
-                      )}
-                      <span className="art-halo" />
-                      <PixelArt puzzle={animal} />
-                      <span className="card-spark" aria-hidden="true">
-                        ✦
-                      </span>
-                    </div>
-                    <div className="card-copy">
-                      <span className="card-level" id={`category-${animal.id}`}>
-                        {t[getDifficulty(animal)]} · {t[getSize(animal)]}
-                        <span className="card-exercises">
-                          {animal.pixels.length} {t.exercises}
-                        </span>
-                      </span>
-                      <h3>{t[animal.name]}</h3>
-                      <div className="card-action">
-                        <span>
-                          {done ? t.completed : saved ? t.continue : t.start}
-                        </span>
-                        <span aria-hidden="true">{done ? '✓' : '↗'}</span>
-                      </div>
-                      {saved && !done && (
-                        <progress
-                          value={saved.solved.length}
-                          max={animal.pixels.length}
-                          aria-label={`${t[animal.name]}: ${t.filled}`}
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                <h2 id={`difficulty-${group.difficulty}`}>
+                  {t[group.difficulty]}
+                </h2>
+                <div className="picture-gallery">
+                  {group.puzzles.map((animal) => {
+                    const saved = progress.attempts[animal.id];
+                    const done = saved && isComplete(saved);
+                    const badge = progress.completed.includes(animal.id);
+                    return (
+                      <button
+                        key={animal.id}
+                        className={`picture-card picture-${animal.id}`}
+                        onClick={() => openPuzzle(animal.id)}
+                        aria-label={`${t[animal.name]} · ${done ? t.completed : saved ? t.continue : t.start}`}
+                        aria-describedby={`category-${animal.id}`}
+                      >
+                        <div className="card-art">
+                          <span className="picture-number" aria-hidden="true">
+                            {String(puzzles.indexOf(animal) + 1).padStart(
+                              2,
+                              '0',
+                            )}
+                          </span>
+                          {badge && (
+                            <span
+                              className="discovery-badge"
+                              aria-label={t.completed}
+                            >
+                              ✓
+                            </span>
+                          )}
+                          <span className="art-halo" />
+                          <PixelArt puzzle={animal} />
+                          <span className="card-spark" aria-hidden="true">
+                            ✦
+                          </span>
+                        </div>
+                        <div className="card-copy">
+                          <span
+                            className="card-level"
+                            id={`category-${animal.id}`}
+                          >
+                            {t[getDifficulty(animal)]} · {t[getSize(animal)]}
+                            <span className="card-exercises">
+                              {animal.pixels.length} {t.exercises}
+                            </span>
+                          </span>
+                          <h3>{t[animal.name]}</h3>
+                          <div className="card-action">
+                            <span>
+                              {done
+                                ? t.completed
+                                : saved
+                                  ? t.continue
+                                  : t.start}
+                            </span>
+                            <span aria-hidden="true">{done ? '✓' : '↗'}</span>
+                          </div>
+                          {saved && !done && (
+                            <progress
+                              value={saved.solved.length}
+                              max={animal.pixels.length}
+                              aria-label={`${t[animal.name]}: ${t.filled}`}
+                            />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
             <p className="gallery-note">
               <span aria-hidden="true">♡ </span>
               {t.gentle}

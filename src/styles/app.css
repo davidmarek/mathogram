@@ -232,37 +232,12 @@ main {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
-.gallery-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 12px;
+.difficulty-group {
+  margin-top: 28px;
 }
-.gallery-filters label {
-  display: grid;
-  gap: 6px;
-  flex: 1 1 220px;
-  min-width: 0;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-.gallery-filters select {
-  width: 100%;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--ink);
-  background: #fffef9;
-}
-.gallery-summary {
-  margin: 16px 0 8px;
-  font-weight: 700;
-}
-.gallery-guidance {
-  margin-bottom: 20px;
-  font-size: 0.85rem;
-  color: var(--muted);
+.difficulty-group h2 {
+  margin-bottom: 16px;
+  font-size: 1.2rem;
 }
 .card-exercises {
   display: block;
@@ -527,12 +502,15 @@ progress::-moz-progress-bar {
 }
 .grid-cell {
   aspect-ratio: 1;
-  background-color: #f0eee6;
+  background-color: #d8d9d2;
   border-radius: 2px;
   min-width: 0;
 }
 .grid-cell.active-row {
   box-shadow: inset 0 0 0 1px #597c6470;
+}
+.grid-cell[data-filled='true'] {
+  box-shadow: inset 0 0 0 1px #63716c;
 }
 .active-row-label {
   background: #306950;

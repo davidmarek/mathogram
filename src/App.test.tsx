@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { puzzles } from './content/animals';
+import { difficulties, getDifficulty } from './domain/categories';
 import { createAttempt, currentExercise } from './domain/game';
 import { emptyProgress, STORAGE_KEY } from './storage/progress';
 import type { Progress } from './storage/progress';
@@ -209,43 +210,41 @@ describe('aggregate puzzle analytics', () => {
 });
 
 describe('bilingual gallery and settings', () => {
-  it('filters difficulty and length independently, orders by exercises, and clears empty results', () => {
+  it('groups every picture by difficulty and orders each group by exercise count', () => {
     const { container } = render(<App />);
-    const counts = () =>
-      [...container.querySelectorAll('.card-exercises')].map((element) =>
-        Number(element.textContent!.split(' ')[0]),
-      );
-    expect(counts()).toHaveLength(29);
-    expect(counts()).toEqual([...counts()].sort((a, b) => a - b));
-    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
-      target: { value: 'advanced' },
-    });
-    expect(counts()).toHaveLength(9);
-    fireEvent.change(
-      screen.getByRole('combobox', { name: 'Length (exercises)' }),
-      {
-        target: { value: 'small' },
-      },
+    expect(container.querySelectorAll('.picture-card')).toHaveLength(
+      puzzles.length,
     );
-    expect(counts()).toHaveLength(2);
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(
+      [...container.querySelectorAll('.difficulty-group h2')].map(
+        (heading) => heading.textContent,
+      ),
+    ).toEqual(difficulties.map((difficulty) => messages.en[difficulty]));
+    for (const difficulty of difficulties) {
+      const group = screen.getByRole('region', {
+        name: messages.en[difficulty],
+      });
+      const expected = puzzles
+        .filter((puzzle) => getDifficulty(puzzle) === difficulty)
+        .sort((a, b) => a.pixels.length - b.pixels.length);
+      expect(
+        within(group)
+          .getAllByRole('button')
+          .map((card) => within(card).getByRole('heading').textContent),
+      ).toEqual(expected.map((puzzle) => messages.en[puzzle.name]));
+      expect(
+        [...group.querySelectorAll('.card-exercises')].map((element) =>
+          Number(element.textContent!.split(' ')[0]),
+        ),
+      ).toEqual(expected.map((puzzle) => puzzle.pixels.length));
+    }
     expect(
       screen.getByRole('button', { name: /Rocket/ }),
     ).toHaveAccessibleDescription(/Advanced · Small · 1–40.*exercises/);
-    expect(screen.getByRole('button', { name: /Robot face/ })).toBeVisible();
-    expect(screen.getByText('Matching pictures: 2 / 29')).toBeVisible();
-    expect(
-      screen.getByRole('option', { name: 'Advanced (2)' }),
-    ).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
-      target: { value: 'standard' },
-    });
-    expect(counts()).toHaveLength(0);
-    expect(screen.getByText(messages.en.noPictures)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(counts()).toHaveLength(29);
   });
 
-  it('keeps filters across play and language changes without changing existing saves', () => {
+  it('keeps every group available across play and language changes without changing saves', () => {
     const progress = emptyProgress('en');
     const attempt = createAttempt(puzzles[0]!);
     attempt.solved = [attempt.queue[0]!.pixelId];
@@ -253,31 +252,26 @@ describe('bilingual gallery and settings', () => {
     progress.completed = ['butterfly'];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
     render(<App />);
-    fireEvent.change(screen.getByRole('combobox', { name: 'Difficulty' }), {
-      target: { value: 'beginner' },
-    });
-    fireEvent.change(
-      screen.getByRole('combobox', { name: 'Length (exercises)' }),
-      {
-        target: { value: 'small' },
-      },
-    );
     expect(saved()).toEqual(progress);
     openFish();
     expect(screen.getByTestId('equation')).toHaveTextContent(/^\d+ [+−] \d+$/);
     expect(saved().attempts.fish).toEqual(attempt);
     fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
-    expect(screen.getByRole('combobox', { name: 'Difficulty' })).toHaveValue(
-      'beginner',
-    );
+    for (const difficulty of difficulties)
+      expect(
+        screen.getByRole('region', { name: messages.en[difficulty] }),
+      ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
-    expect(screen.getByRole('combobox', { name: 'Obtížnost' })).toHaveValue(
-      'beginner',
-    );
-    expect(
-      screen.getByRole('combobox', { name: 'Délka (počet příkladů)' }),
-    ).toHaveValue('small');
-    expect(screen.getByText('Odpovídající obrázky: 6 / 29')).toBeVisible();
+    for (const difficulty of difficulties)
+      expect(
+        screen.getByRole('region', { name: messages.cs[difficulty] }),
+      ).toBeVisible();
+    for (const puzzle of puzzles)
+      expect(
+        screen.getByRole('button', {
+          name: new RegExp(messages.cs[puzzle.name]),
+        }),
+      ).toBeVisible();
     expect(saved().attempts.fish).toEqual(attempt);
     expect(saved().completed).toEqual(['butterfly']);
   });
