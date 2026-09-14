@@ -45,7 +45,7 @@ export default defineConfig({
       workbox: {
         cacheId: 'mathogram',
         cleanupOutdatedCaches: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,mp3}'],
         navigateFallback: '/mathogram/index.html',
         navigateFallbackAllowlist: [/^\/mathogram(?:\/|$)/],
         skipWaiting: false,

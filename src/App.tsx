@@ -22,6 +22,8 @@ import type { Language, LoadResult, Progress } from './storage/progress';
 import { usePwa } from './pwa/usePwa';
 import { analyticsEnabled, trackPuzzle } from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
+import { CzechPractice } from './components/CzechPractice';
+import { practiceMessages } from './i18n/practice';
 
 function browserStorage(): Storage | null {
   try {
@@ -78,11 +80,16 @@ export function App() {
   const heading = useRef<HTMLHeadingElement>(null);
   const answerRef = useRef<HTMLInputElement>(null);
   const pwa = usePwa();
-  const t = messages[progress.language];
+  const subject = progress.subject ?? 'math';
+  const t = practiceMessages(messages[progress.language], subject);
   const puzzle = puzzles.find((item) => item.id === activeId);
   const attempt = activeId ? progress.attempts[activeId] : undefined;
   const complete = attempt ? isComplete(attempt) : false;
-  usePuzzleTime(attempt && !complete && modal === null ? activeId : null);
+  usePuzzleTime(
+    subject === 'math' && attempt && !complete && modal === null
+      ? activeId
+      : null,
+  );
   const current =
     pendingExercise?.exercise ??
     (attempt ? currentExercise(attempt) : undefined);
@@ -284,6 +291,21 @@ export function App() {
           </button>
         </div>
       </header>
+      <nav className="subject-switch" aria-label={t.subject}>
+        {(['math', 'czech'] as const).map((value) => (
+          <button
+            key={value}
+            aria-pressed={subject === value}
+            onClick={() => {
+              if (subject === value) return;
+              goHome();
+              store({ ...progressRef.current, subject: value });
+            }}
+          >
+            {t[value]}
+          </button>
+        ))}
+      </nav>
 
       {notice && (
         <div className="notice" role="alert">
@@ -322,7 +344,17 @@ export function App() {
       )}
 
       <main>
-        {!puzzle || !attempt ? (
+        {subject === 'czech' ? (
+          <CzechPractice
+            progress={progress}
+            store={store}
+            activeId={activeId}
+            onSelect={setActiveId}
+            onHome={goHome}
+            suspended={modal !== null}
+            t={t}
+          />
+        ) : !puzzle || !attempt ? (
           <section className="gallery" aria-labelledby="gallery-title">
             <div className="hero">
               <span className="hero-spark spark-one" aria-hidden="true">
@@ -657,7 +689,11 @@ export function App() {
             <>
               <h3>{t.howTitle}</h3>
               <p>{t.howBody}</p>
-              <p>{t.threeNumbersHelp}</p>
+              {subject === 'math' ? (
+                <p>{t.threeNumbersHelp}</p>
+              ) : (
+                <p>{t.audioHelp}</p>
+              )}
               <p>{t.gentle}</p>
               {!standalone && (
                 <>
