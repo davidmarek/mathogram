@@ -1,0 +1,104 @@
+[
+  {
+    "topic": "home",
+    "words": [
+      "máma",
+      "táta",
+      "babička",
+      "děda",
+      "sestra",
+      "teta",
+      "doma",
+      "vana",
+      "okno",
+      "deka",
+      "kolo",
+      "panenka"
+    ]
+  },
+  {
+    "topic": "school",
+    "words": [
+      "škola",
+      "třída",
+      "lavice",
+      "tabule",
+      "pero",
+      "tužka",
+      "guma",
+      "papír",
+      "kniha",
+      "taška",
+      "číslo",
+      "písmeno"
+    ]
+  },
+  {
+    "topic": "animals",
+    "words": [
+      "kočka",
+      "pes",
+      "husa",
+      "kachna",
+      "slepice",
+      "kuře",
+      "tele",
+      "prase",
+      "koza",
+      "ovce",
+      "žába",
+      "ryba"
+    ]
+  },
+  {
+    "topic": "nature",
+    "words": [
+      "voda",
+      "řeka",
+      "louka",
+      "les",
+      "pole",
+      "tráva",
+      "lípa",
+      "bříza",
+      "růže",
+      "nebe",
+      "jaro",
+      "léto"
+    ]
+  },
+  {
+    "topic": "food",
+    "words": [
+      "jablko",
+      "hruška",
+      "banán",
+      "malina",
+      "jahoda",
+      "citrón",
+      "mléko",
+      "máslo",
+      "kaše",
+      "polévka",
+      "salát",
+      "rýže"
+    ]
+  },
+  {
+    "topic": "everyday",
+    "words": [
+      "ruka",
+      "noha",
+      "hlava",
+      "oko",
+      "ucho",
+      "pusa",
+      "čelo",
+      "koleno",
+      "bota",
+      "čepice",
+      "šála",
+      "šaty"
+    ]
+  }
+]

@@ -2,6 +2,8 @@ import { puzzles } from '../content/animals';
 import { validateAttempt } from '../domain/game';
 import type { Attempt } from '../domain/game';
 import { isRecord } from '../domain/puzzle';
+import { validateSpellingAttempt } from '../domain/spelling';
+import type { SpellingProgress } from '../domain/spelling';
 
 export const STORAGE_KEY = 'mathogram.progress';
 
@@ -13,6 +15,8 @@ export interface Progress {
   showRowHints: boolean;
   attempts: Record<string, Attempt>;
   completed: string[];
+  subject?: 'math' | 'czech';
+  czech?: SpellingProgress;
 }
 
 export interface LoadResult {
@@ -93,6 +97,48 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
   } else {
     recovered = true;
   }
+  if ('subject' in value) {
+    if (value.subject === 'math' || value.subject === 'czech')
+      progress.subject = value.subject;
+    else recovered = true;
+  }
+  if ('czech' in value) {
+    const czech: SpellingProgress = { attempts: {}, completed: [] };
+    progress.czech = czech;
+    if (!isRecord(value.czech)) recovered = true;
+    else {
+      if (!isRecord(value.czech.attempts)) recovered = true;
+      else
+        for (const [id, attempt] of Object.entries(value.czech.attempts)) {
+          const puzzle = puzzles.find((item) => item.id === id);
+          if (!puzzle || !validateSpellingAttempt(attempt, puzzle)) {
+            recovered = true;
+            continue;
+          }
+          czech.attempts[id] = {
+            puzzleId: attempt.puzzleId,
+            puzzleVersion: attempt.puzzleVersion,
+            wordVersion: attempt.wordVersion,
+            queue: attempt.queue.map(({ pixelId, wordId }) => ({
+              pixelId,
+              wordId,
+            })),
+            solved: [...attempt.solved],
+          };
+        }
+      if (!Array.isArray(value.czech.completed)) recovered = true;
+      else
+        for (const id of value.czech.completed) {
+          if (
+            typeof id !== 'string' ||
+            !puzzles.some((item) => item.id === id) ||
+            czech.completed.includes(id)
+          )
+            recovered = true;
+          else czech.completed.push(id);
+        }
+    }
+  }
   return { progress, notice: recovered ? 'recovered' : null };
 }
 
@@ -163,5 +209,6 @@ export function resetAllProgress(progress: Progress): Progress {
   return {
     ...emptyProgress(progress.language),
     showRowHints: progress.showRowHints,
+    ...(progress.subject ? { subject: progress.subject } : {}),
   };
 }
