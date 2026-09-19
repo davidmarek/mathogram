@@ -1,6 +1,6 @@
 # Mathogram
 
-**Little sums. Lovely discoveries.** A bright, touch-first pixel-picture game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No player accounts, ads, external assets, penalties, timers, or sound. Analytics is off by default; deployments may explicitly enable the limited, cookieless usage statistics described below.
+**Little sums. Lovely discoveries.** A bright, touch-first pixel-picture game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. The separate Czech spelling mode reveals a pixel for each correctly transcribed word. No player accounts, ads, remote runtime assets, penalties, or player timers. Math practice remains silent. Analytics is off by default; deployments may explicitly enable the limited, cookieless usage statistics described below.
 
 Eleven original animals are available from the start: Sunny fish (28 pixels), Berry butterfly (32), Honey bee (36), Pebble snail (40), Mossy turtle (44), Ginger cat (48), Daffodil duck (50), Clover bunny (54), Amber fox (58), Twilight owl (61), and Biscuit pup (63). The five intermediate drawings keep gaps between available puzzle lengths to at most four pixels. The first four puzzles stay within 10; later puzzles introduce the second ten. Background squares never give away the unfinished silhouette.
 
@@ -55,6 +55,46 @@ Return to **My pictures / Moje obrázky** at any point to resume later with the 
 
 The header language switch works during a puzzle without changing its queue. On first use, Czech is chosen if the browser's preferred languages include Czech; otherwise English is used. The saved choice takes precedence thereafter. **Settings** contains language, row hints, local-data controls, deferred app updates, and collection reset. The separate **Help / Nápověda** question-mark button contains game instructions, installation guidance, and offline-play advice.
 
+## Czech spelling practice (audio preparation pending)
+
+The top-of-page **Math / Czech spelling** switch chooses the subject; the existing language switch chooses the interface language independently. Each subject has its own saved attempts and discovery badges. Czech galleries group the same artwork by picture length, not arithmetic difficulty. Switching subjects returns to that subject's gallery without losing progress; the subject preference survives reloads. Resetting the collection clears both subjects and retains preferences.
+
+Tap **Listen**, hear the whole recording, type the word, and press **Check** or Enter. Every correct answer reveals exactly one pixel. Wrong answers stay on the same word with a gentle retry message and unlimited replay. **Listen slowly** uses pitch-preserving 0.8× playback. Input supports physical/mobile Czech keyboards plus accent buttons that insert at the caret. Answers are NFC-normalized, case-insensitive, and trimmed, but accents and internal spelling must match. Browser spelling correction is disabled. Playback starts only on a user gesture and stops when leaving the exercise, opening a dialog, or hiding the page. A missing/failed recording displays an error; it never reveals the answer or grants a pixel before a full listen.
+
+**This branch deliberately contains no generated recordings yet.** The UI, word bank, persistence, and generator are prepared, but dictation cannot be played until all audio is generated. Do not release this mode as ready before completing the steps below. There is no silent browser-speech fallback.
+
+### Speech choice and generation
+
+Use **Azure AI Speech**, Czech voice **`cs-CZ-VlastaNeural`**, to generate one MP3 per word before deployment. [Azure lists Vlasta and Antonin Czech neural voices](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts); the [text-to-speech REST API](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech) works with Node's built-in `fetch`, so no runtime SDK or dependency is needed. Browser Web Speech was considered but not selected because Czech voice availability/pronunciation depends on the device.
+
+An authorized maintainer must configure `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` in their local process environment using an existing Azure Speech resource. **Never put the key in source, a browser bundle, a `VITE_` variable, or a committed environment file.** No resource is provisioned automatically. Generation sends only the curated word bank to Azure; per-character charges may apply.
+
+```powershell
+npm run audio:generate
+npm run audio:check
+npm run build
+npm run test:e2e
+```
+
+The generator verifies regional voice availability, uses 24 kHz/48 kbit mono MP3 with a slightly slower reading rate, throttles requests, and skips valid existing clips when rerun. Errors abort with a nonzero exit code; incomplete responses never replace finished files. `audio:check` is offline and requires every catalog file to exist with an MP3 header; it does **not** verify pronunciation or decode quality. Review every recording with a Czech-speaking adult, including accents, before committing the generated `public\audio\cs\v2\cs-*.mp3` files and deploying. Then verify real audio playback on iOS/Safari and Android/Chrome, online and offline.
+
+Files use opaque IDs rather than spelling answers in URLs. Vite's base path is respected. Each short recording is downloaded fully and played through a temporary blob URL, avoiding media byte-range requests against the offline cache. Blob URLs are revoked on exit. If a browser blocks playback after an asynchronous download, another tap reuses the downloaded recording and starts playback directly from that gesture. Workbox precaches all bundled MP3s, so no Azure requests, credentials, microphone access, or installed Czech voice are needed during play. The first visit still needs internet, and offline availability still depends on browser storage. Existing math analytics remain unchanged; Czech starts/completions/answers are not sent as math events.
+
+### Word bank for second graders
+
+The **105-word practice bank** in `src\content\czech-words.json` follows Tomas's workbook order. The repeated `opice` entry from the source list is included once, and `Slávek` uses normalized capitalization.
+
+| Workbook words                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------- |
+| pes, lev, myš, kos, páv, šíp, luk, koš, rok, sýr, výr, orel, pórek, pero, ruka, dárek, párek, Marek, Mirek, Jarek, roláda |
+| korále, rak, rám, vrána, prase, kráva, tráva, vlaky, vlasy, vlaje, Ríša, René, Renata, Roman, Irena, drápy, dráty, pole   |
+| stopa, ploty, stany, kolo, stoly, lopata, auto, sauna, mouka, louka, koule, euro, kousá, kouká, koulí, koupí, celá, více  |
+| celer, lavice, police, cop, opice, ocet, otec, Alice, Cyril, copak, pec, kocour, zajíc, školák, plánek, dvorek, zvonek    |
+| králík, mlýnek, Pavel, Slávek, Zita, Zuza, Zdena, hák, had, husa, house, hází, hra, hraje, hokej, puk, hora, hůl          |
+| Hana, Hynek, Tomáš, Tereza, Tadeáš, mlýn, plyn, hráz, mráz, král, kraj, hlas, vlas                                        |
+
+IDs are derived from catalog order. When changing words, order, or synthesis settings, increment `czechWordVersion` in `src\content\czechWords.ts` and regenerate all audio in the new versioned directory. This invalidates only incompatible spelling attempts, not math attempts or discovery badges. Remove obsolete versioned audio when no longer needed. `src\domain\spelling.ts` validates saved word IDs, versions, pixel coverage, and the solved prefix.
+
 ## Architecture and arithmetic
 
 | Location                                        | Responsibility                                                                     |
@@ -93,7 +133,7 @@ Add English keys in `src\i18n\en.ts` and corresponding Czech keys in `cs.ts`; Ty
 
 ## Local data and recovery
 
-Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, the row hint preference, attempts (including content versions, exact equations, solved prefix and optional final-pixel practice reference), and completion badges. Earlier version-1 saves without the hint preference are loaded with hints enabled and retain their progress. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels, invalid practice references and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
+Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, the row hint preference, math attempts (including content versions, exact equations, solved prefix and optional final-pixel practice reference), and math completion badges. Optional `subject` and `czech` fields add the selected subject and separately validated spelling attempts/badges without changing older math saves. Earlier version-1 saves without the hint preference are loaded with hints enabled and retain their progress. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels, invalid practice references and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
 
 Every correct answer, deferral, practice transition, fresh attempt, reset and preference change is saved synchronously, before animation. Quota/security failures show a persistent warning and allow in-memory play without claiming it was saved. Update acceptance is blocked if that save fails. No unload event is required, and neither reset action calls `localStorage.clear()` or deletes any origin-wide cache.
 

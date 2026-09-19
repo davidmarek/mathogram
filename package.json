@@ -19,7 +19,9 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run test:e2e",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "audio:generate": "node scripts/generate-czech-audio.mjs",
+    "audio:check": "node scripts/generate-czech-audio.mjs --check"
   },
   "dependencies": {
     "react": "^19.3.0",

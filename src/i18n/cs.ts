@@ -1,6 +1,39 @@
 import type { Messages } from './en';
 
 export const cs: Messages = {
+  subject: 'Co procvičujeme',
+  math: 'Matematika',
+  czech: 'Český jazyk',
+  spellingTagline: 'Malá slova. Velké objevy.',
+  spellingIntro:
+    'Vyber si obrázek. Poslechni si slovo. Napiš ho a odkryj políčko!',
+  spellingHowTitle: 'Jedno slovo, jedno políčko',
+  spellingHowBody:
+    'Klepni na Poslechnout, poslechni si celé české slovo, napiš ho a klepni na Ověřit. Každé správně napsané slovo odhalí jedno políčko. Háčky a čárky jsou důležité. Velká písmena a mezery na začátku a konci nevadí. Když se spleteš, poslechni si slovo znovu a oprav ho. O žádná políčka nepřijdeš. Matematika a čeština mají oddělené sbírky.',
+  spellingGentle: 'Nespěchej. Slovo si můžeš poslechnout znovu.',
+  spellingComplete: 'Slovo za slovem. Vytvořil jsi něco krásného.',
+  spellingHiddenGrid:
+    'Skrytý obrázek. Napiš slova, která uslyšíš, a odhal jeho barvy.',
+  spellingSolve: 'POSLOUCHEJ, PIŠ A OBJEVUJ',
+  spellingAnswer: 'Slovo, které jsi slyšel',
+  spellingWords: 'slov',
+  spellingLevel: 'Čeština · 2. třída',
+  listen: 'Poslechnout',
+  listenAgain: 'Poslechnout znovu',
+  listenSlowly: 'Poslechnout pomalu',
+  audioLoading: 'Načítáme nahrávku…',
+  audioPlaying: 'Poslechni si celé slovo…',
+  audioError:
+    'Nahrávku se nepodařilo přehrát. Zkontroluj připojení nebo popros dospělého o kontrolu zvukových souborů. Pak klepni znovu na Poslechnout. Tvoje políčka zůstávají.',
+  audioHelp:
+    'Čeština používá přibalené nahrávky Azure Speech, ne mikrofon ani hlas zařízení. Odpovědi se do Azure neposílají. Před použitím této části je potřeba nahrávky vygenerovat. Bez nahrávky nejde slovo ověřit. Přibalené nahrávky po uložení do offline paměti fungují i bez internetu.',
+  listenFirst: 'Než slovo ověříš, poslechni si ho celé.',
+  spellingHint:
+    'Nezapomeň na háčky a čárky. Můžeš použít i tlačítka s písmeny.',
+  spellingRetry:
+    'Ještě to není ono. Poslechni si slovo znovu a zkontroluj písmena, háčky a čárky.',
+  accentLetters: 'Česká písmena',
+  insertLetter: 'Vložit písmeno',
   tagline: 'Malé příklady. Velké objevy.',
   galleryTitle: 'Co dnes objevíš?',
   galleryIntro: 'Vyber si obrázek. Vyřeš příklad. Oživ obrázek!',

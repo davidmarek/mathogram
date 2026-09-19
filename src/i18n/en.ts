@@ -1,4 +1,36 @@
 export const en = {
+  subject: 'Practice subject',
+  math: 'Math',
+  czech: 'Czech spelling',
+  spellingTagline: 'Little words. Lovely discoveries.',
+  spellingIntro:
+    'Pick a picture. Listen to a Czech word. Write it to reveal a pixel!',
+  spellingHowTitle: 'One word, one little pixel',
+  spellingHowBody:
+    'Tap Listen, hear the whole Czech word, then write it and tap Check. Every correct spelling reveals one pixel. Accents matter; capitals and spaces at the ends do not. If you miss a word, listen again and retry without losing any pixels. Math and Czech keep separate collections.',
+  spellingGentle: 'Take your time. Listen again whenever you need.',
+  spellingComplete: 'One little word at a time. You made something lovely.',
+  spellingHiddenGrid:
+    'Hidden picture. Write the words you hear to reveal its colored pixels.',
+  spellingSolve: 'LISTEN, WRITE & REVEAL',
+  spellingAnswer: 'The word you heard',
+  spellingWords: 'words',
+  spellingLevel: 'Czech · Grade 2',
+  listen: 'Listen',
+  listenAgain: 'Listen again',
+  listenSlowly: 'Listen slowly',
+  audioLoading: 'Loading the recording…',
+  audioPlaying: 'Listen to the whole word…',
+  audioError:
+    'The recording could not be played. Check your connection or ask an adult to check the audio files, then try Listen again. Your pixels are safe.',
+  audioHelp:
+    'Czech practice uses bundled Azure Speech recordings, not a microphone or a device voice. No answers are sent to Azure. Recordings must be generated before this mode is ready; an unavailable recording blocks that word. Once included and cached, recordings work offline.',
+  listenFirst: 'Listen to the whole word before checking your spelling.',
+  spellingHint:
+    'Remember the háčky and čárky. You can also use the letter buttons.',
+  spellingRetry: 'Not quite. Listen again and check every letter and accent.',
+  accentLetters: 'Czech letters',
+  insertLetter: 'Insert letter',
   tagline: 'Little sums. Lovely discoveries.',
   galleryTitle: 'What will you discover?',
   galleryIntro: 'Pick a picture. Solve a sum. Bring it to life!',
