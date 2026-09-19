@@ -27,7 +27,7 @@ The gallery groups all pictures under Beginner, Standard, and Advanced headings.
 
 ## Run locally
 
-Use **Node 24 LTS**, at least **24.14.1** within the 24.x line, and npm. `.nvmrc` records the reproducible baseline. The lockfile is included. TypeScript 6 is intentional: the maintained TypeScript ESLint parser currently supports TypeScript below 6.1. jsdom 29 supports this Node baseline; jsdom 30 requires a newer Node patch.
+Use **Node 24 LTS**, at least **24.15.0** within the 24.x line, and npm. `.nvmrc` records the reproducible baseline. The lockfile is included. TypeScript 6 is intentional: the maintained TypeScript ESLint parser currently supports TypeScript below 6.1.
 
 ```powershell
 npm ci
