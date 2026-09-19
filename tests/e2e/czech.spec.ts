@@ -55,7 +55,7 @@ test('Czech dictation requires listening and accents, saves separately and fits 
       });
     });
   }
-  await page.route('**/audio/cs/v1/*.mp3', (route) =>
+  await page.route('**/audio/cs/v2/*.mp3', (route) =>
     route.fulfill({ contentType: 'audio/wav', body: recording() }),
   );
   await page.setViewportSize({ width: 390, height: 844 });
@@ -66,6 +66,13 @@ test('Czech dictation requires listening and accents, saves separately and fits 
   await page
     .getByRole('button', { name: 'Czech spelling', exact: true })
     .click();
+  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.evaluate(() => {
+    const progress = JSON.parse(localStorage.getItem('mathogram.progress')!);
+    progress.czech.attempts.fish.queue[0].wordId = 'cs-005';
+    localStorage.setItem('mathogram.progress', JSON.stringify(progress));
+  });
+  await page.reload();
   await page.getByRole('button', { name: /Sunny fish/ }).click();
   const savedWord = await page.evaluate(() => {
     const progress = JSON.parse(localStorage.getItem('mathogram.progress')!);
@@ -117,7 +124,7 @@ test('Czech dictation requires listening and accents, saves separately and fits 
 test('missing audio shows a recoverable error without revealing a pixel', async ({
   page,
 }) => {
-  await page.route('**/audio/cs/v1/*.mp3', (route) =>
+  await page.route('**/audio/cs/v2/*.mp3', (route) =>
     route.fulfill({ status: 404, body: '' }),
   );
   await page.goto('./');

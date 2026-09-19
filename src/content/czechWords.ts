@@ -1,7 +1,7 @@
 import groups from './czech-words.json' with { type: 'json' };
 
 // Bump when words or their order change: IDs also identify versioned recordings.
-export const czechWordVersion = 1;
+export const czechWordVersion = 2;
 export const czechWords = groups
   .flatMap(({ words }) => words)
   .map((text, index) => ({

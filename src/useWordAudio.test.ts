@@ -19,7 +19,7 @@ it('requires a full listen and supports a slower, non-overlapping replay', async
   const first = recordings[0]!;
   expect(first.src).toBe('blob:test-recording');
   expect(fetch).toHaveBeenCalledWith(
-    expect.stringMatching(/\/audio\/cs\/v1\/cs-001.mp3$/),
+    expect.stringMatching(/\/audio\/cs\/v2\/cs-001.mp3$/),
     expect.anything(),
   );
   expect(hook.result.current.heard).toBe(false);

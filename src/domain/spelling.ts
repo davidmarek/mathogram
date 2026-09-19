@@ -79,7 +79,8 @@ export function submitSpelling(
   if (
     !current ||
     current.pixelId !== expectedPixelId ||
-    normalizeSpelling(answer) !== czechWordById.get(current.wordId)?.text
+    normalizeSpelling(answer) !==
+      normalizeSpelling(czechWordById.get(current.wordId)?.text ?? '')
   )
     return attempt;
   return { ...attempt, solved: [...attempt.solved, current.pixelId] };

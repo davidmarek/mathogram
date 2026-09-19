@@ -76,22 +76,22 @@ npm run build
 npm run test:e2e
 ```
 
-The generator verifies regional voice availability, uses 24 kHz/48 kbit mono MP3 with a slightly slower reading rate, throttles requests, and skips valid existing clips when rerun. Errors abort with a nonzero exit code; incomplete responses never replace finished files. `audio:check` is offline and requires every catalog file to exist with an MP3 header; it does **not** verify pronunciation or decode quality. Review every recording with a Czech-speaking adult, including accents, before committing the generated `public\audio\cs\v1\cs-*.mp3` files and deploying. Then verify real audio playback on iOS/Safari and Android/Chrome, online and offline.
+The generator verifies regional voice availability, uses 24 kHz/48 kbit mono MP3 with a slightly slower reading rate, throttles requests, and skips valid existing clips when rerun. Errors abort with a nonzero exit code; incomplete responses never replace finished files. `audio:check` is offline and requires every catalog file to exist with an MP3 header; it does **not** verify pronunciation or decode quality. Review every recording with a Czech-speaking adult, including accents, before committing the generated `public\audio\cs\v2\cs-*.mp3` files and deploying. Then verify real audio playback on iOS/Safari and Android/Chrome, online and offline.
 
 Files use opaque IDs rather than spelling answers in URLs. Vite's base path is respected. Each short recording is downloaded fully and played through a temporary blob URL, avoiding media byte-range requests against the offline cache. Blob URLs are revoked on exit. If a browser blocks playback after an asynchronous download, another tap reuses the downloaded recording and starts playback directly from that gesture. Workbox precaches all bundled MP3s, so no Azure requests, credentials, microphone access, or installed Czech voice are needed during play. The first visit still needs internet, and offline availability still depends on browser storage. Existing math analytics remain unchanged; Czech starts/completions/answers are not sent as math events.
 
 ### Word bank for second graders
 
-The initial **72-word practice bank** is in `src\content\czech-words.json`. It mixes familiar concrete vocabulary, short words, long vowels, and soft consonants; it is not a certified curriculum or a test of all second-grade grammar. A teacher/parent should review its fit for the child. Isolated homophone pairs such as _být/bít_ and _mýt/mít_ are intentionally excluded because audio alone cannot distinguish them. Longer pictures reshuffle the bank only after all words have been used, avoiding an immediate repeated word at the boundary.
+The **105-word practice bank** in `src\content\czech-words.json` follows Tomas's workbook order. The repeated `opice` entry from the source list is included once, and `Slávek` uses normalized capitalization.
 
-| Topic           | Words                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------- |
-| Home and family | máma, táta, babička, děda, sestra, teta, doma, vana, okno, deka, kolo, panenka          |
-| School          | škola, třída, lavice, tabule, pero, tužka, guma, papír, kniha, taška, číslo, písmeno    |
-| Animals         | kočka, pes, husa, kachna, slepice, kuře, tele, prase, koza, ovce, žába, ryba            |
-| Nature          | voda, řeka, louka, les, pole, tráva, lípa, bříza, růže, nebe, jaro, léto                |
-| Food            | jablko, hruška, banán, malina, jahoda, citrón, mléko, máslo, kaše, polévka, salát, rýže |
-| Everyday words  | ruka, noha, hlava, oko, ucho, pusa, čelo, koleno, bota, čepice, šála, šaty              |
+| Workbook words                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------- |
+| pes, lev, myš, kos, páv, šíp, luk, koš, rok, sýr, výr, orel, pórek, pero, ruka, dárek, párek, Marek, Mirek, Jarek, roláda |
+| korále, rak, rám, vrána, prase, kráva, tráva, vlaky, vlasy, vlaje, Ríša, René, Renata, Roman, Irena, drápy, dráty, pole   |
+| stopa, ploty, stany, kolo, stoly, lopata, auto, sauna, mouka, louka, koule, euro, kousá, kouká, koulí, koupí, celá, více  |
+| celer, lavice, police, cop, opice, ocet, otec, Alice, Cyril, copak, pec, kocour, zajíc, školák, plánek, dvorek, zvonek    |
+| králík, mlýnek, Pavel, Slávek, Zita, Zuza, Zdena, hák, had, husa, house, hází, hra, hraje, hokej, puk, hora, hůl          |
+| Hana, Hynek, Tomáš, Tereza, Tadeáš, mlýn, plyn, hráz, mráz, král, kraj, hlas, vlas                                        |
 
 IDs are derived from catalog order. When changing words, order, or synthesis settings, increment `czechWordVersion` in `src\content\czechWords.ts` and regenerate all audio in the new versioned directory. This invalidates only incompatible spelling attempts, not math attempts or discovery badges. Remove obsolete versioned audio when no longer needed. `src\domain\spelling.ts` validates saved word IDs, versions, pixel coverage, and the solved prefix.
 

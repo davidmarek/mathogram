@@ -42,11 +42,11 @@ afterEach(() => {
 
 it('checks every file offline and fails clearly for missing or invalid clips', async () => {
   await expect(generateAudio(['--check'], {})).rejects.toThrow(
-    '72/72 recordings missing',
+    '105/105 recordings missing',
   );
   expect(fetch).not.toHaveBeenCalled();
   fs.readFile.mockResolvedValue(Buffer.from('<html>not audio</html>'));
-  await expect(generateAudio(['--check'], {})).rejects.toThrow('72/72');
+  await expect(generateAudio(['--check'], {})).rejects.toThrow('105/105');
   fs.readFile.mockResolvedValue(mp3);
   await expect(generateAudio(['--check'], {})).resolves.toBeUndefined();
   expect(fs.writeFile).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ it('generates the entire catalog with Czech SSML, throttling, and atomic file re
     const [temporary, destination] = fs.rename.mock.calls[index];
     expect(temporary).toBe(`${destination}.tmp`);
   }
-  expect(delay).toHaveBeenCalledTimes(72);
+  expect(delay).toHaveBeenCalledTimes(105);
   expect(delay).toHaveBeenCalledWith(3100);
 });
 

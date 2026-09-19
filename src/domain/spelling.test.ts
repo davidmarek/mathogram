@@ -8,7 +8,6 @@ import {
 import {
   createSpellingAttempt,
   currentWord,
-  normalizeSpelling,
   spellingComplete,
   submitSpelling,
   validateSpellingAttempt,
@@ -24,13 +23,13 @@ import {
 const fish = puzzles[0]!;
 
 describe('Czech spelling domain', () => {
-  it('provides 72 unique, NFC-normalized words and versioned opaque audio paths', () => {
-    expect(czechWords).toHaveLength(72);
-    expect(new Set(czechWords.map(({ text }) => text)).size).toBe(72);
+  it('provides 105 unique, NFC-normalized words and versioned opaque audio paths', () => {
+    expect(czechWords).toHaveLength(105);
+    expect(new Set(czechWords.map(({ text }) => text)).size).toBe(105);
     for (const word of czechWords) {
-      expect(word.text).toMatch(/^[a-záčďéěíňóřšťúůýž]+$/u);
-      expect(word.text).toBe(normalizeSpelling(word.text));
-      expect(wordAudioPath(word.id)).toMatch(/^audio\/cs\/v1\/cs-\d{3}\.mp3$/);
+      expect(word.text).toMatch(/^[a-záčďéěíňóřšťúůýž]+$/iu);
+      expect(word.text).toBe(word.text.normalize('NFC'));
+      expect(wordAudioPath(word.id)).toMatch(/^audio\/cs\/v2\/cs-\d{3}\.mp3$/);
     }
     expect(() => wordAudioPath('unknown')).toThrow(TypeError);
   });
@@ -44,8 +43,10 @@ describe('Czech spelling domain', () => {
         puzzle.pixels.length,
       );
       expect(
-        new Set(attempt.queue.slice(0, 72).map(({ wordId }) => wordId)).size,
-      ).toBe(Math.min(72, puzzle.pixels.length));
+        new Set(
+          attempt.queue.slice(0, czechWords.length).map(({ wordId }) => wordId),
+        ).size,
+      ).toBe(Math.min(czechWords.length, puzzle.pixels.length));
       for (let index = 1; index < attempt.queue.length; index++)
         expect(attempt.queue[index]!.wordId).not.toBe(
           attempt.queue[index - 1]!.wordId,
@@ -81,23 +82,35 @@ describe('Czech spelling domain', () => {
 
   it('accepts composed/decomposed accents but does not remove accents or internal spaces', () => {
     const attempt = createSpellingAttempt(fish, () => 0);
-    attempt.queue[0]!.wordId = 'cs-001';
+    attempt.queue[0]!.wordId = 'cs-005';
     const id = currentWord(attempt)!.pixelId;
-    expect(submitSpelling(attempt, 'MA\u0301MA', id).solved).toEqual([id]);
-    expect(submitSpelling(attempt, 'mama', id)).toBe(attempt);
-    expect(submitSpelling(attempt, 'má ma', id)).toBe(attempt);
+    expect(submitSpelling(attempt, 'PA\u0301V', id).solved).toEqual([id]);
+    expect(submitSpelling(attempt, 'pav', id)).toBe(attempt);
+    expect(submitSpelling(attempt, 'pá v', id)).toBe(attempt);
     expect(spellingComplete({ ...attempt, queue: [], solved: [] })).toBe(false);
   });
 
-  it('avoids repetition even when the last word of a deck is the first of the next', () => {
-    const large = puzzles.find((puzzle) => puzzle.pixels.length > 72)!;
-    // The first word shuffle uses 0; the second uses almost 1.
-    let calls = 0;
-    const attempt = createSpellingAttempt(large, () => {
-      calls++;
-      return calls <= large.pixels.length - 1 + 71 ? 0 : 0.999;
-    });
-    expect(attempt.queue[71]!.wordId).not.toBe(attempt.queue[72]!.wordId);
+  it('uses every workbook word before reshuffling without a boundary repeat', () => {
+    const large = puzzles.reduce((current, puzzle) =>
+      puzzle.pixels.length > current.pixels.length ? puzzle : current,
+    );
+    const attempt = createSpellingAttempt(large, () => 0);
+    expect(
+      new Set(
+        attempt.queue.slice(0, czechWords.length).map(({ wordId }) => wordId),
+      ).size,
+    ).toBe(czechWords.length);
+    expect(attempt.queue[czechWords.length - 1]!.wordId).not.toBe(
+      attempt.queue[czechWords.length]!.wordId,
+    );
+  });
+
+  it('accepts proper names case-insensitively', () => {
+    const attempt = createSpellingAttempt(fish, () => 0);
+    attempt.queue[0]!.wordId = 'cs-018';
+    const id = currentWord(attempt)!.pixelId;
+    expect(czechWordById.get('cs-018')?.text).toBe('Marek');
+    expect(submitSpelling(attempt, 'marek', id).solved).toEqual([id]);
   });
 
   it('rejects invalid puzzles and random sources', () => {
