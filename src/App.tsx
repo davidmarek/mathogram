@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { puzzles } from './content/animals';
 import { difficulties, getDifficulty, getSize } from './domain/categories';
 import {
@@ -99,6 +99,21 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = progress.language;
   }, [progress.language]);
+  useLayoutEffect(() => {
+    const preference = window.matchMedia('(prefers-color-scheme: dark)');
+    function applyTheme() {
+      const dark =
+        progress.theme === 'dark' ||
+        (progress.theme === 'system' && preference.matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', dark ? '#1c2528' : '#fff8ec');
+    }
+    applyTheme();
+    preference.addEventListener?.('change', applyTheme);
+    return () => preference.removeEventListener?.('change', applyTheme);
+  }, [progress.theme]);
   useEffect(() => {
     modalOpen.current = modal !== null;
   }, [modal]);
@@ -679,6 +694,26 @@ export function App() {
                 >
                   <option value="en">English</option>
                   <option value="cs">Čeština</option>
+                </select>
+              </label>
+              <label className="language-setting theme-setting">
+                {t.appearance}
+                <select
+                  value={progress.theme}
+                  onChange={(event) => {
+                    const theme = event.target.value;
+                    if (
+                      theme === 'system' ||
+                      theme === 'light' ||
+                      theme === 'dark'
+                    ) {
+                      store({ ...progressRef.current, theme });
+                    }
+                  }}
+                >
+                  <option value="system">{t.systemTheme}</option>
+                  <option value="light">{t.lightTheme}</option>
+                  <option value="dark">{t.darkTheme}</option>
                 </select>
               </label>
               <label className="hint-setting">

@@ -6,11 +6,13 @@ import { isRecord } from '../domain/puzzle';
 export const STORAGE_KEY = 'mathogram.progress';
 
 export type Language = 'en' | 'cs';
+export type Theme = 'system' | 'light' | 'dark';
 
 export interface Progress {
   version: 1;
   language: Language;
   showRowHints: boolean;
+  theme: Theme;
   attempts: Record<string, Attempt>;
   completed: string[];
 }
@@ -25,6 +27,7 @@ export function emptyProgress(language: Language): Progress {
     version: 1,
     language,
     showRowHints: true,
+    theme: 'system',
     attempts: {},
     completed: [],
   };
@@ -42,6 +45,17 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
   if ('showRowHints' in value) {
     if (typeof value.showRowHints === 'boolean') {
       progress.showRowHints = value.showRowHints;
+    } else {
+      recovered = true;
+    }
+  }
+  if ('theme' in value) {
+    if (
+      value.theme === 'system' ||
+      value.theme === 'light' ||
+      value.theme === 'dark'
+    ) {
+      progress.theme = value.theme;
     } else {
       recovered = true;
     }
@@ -137,7 +151,11 @@ export function saveProgress(
   progress: Progress,
 ): { ok: true } | { ok: false; reason: 'unavailable' } {
   const validated = recover(progress, 'en');
-  if (validated.notice !== null || typeof progress.showRowHints !== 'boolean') {
+  if (
+    validated.notice !== null ||
+    typeof progress.showRowHints !== 'boolean' ||
+    progress.theme !== validated.progress.theme
+  ) {
     throw new TypeError('Cannot save invalid progress.');
   }
   const serialized = JSON.stringify(validated.progress);
@@ -163,5 +181,6 @@ export function resetAllProgress(progress: Progress): Progress {
   return {
     ...emptyProgress(progress.language),
     showRowHints: progress.showRowHints,
+    theme: progress.theme,
   };
 }

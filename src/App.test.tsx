@@ -75,6 +75,63 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe('appearance settings', () => {
+  it('follows system changes, honors overrides and removes its listener', () => {
+    const preference = {
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) =>
+        query === '(prefers-color-scheme: dark)'
+          ? preference
+          : { matches: false },
+      ),
+    );
+    const view = render(<App />);
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    const listener = preference.addEventListener.mock
+      .calls[0]![1] as () => void;
+    preference.matches = false;
+    act(listener);
+    expect(document.documentElement.dataset.theme).toBe('light');
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    const appearance = screen.getByRole('combobox', { name: 'Appearance' });
+    fireEvent.change(appearance, { target: { value: 'dark' } });
+    expect(saved().theme).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    const overrideListener = preference.addEventListener.mock.calls.at(
+      -1,
+    )![1] as () => void;
+    act(overrideListener);
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    view.unmount();
+    expect(preference.removeEventListener).toHaveBeenLastCalledWith(
+      'change',
+      overrideListener,
+    );
+  });
+
+  it('changes appearance in memory even when preferences cannot be saved', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Blocked', 'SecurityError');
+    });
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Appearance' }), {
+      target: { value: 'dark' },
+    });
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(screen.getByRole('combobox', { name: 'Appearance' })).toHaveValue(
+      'dark',
+    );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+});
+
 describe('aggregate puzzle analytics', () => {
   it('times solving but excludes dialogs, gallery and completed pictures', () => {
     vi.useFakeTimers({

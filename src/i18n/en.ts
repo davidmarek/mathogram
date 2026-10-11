@@ -52,6 +52,10 @@ export const en = {
   settings: 'Settings',
   help: 'Help',
   language: 'Language',
+  appearance: 'Appearance',
+  systemTheme: 'System',
+  lightTheme: 'Light',
+  darkTheme: 'Dark',
   showRowHints: 'Show row hints',
   rowHintsHelp:
     'Highlight the current row and show its letter. Turn this off to solve without hints from the picture.',
