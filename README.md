@@ -49,6 +49,8 @@ Pick any picture. The answer to the equation is the column number. Enter up to t
 
 In **Settings / Nastavení** (the gear button), disable **Show row hints / Zobrazovat nápovědu řádku** to hide both the active-row highlight and the equation's row letter, including screen-reader row hints. Permanent grid coordinates remain visible. Hints default to on, including for existing saves; your choice is remembered across puzzles, reloads and collection resets.
 
+Choose **Appearance / Vzhled** in Settings: **System / Podle zařízení** follows your device's light or dark appearance, including changes while playing; **Light / Světlý** and **Dark / Tmavý** override it. System is the default for new and existing saves. Your choice is remembered across reloads and collection resets. Puzzle pixel colors and saved equations stay unchanged.
+
 If only one pixel remains when an answer is wrong, a previously solved exercise becomes a clearly labeled practice round. Practice has no row hint, never adds another pixel, and returns to the final exercise when answered correctly. A wrong practice answer moves to another practice exercise. Neither missed exercises nor practice rounds cost progress. Exercise order and practice state are saved immediately, so reopening continues from the deferred exercise rather than permitting an immediate repeat.
 
 Return to **My pictures / Moje obrázky** at any point to resume later with the same equations. Completed pictures have a discovery badge and can be replayed without losing it. Restarting an unfinished picture or resetting the collection requires confirmation.
@@ -93,7 +95,7 @@ Add English keys in `src\i18n\en.ts` and corresponding Czech keys in `cs.ts`; Ty
 
 ## Local data and recovery
 
-Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, the row hint preference, attempts (including content versions, exact equations, solved prefix and optional final-pixel practice reference), and completion badges. Earlier version-1 saves without the hint preference are loaded with hints enabled and retain their progress. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels, invalid practice references and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
+Only **`mathogram.progress`** is written in localStorage. Its version-1 envelope contains language, the row hint and appearance preferences, attempts (including content versions, exact equations, solved prefix and optional final-pixel practice reference), and completion badges. Earlier version-1 saves without these preferences are loaded with hints enabled and system appearance and retain their progress. Runtime validation rejects invalid arithmetic, stale content, unknown coordinates, duplicate queue entries, skipped pixels, invalid practice references and malformed shapes. Recovery salvages independently valid fields and shows a localized notice; unexpected programming errors are not swallowed.
 
 Every correct answer, deferral, practice transition, fresh attempt, reset and preference change is saved synchronously, before animation. Quota/security failures show a persistent warning and allow in-memory play without claiming it was saved. Update acceptance is blocked if that save fails. No unload event is required, and neither reset action calls `localStorage.clear()` or deletes any origin-wide cache.
 

@@ -40,6 +40,7 @@ function inProgress(): Progress {
     version: 1,
     language: 'cs',
     showRowHints: true,
+    theme: 'system',
     attempts: {
       fish: submitAnswer(attempt, String(current.equation.c), current.pixelId),
       cat: createAttempt(cat, () => 0.6),
@@ -172,6 +173,39 @@ describe('progress persistence', () => {
     saveProgress(storage, progress);
     expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
   });
+
+  it.each(['system', 'light', 'dark'] as const)(
+    'persists theme %s and keeps it when resetting the collection',
+    (theme) => {
+      const progress = { ...inProgress(), theme };
+      const storage = memoryStorage();
+      saveProgress(storage, progress);
+      expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+      expect(resetAllProgress(progress).theme).toBe(theme);
+      expect(resetPuzzle(progress, 'fish').theme).toBe(theme);
+    },
+  );
+
+  it('defaults older saves to system appearance without discarding progress', () => {
+    const progress = inProgress();
+    const legacy: Partial<Progress> = { ...progress };
+    delete legacy.theme;
+    expect(load(legacy)).toEqual({ progress, notice: null });
+  });
+
+  it.each(['invalid', null, 1, {}, true])(
+    'recovers invalid theme %j independently',
+    (theme) => {
+      const progress = inProgress();
+      expect(load({ ...progress, theme })).toEqual({
+        progress,
+        notice: 'recovered',
+      });
+      expect(() =>
+        saveProgress(memoryStorage(), { ...progress, theme } as Progress),
+      ).toThrow(TypeError);
+    },
+  );
 
   it('migrates a preexisting v1 save without hints silently and preserves gameplay', () => {
     const progress = inProgress();

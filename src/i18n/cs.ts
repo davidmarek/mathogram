@@ -54,6 +54,10 @@ export const cs: Messages = {
   settings: 'Nastavení',
   help: 'Nápověda',
   language: 'Jazyk',
+  appearance: 'Vzhled',
+  systemTheme: 'Podle zařízení',
+  lightTheme: 'Světlý',
+  darkTheme: 'Tmavý',
   showRowHints: 'Zobrazovat nápovědu řádku',
   rowHintsHelp:
     'Zvýrazní aktuální řádek a ukáže jeho písmeno. Vypni pro počítání bez nápovědy z obrázku.',
