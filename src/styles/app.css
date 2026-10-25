@@ -347,9 +347,18 @@ main {
   overflow: hidden;
   box-shadow: 0 4px 0 var(--shadow);
 }
-.picture-card:hover {
+.picture-card:not(:disabled):hover {
   box-shadow: 0 8px 20px #77664217;
   transform: translateY(-3px);
+}
+.picture-card.is-locked .card-action {
+  color: var(--muted);
+}
+.exercise-summary {
+  margin: -6px 0 16px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 .picture-fish,
 .picture-bee,
@@ -787,6 +796,12 @@ progress::-moz-progress-bar {
   display: block;
   margin: 22px auto 0;
   color: var(--muted);
+}
+.restart-note,
+#replay-needs-numbers {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 .button-row {
   display: flex;

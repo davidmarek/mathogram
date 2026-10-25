@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { puzzles } from '../content/animals';
-import { enumerateEquations, isValidEquation } from './arithmetic';
+import {
+  crossesTen,
+  enumerateEquations,
+  isValidEquation,
+  isValidRuleEquation,
+} from './arithmetic';
 import {
   createAttempt,
   currentExercise,
   deferExercise,
+  fitsRules,
   isComplete,
+  largestColumn,
   submitAnswer,
   validateAttempt,
 } from './game';
@@ -870,5 +877,77 @@ describe('saved attempt validation', () => {
 
   it('rejects attempts against invalid content', () => {
     expect(validateAttempt(valid, { ...fish, palette: {} })).toBe(false);
+  });
+});
+
+describe('attempts with settings rules', () => {
+  const crossingTo12 = {
+    maxNumber: 12,
+    crossTen: true,
+    operations: 'both' as const,
+  };
+  const cat = puzzles.find(({ id }) => id === 'cat')!;
+  const dog = puzzles.find(({ id }) => id === 'dog')!;
+  const cheetah = puzzles.find(({ id }) => id === 'cheetah')!;
+
+  it('reports whether a picture fits the largest number', () => {
+    expect(largestColumn(cat)).toBe(12);
+    expect(fitsRules(cat, crossingTo12)).toBe(true);
+    expect(fitsRules(dog, crossingTo12)).toBe(false);
+    expect(fitsRules(dog, undefined)).toBe(true);
+  });
+
+  it('creates two-number sums that cross ten whenever a column allows', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const attempt = createAttempt(cat, seededRandom(seed), crossingTo12);
+      expect(attempt.rules).toEqual(crossingTo12);
+      expect(validateAttempt(attempt, cat)).toBe(true);
+      for (const { pixelId, equation } of attempt.queue) {
+        expect(isValidRuleEquation(equation, crossingTo12)).toBe(true);
+        expect(equation.c).toBe(Number(pixelId.split(':')[1]));
+        if (equation.c !== 10) expect(crossesTen(equation)).toBe(true);
+      }
+    }
+  });
+
+  it('turns three-number pictures into two-number sums within the rules', () => {
+    const rules = {
+      maxNumber: 20,
+      crossTen: false,
+      operations: 'add' as const,
+    };
+    const attempt = createAttempt(cheetah, seededRandom(3), rules);
+    expect(validateAttempt(attempt, cheetah)).toBe(true);
+    for (const { equation } of attempt.queue) {
+      expect(equation.op).toBe('+');
+      expect(equation.op2).toBeUndefined();
+      expect(crossesTen(equation)).toBe(false);
+    }
+  });
+
+  it('refuses pictures that need larger answers or invalid rules', () => {
+    expect(() => createAttempt(dog, Math.random, crossingTo12)).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      createAttempt(cat, Math.random, { ...crossingTo12, maxNumber: 9 }),
+    ).toThrow(RangeError);
+  });
+
+  it('validates saved equations against the attempt rules', () => {
+    const attempt = createAttempt(cat, seededRandom(5), crossingTo12);
+    expect(
+      validateAttempt(
+        { ...attempt, rules: { ...crossingTo12, crossTen: false } },
+        cat,
+      ),
+    ).toBe(false);
+    expect(validateAttempt({ ...attempt, rules: 'picture' }, cat)).toBe(false);
+    const withoutRules: Partial<Attempt> = { ...attempt };
+    delete withoutRules.rules;
+    expect(validateAttempt(withoutRules, cat)).toBe(false);
+    const plain = createAttempt(cat, seededRandom(5));
+    expect(plain.rules).toBeUndefined();
+    expect(validateAttempt(plain, cat)).toBe(true);
   });
 });
