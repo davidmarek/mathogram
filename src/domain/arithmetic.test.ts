@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { enumerateEquations, isValidEquation } from './arithmetic';
+import {
+  crossesTen,
+  enumerateEquations,
+  enumerateRuleEquations,
+  isValidEquation,
+  isValidRuleEquation,
+  isValidRules,
+} from './arithmetic';
+import type { ArithmeticRules } from './arithmetic';
 
 describe('arithmetic', () => {
   it.each([false, true])(
@@ -221,5 +229,116 @@ describe('three-number arithmetic', () => {
         true,
       ),
     ).toBe(false);
+  });
+});
+
+describe('settings rules', () => {
+  const ruleSets = [10, 12, 15, 20].flatMap((maxNumber) =>
+    [false, true].flatMap((crossTen) =>
+      (['both', 'add', 'subtract'] as const).map((operations) => ({
+        maxNumber,
+        crossTen,
+        operations,
+      })),
+    ),
+  );
+
+  it.each(ruleSets)(
+    'exhaustively validates two-number sums for %j',
+    (rules) => {
+      const candidates = enumerateRuleEquations(rules);
+      const keys = new Set(candidates.map((entry) => JSON.stringify(entry)));
+      expect(keys.size).toBe(candidates.length);
+      for (let a = -1; a <= 21; a += 1) {
+        for (let b = -1; b <= 11; b += 1) {
+          for (const op of ['+', '-'] as const) {
+            for (let c = 0; c <= 21; c += 1) {
+              const equation = { a, op, b, c };
+              const crosses = Math.min(a, c) < 10 && Math.max(a, c) > 10;
+              const expected =
+                a >= 0 &&
+                a <= rules.maxNumber &&
+                b >= 0 &&
+                b <= 10 &&
+                c >= 1 &&
+                c <= rules.maxNumber &&
+                (rules.crossTen || !crosses) &&
+                (rules.operations === 'both' ||
+                  op === (rules.operations === 'add' ? '+' : '-')) &&
+                (op === '+' ? a + b : a - b) === c;
+              expect(isValidRuleEquation(equation, rules)).toBe(expected);
+              expect(keys.has(JSON.stringify(equation))).toBe(expected);
+              if (expected) expect(crossesTen(equation)).toBe(crosses);
+            }
+          }
+        }
+      }
+      expect(
+        [...new Set(candidates.map(({ c }) => c))].sort((a, b) => a - b),
+      ).toEqual(Array.from({ length: rules.maxNumber }, (_, i) => i + 1));
+    },
+  );
+
+  it('allows 9 + 3 and 12 − 5 only when crossing ten up to 12', () => {
+    const rules = {
+      maxNumber: 12,
+      crossTen: true,
+      operations: 'both' as const,
+    };
+    expect(isValidRuleEquation({ a: 9, op: '+', b: 3, c: 12 }, rules)).toBe(
+      true,
+    );
+    expect(isValidRuleEquation({ a: 12, op: '-', b: 5, c: 7 }, rules)).toBe(
+      true,
+    );
+    expect(isValidRuleEquation({ a: 9, op: '+', b: 4, c: 13 }, rules)).toBe(
+      false,
+    );
+    expect(
+      isValidRuleEquation(
+        { a: 9, op: '+', b: 3, c: 12 },
+        {
+          ...rules,
+          crossTen: false,
+        },
+      ),
+    ).toBe(false);
+  });
+
+  it.each([
+    null,
+    'picture',
+    {},
+    { maxNumber: 9, crossTen: true, operations: 'both' },
+    { maxNumber: 21, crossTen: true, operations: 'both' },
+    { maxNumber: 12.5, crossTen: true, operations: 'both' },
+    { maxNumber: 12, crossTen: 'yes', operations: 'both' },
+    { maxNumber: 12, crossTen: true, operations: 'multiply' },
+  ])('rejects invalid rules %j', (rules) => {
+    expect(isValidRules(rules)).toBe(false);
+    expect(
+      isValidRuleEquation(
+        { a: 1, op: '+', b: 1, c: 2 },
+        rules as unknown as ArithmeticRules,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects malformed and three-number equations', () => {
+    const rules = {
+      maxNumber: 20,
+      crossTen: true,
+      operations: 'both' as const,
+    };
+    for (const value of [
+      null,
+      1,
+      { a: 1, op: '+', b: 1 },
+      { a: 1, op: '*', b: 1, c: 2 },
+      { a: 1.5, op: '+', b: 1, c: 2.5 },
+      { a: 1, op: '+', b: 1, c: 2, op2: '+', d: 0 },
+    ]) {
+      expect(isValidRuleEquation(value, rules)).toBe(false);
+    }
   });
 });

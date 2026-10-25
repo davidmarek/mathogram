@@ -1,4 +1,6 @@
 import { puzzles } from '../content/animals';
+import { isValidRules } from '../domain/arithmetic';
+import type { ArithmeticRules } from '../domain/arithmetic';
 import { validateAttempt } from '../domain/game';
 import type { Attempt } from '../domain/game';
 import { isRecord } from '../domain/puzzle';
@@ -7,12 +9,15 @@ export const STORAGE_KEY = 'mathogram.progress';
 
 export type Language = 'en' | 'cs';
 export type Theme = 'system' | 'light' | 'dark';
+/** `picture` keeps each picture's own exercises; rules override them for new attempts. */
+export type ExercisePreference = 'picture' | ArithmeticRules;
 
 export interface Progress {
   version: 1;
   language: Language;
   showRowHints: boolean;
   theme: Theme;
+  exercises: ExercisePreference;
   attempts: Record<string, Attempt>;
   completed: string[];
 }
@@ -28,6 +33,7 @@ export function emptyProgress(language: Language): Progress {
     language,
     showRowHints: true,
     theme: 'system',
+    exercises: 'picture',
     attempts: {},
     completed: [],
   };
@@ -60,6 +66,19 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
       recovered = true;
     }
   }
+  if ('exercises' in value) {
+    if (value.exercises === 'picture') {
+      progress.exercises = 'picture';
+    } else if (isValidRules(value.exercises)) {
+      progress.exercises = {
+        maxNumber: value.exercises.maxNumber,
+        crossTen: value.exercises.crossTen,
+        operations: value.exercises.operations,
+      };
+    } else {
+      recovered = true;
+    }
+  }
   if (isRecord(value.attempts)) {
     for (const [id, attempt] of Object.entries(value.attempts)) {
       const puzzle = puzzles.find((candidate) => candidate.id === id);
@@ -86,6 +105,15 @@ function recover(value: unknown, fallbackLanguage: Language): LoadResult {
         solved: [...attempt.solved],
         ...(attempt.reviewPixelId !== undefined
           ? { reviewPixelId: attempt.reviewPixelId }
+          : {}),
+        ...(attempt.rules !== undefined
+          ? {
+              rules: {
+                maxNumber: attempt.rules.maxNumber,
+                crossTen: attempt.rules.crossTen,
+                operations: attempt.rules.operations,
+              },
+            }
           : {}),
       };
     }
@@ -146,6 +174,17 @@ export function loadProgress(
   return recover(value, fallbackLanguage);
 }
 
+export function sameExercises(
+  first: ExercisePreference,
+  second: ExercisePreference,
+): boolean {
+  return first === 'picture' || second === 'picture'
+    ? first === second
+    : first.maxNumber === second.maxNumber &&
+        first.crossTen === second.crossTen &&
+        first.operations === second.operations;
+}
+
 export function saveProgress(
   storage: Pick<Storage, 'setItem'>,
   progress: Progress,
@@ -154,7 +193,8 @@ export function saveProgress(
   if (
     validated.notice !== null ||
     typeof progress.showRowHints !== 'boolean' ||
-    progress.theme !== validated.progress.theme
+    progress.theme !== validated.progress.theme ||
+    !sameExercises(progress.exercises, validated.progress.exercises)
   ) {
     throw new TypeError('Cannot save invalid progress.');
   }
@@ -182,5 +222,6 @@ export function resetAllProgress(progress: Progress): Progress {
     ...emptyProgress(progress.language),
     showRowHints: progress.showRowHints,
     theme: progress.theme,
+    exercises: progress.exercises,
   };
 }
