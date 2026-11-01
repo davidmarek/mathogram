@@ -31,7 +31,7 @@ test.describe('real Workbox lifecycle', () => {
     const onlineEvents = analyticsRequests.length;
     await context.setOffline(true);
     const cold = await context.newPage();
-    await cold.goto('http://127.0.0.1:4173/mathogram/');
+    await cold.goto('http://127.0.0.1:4173/');
     await expect(
       cold.getByRole('heading', { name: 'What will you make today?' }),
     ).toBeVisible();
@@ -106,7 +106,7 @@ test.describe('real Workbox lifecycle', () => {
         (registration) => registration.scope,
       ),
     );
-    expect(scopes).toEqual(['http://127.0.0.1:4173/mathogram/']);
+    expect(scopes).toEqual(['http://127.0.0.1:4173/']);
     expect(analyticsRequests).toHaveLength(onlineEvents);
     await context.setOffline(false);
     await cold.getByRole('button', { name: 'Nastavení' }).click();
@@ -122,6 +122,11 @@ test.describe('real Workbox lifecycle', () => {
     await request.post(`${origin}/__release?version=1`);
     await page.goto(`${origin}/mathogram/`);
     await expect(page.getByText('Ready for offline play')).toBeVisible();
+    expect(
+      await page.evaluate(
+        async () => (await navigator.serviceWorker.ready).scope,
+      ),
+    ).toBe(`${origin}/mathogram/`);
     await page.getByRole('button', { name: /Fish/ }).click();
     const state = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('mathogram.progress')!),

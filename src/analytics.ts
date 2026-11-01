@@ -57,7 +57,7 @@ function send(
         payload: {
           website,
           hostname: window.location.hostname,
-          url: import.meta.env.BASE_URL,
+          url: new URL(import.meta.env.BASE_URL, window.location.href).pathname,
           ...(name ? { name, data } : {}),
         },
       }),

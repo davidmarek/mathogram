@@ -10,7 +10,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', request);
   vi.stubGlobal('navigator', { onLine: true });
   vi.stubEnv('PROD', true);
-  vi.stubEnv('BASE_URL', '/mathogram/');
+  vi.stubEnv('BASE_URL', './');
   vi.stubEnv('VITE_ANALYTICS_ENABLED', 'true');
   vi.stubEnv('VITE_UMAMI_WEBSITE_ID', website);
   vi.stubEnv('VITE_UMAMI_ENDPOINT', endpoint);
@@ -41,7 +41,7 @@ describe('optional analytics', () => {
     expect(JSON.parse(request.mock.calls[0]![1].body).payload).toEqual({
       website,
       hostname: window.location.hostname,
-      url: '/mathogram/',
+      url: '/',
       name: 'Puzzle time spent',
       data: { puzzleId: 'fish', activeSeconds: 42 },
     });
@@ -75,11 +75,7 @@ describe('optional analytics', () => {
   });
 
   it('sends only canonical pageviews and allowlisted puzzle events, without credentials or referrers', async () => {
-    window.history.replaceState(
-      null,
-      '',
-      '/mathogram/private?name=private#secret',
-    );
+    window.history.replaceState(null, '', '/private?name=private#secret');
     const storage = vi.spyOn(Storage.prototype, 'setItem');
     const { trackPageview, trackPuzzle } = await import('./analytics');
     trackPageview();
@@ -105,7 +101,7 @@ describe('optional analytics', () => {
           payload: {
             website,
             hostname: window.location.hostname,
-            url: '/mathogram/',
+            url: '/',
             ...(name ? { name, data } : {}),
           },
         }),
@@ -131,7 +127,7 @@ describe('optional analytics', () => {
         expect(JSON.parse(request.mock.calls[index]![1].body).payload).toEqual({
           website,
           hostname: window.location.hostname,
-          url: '/mathogram/',
+          url: '/',
           name,
           data: { puzzleId: 'rocket' },
         });

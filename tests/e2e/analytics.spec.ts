@@ -74,7 +74,7 @@ test.describe('enabled analytics', () => {
         payload: {
           website: process.env.VITE_UMAMI_WEBSITE_ID,
           hostname: '127.0.0.1',
-          url: '/mathogram/',
+          url: '/',
           ...(name === 'pageview' ? {} : { name, data: { puzzleId: 'fish' } }),
         },
       })),
@@ -104,7 +104,7 @@ test.describe('enabled analytics', () => {
     expect(durations()[0]).toEqual({
       website: process.env.VITE_UMAMI_WEBSITE_ID,
       hostname: '127.0.0.1',
-      url: '/mathogram/',
+      url: '/',
       name: 'Puzzle time spent',
       data: { puzzleId: 'fish', activeSeconds: 10 },
     });
@@ -143,7 +143,7 @@ test.describe('enabled analytics', () => {
         payload: {
           website: process.env.VITE_UMAMI_WEBSITE_ID,
           hostname: '127.0.0.1',
-          url: '/mathogram/',
+          url: '/',
         },
       },
       {
@@ -151,7 +151,7 @@ test.describe('enabled analytics', () => {
         payload: {
           website: process.env.VITE_UMAMI_WEBSITE_ID,
           hostname: '127.0.0.1',
-          url: '/mathogram/',
+          url: '/',
           name: 'Puzzle started',
           data: { puzzleId: 'fish' },
         },
