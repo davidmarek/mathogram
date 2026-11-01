@@ -150,20 +150,37 @@ jobs:
                 pr.base.ref !== 'main' || pr.base.repo.full_name !== 'davidmarek/mathogram') {
               throw new Error('PR closed, changed target, or changed revision while awaiting deployment.');
             }
-      - name: Deploy static files only
+      # Run the Azure deployment client directly rather than through
+      # Azure/static-web-apps-deploy: that action always passes the
+      # pull_request event payload, and the client then deploys to a new
+      # PR-numbered environment, ignoring deployment_environment. Without the
+      # event payload the client honors the shared named environment.
+      - name: Deploy static files only to the shared preview environment
         id: azure
-        uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1 # v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          app_location: preview
-          config_file_location: preview
-          api_location: ''
-          output_location: ''
-          skip_app_build: true
-          skip_api_build: true
-          production_branch: main
-          deployment_environment: preview
+        env:
+          DEPLOYMENT_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        run: |
+          docker run --rm \
+            --workdir /github/workspace \
+            --volume "$GITHUB_WORKSPACE:/github/workspace" \
+            --volume "$GITHUB_OUTPUT:/github/output" \
+            --env DEPLOYMENT_TOKEN \
+            --env GITHUB_WORKSPACE=/github/workspace \
+            --env GITHUB_OUTPUT=/github/output \
+            --env INPUT_APP_LOCATION=preview \
+            --env INPUT_CONFIG_FILE_LOCATION=preview \
+            --env INPUT_API_LOCATION= \
+            --env INPUT_OUTPUT_LOCATION= \
+            --env INPUT_SKIP_APP_BUILD=true \
+            --env INPUT_SKIP_API_BUILD=true \
+            --env INPUT_DEPLOYMENT_ENVIRONMENT=preview \
+            --entrypoint /bin/sh \
+            mcr.microsoft.com/appsvc/staticappsclient:stable \
+            -c 'cd /bin/staticsites && ./StaticSitesClient upload'
+          if ! grep -Eq '^static_web_app_url=https://[a-z0-9-]+-preview\.([a-z0-9-]+\.)*azurestaticapps\.net/?$' "$GITHUB_OUTPUT"; then
+            echo '::error::Azure did not deploy to the shared named preview environment.'
+            exit 1
+          fi
       - name: Report preview URL
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
