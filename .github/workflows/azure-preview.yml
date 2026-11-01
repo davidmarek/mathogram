@@ -3,7 +3,7 @@ name: Azure PR preview
 on:
   pull_request:
     branches: [main]
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize]
 
 permissions: {}
 
@@ -25,7 +25,6 @@ jobs:
     outputs:
       number: ${{ steps.pr.outputs.number }}
       sha: ${{ steps.pr.outputs.sha }}
-      operation: ${{ steps.pr.outputs.operation }}
     steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: pr
@@ -44,23 +43,16 @@ jobs:
             if (pr.base.repo.full_name !== 'davidmarek/mathogram' || pr.base.ref !== 'main') {
               throw new Error('Only PRs targeting davidmarek/mathogram main are supported.');
             }
-            const closing = context.payload.action === 'closed';
-            if (closing) {
-              if (pr.state !== 'closed') throw new Error('PR has reopened; do not delete its preview.');
-            } else {
-              if (pr.state !== 'open' || !/^[a-f0-9]{40}$/.test(process.env.HEAD_SHA) ||
-                  pr.head.sha !== process.env.HEAD_SHA) {
-                throw new Error('PR must be open at the event head SHA. Use the latest workflow run.');
-              }
+            if (pr.state !== 'open' || !/^[a-f0-9]{40}$/.test(process.env.HEAD_SHA) ||
+                pr.head.sha !== process.env.HEAD_SHA) {
+              throw new Error('PR must be open at the event head SHA. Use the latest workflow run.');
             }
             core.setOutput('number', number);
             core.setOutput('sha', pr.head.sha);
-            core.setOutput('operation', closing ? 'close' : 'upload');
 
   validate:
     name: Validate PR without deployment credentials
     needs: resolve
-    if: needs.resolve.outputs.operation == 'upload'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -104,6 +96,10 @@ jobs:
     permissions:
       actions: read
       pull-requests: write
+    # All PRs replace the same Azure slot; never interrupt an active upload.
+    concurrency:
+      group: azure-preview-shared-slot
+      cancel-in-progress: false
     environment:
       name: azure-preview
       url: ${{ steps.azure.outputs.static_web_app_url }}/mathogram/
@@ -148,7 +144,7 @@ jobs:
             }
       - name: Deploy static files only
         id: azure
-        uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
+        uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1 # v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: upload
@@ -159,6 +155,7 @@ jobs:
           skip_app_build: true
           skip_api_build: true
           production_branch: main
+          deployment_environment: preview
       - name: Report preview URL
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -171,37 +168,10 @@ jobs:
             if (url.protocol !== 'https:' || !url.hostname.endsWith('.azurestaticapps.net')) {
               throw new Error('Unexpected Azure preview URL.');
             }
-            const body = `Azure preview for commit \`${process.env.HEAD_SHA}\`: ${url.href}\n\n` +
+            const body = `Shared Azure preview for PR #${process.env.PR_NUMBER}, commit \`${process.env.HEAD_SHA}\`: ${url.href}\n\n` +
+              'This URL is shared by all PRs and is replaced by the next approved deployment. ' +
               'Public preview; production on GitHub Pages is unchanged.';
             await github.rest.issues.createComment({
               ...context.repo, issue_number: Number(process.env.PR_NUMBER), body,
             });
             await core.summary.addRaw(body).write();
-
-  close:
-    name: Remove closed PR preview
-    needs: resolve
-    if: needs.resolve.outputs.operation == 'close'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      pull-requests: read
-    environment:
-      name: azure-preview
-    steps:
-      - name: Confirm PR is still closed after approval
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          PR_NUMBER: ${{ needs.resolve.outputs.number }}
-        with:
-          script: |
-            const { data: pr } = await github.rest.pulls.get({
-              ...context.repo, pull_number: Number(process.env.PR_NUMBER),
-            });
-            if (pr.state !== 'closed') throw new Error('PR has reopened; keep its preview.');
-      - name: Delete preview environment only
-        uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
-          app_location: /
