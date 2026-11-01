@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/mathogram/',
+  base: './',
   plugins: [
     react(),
     VitePWA({
@@ -11,13 +11,13 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
-        id: '/mathogram/',
+        id: './',
         name: 'Mathixel',
         short_name: 'Mathixel',
         description:
           'Little sums, lovely discoveries. Pixel animals in English and Czech.',
-        start_url: '/mathogram/',
-        scope: '/mathogram/',
+        start_url: './',
+        scope: './',
         display: 'standalone',
         theme_color: '#fff8ec',
         background_color: '#fff8ec',
@@ -46,8 +46,7 @@ export default defineConfig({
         cacheId: 'mathogram',
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
-        navigateFallback: '/mathogram/index.html',
-        navigateFallbackAllowlist: [/^\/mathogram(?:\/|$)/],
+        navigateFallback: 'index.html',
         skipWaiting: false,
         clientsClaim: true,
       },
