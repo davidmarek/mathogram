@@ -59,7 +59,7 @@ const puzzleGroups = difficulties.map((difficulty) => ({
 }));
 
 const parkPictures = puzzles.filter((puzzle) =>
-  ['rabbit', 'butterfly', 'fish'].includes(puzzle.id),
+  ['rabbit', 'butterfly', 'fish', 'chick-and-pig', 'donut'].includes(puzzle.id),
 );
 
 export function App() {

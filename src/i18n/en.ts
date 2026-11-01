@@ -50,6 +50,8 @@ export const en = {
   dragon: 'Dragon',
   'space-shuttle': 'Space shuttle',
   sunflower: 'Sunflower',
+  'chick-and-pig': 'Chick and piglet',
+  donut: 'Donut',
   // Difficulty labels for arithmetic modes, not school grades.
   beginner: 'Beginner',
   standard: 'Standard',

@@ -30,6 +30,8 @@ const puzzleNames = [
   'dragon',
   'space-shuttle',
   'sunflower',
+  'chick-and-pig',
+  'donut',
 ] as const;
 
 type PuzzleName = (typeof puzzleNames)[number];

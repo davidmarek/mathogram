@@ -30,7 +30,7 @@ for (const language of ['en', 'cs'] as const) {
       await expect(page.locator('.brand-icon')).toHaveCount(0);
       for (const width of [1280, 900, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
-        await expect(page.locator('.park-creature')).toHaveCount(3);
+        await expect(page.locator('.park-creature')).toHaveCount(5);
         await expect(page.locator('.park-caption')).toHaveCount(0);
         const titleLines = await page
           .locator('.hero h1')

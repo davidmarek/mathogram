@@ -53,7 +53,7 @@ describe('puzzle categories', () => {
     },
   );
 
-  it('offers all 29 pictures in the expected difficulty/size matrix', () => {
+  it('offers all 31 pictures in the expected difficulty/size matrix', () => {
     const matrix = difficulties.map((difficulty) =>
       sizes.map(
         (size) =>
@@ -64,14 +64,14 @@ describe('puzzle categories', () => {
       ),
     );
     expect(matrix).toEqual([
-      [6, 1, 0, 0],
-      [0, 10, 3, 0],
+      [6, 2, 0, 0],
+      [0, 10, 3, 1],
       [2, 2, 2, 3],
     ]);
     expect(
       matrix.map((row) => row.reduce((sum, count) => sum + count, 0)),
-    ).toEqual([7, 13, 9]);
-    expect(matrix.flat().reduce((sum, count) => sum + count, 0)).toBe(29);
-    expect(puzzles).toHaveLength(29);
+    ).toEqual([8, 14, 9]);
+    expect(matrix.flat().reduce((sum, count) => sum + count, 0)).toBe(31);
+    expect(puzzles).toHaveLength(31);
   });
 });
