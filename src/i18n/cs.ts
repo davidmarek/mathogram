@@ -61,6 +61,19 @@ export const cs: Messages = {
   showRowHints: 'Zobrazovat nápovědu řádku',
   rowHintsHelp:
     'Zvýrazní aktuální řádek a ukáže jeho písmeno. Vypni pro počítání bez nápovědy z obrázku.',
+  exercisesTitle: 'Příklady',
+  exerciseMode: 'Druh příkladů',
+  modePicture: 'Podle obrázku',
+  modeNoCrossing: 'Bez přechodu přes desítku',
+  modeCrossing: 'S přechodem přes desítku',
+  numbersUpTo: 'Čísla do',
+  operations: 'Počítání',
+  operationsBoth: 'Sčítání i odčítání',
+  operationsAdd: 'Jen sčítání',
+  operationsSubtract: 'Jen odčítání',
+  exercisesHelp:
+    'Podle obrázku znamená příklady podle jeho obtížnosti. Když zvolíš druh a limit, každý nově začatý, restartovaný nebo znovu hraný obrázek dostane příklady se dvěma čísly. Rozehrané obrázky si své příklady nechají. Výsledek je číslo sloupce, takže širší obrázky počkají, až limit zvýšíš. Přechod přes desítku volí příklady jako 8 + 4 nebo 12 − 5, kdykoli to sloupec dovolí.',
+  needsNumbers: 'Potřebuje čísla do',
   close: 'Zpátky ke hře',
   howTitle: 'Jeden příklad, jedno políčko',
   howBody:

@@ -13,6 +13,7 @@ import {
   loadProgress,
   resetAllProgress,
   resetPuzzle,
+  sameExercises,
   saveProgress,
   STORAGE_KEY,
 } from './progress';
@@ -41,6 +42,7 @@ function inProgress(): Progress {
     language: 'cs',
     showRowHints: true,
     theme: 'system',
+    exercises: 'picture',
     attempts: {
       fish: submitAnswer(attempt, String(current.equation.c), current.pixelId),
       cat: createAttempt(cat, () => 0.6),
@@ -845,4 +847,64 @@ describe('isolated resets', () => {
       expect(loadProgress(storage, 'en').progress).toEqual(reset);
     },
   );
+});
+
+describe('exercise settings', () => {
+  const rules = { maxNumber: 12, crossTen: true, operations: 'both' as const };
+
+  it('persists rules and attempts created with them, and keeps them on reset', () => {
+    const progress: Progress = {
+      ...inProgress(),
+      exercises: rules,
+      attempts: { cat: createAttempt(cat, () => 0.3, rules) },
+    };
+    const storage = memoryStorage();
+    saveProgress(storage, progress);
+    expect(loadProgress(storage, 'en')).toEqual({ progress, notice: null });
+    expect(resetAllProgress(progress).exercises).toEqual(rules);
+    expect(resetPuzzle(progress, 'cat').exercises).toEqual(rules);
+  });
+
+  it('defaults older saves to each picture’s own exercises', () => {
+    const progress = inProgress();
+    const legacy: Partial<Progress> = { ...progress };
+    delete legacy.exercises;
+    expect(load(legacy)).toEqual({ progress, notice: null });
+  });
+
+  it.each([
+    'custom',
+    null,
+    { ...rules, maxNumber: 25 },
+    { ...rules, operations: 'times' },
+  ])('recovers invalid exercise setting %j independently', (exercises) => {
+    const progress = inProgress();
+    expect(load({ ...progress, exercises })).toEqual({
+      progress,
+      notice: 'recovered',
+    });
+    expect(() =>
+      saveProgress(memoryStorage(), { ...progress, exercises } as Progress),
+    ).toThrow(TypeError);
+  });
+
+  it('drops unknown properties from saved rules', () => {
+    const progress = { ...inProgress(), exercises: rules };
+    expect(
+      load({ ...progress, exercises: { ...rules, extra: true } }).progress,
+    ).toEqual(progress);
+  });
+
+  it('compares exercise preferences by value', () => {
+    expect(sameExercises('picture', 'picture')).toBe(true);
+    expect(sameExercises('picture', rules)).toBe(false);
+    expect(
+      sameExercises(rules, {
+        operations: 'both',
+        crossTen: true,
+        maxNumber: 12,
+      }),
+    ).toBe(true);
+    expect(sameExercises(rules, { ...rules, maxNumber: 13 })).toBe(false);
+  });
 });

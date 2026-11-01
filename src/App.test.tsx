@@ -853,3 +853,127 @@ describe('visible persistence and PWA failures', () => {
     expect(pwa.retry).toHaveBeenCalled();
   });
 });
+
+describe('exercise settings', () => {
+  function chooseCrossingTo12() {
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('combobox', { name: 'Exercise type' })).toHaveValue(
+      'picture',
+    );
+    expect(
+      screen.queryByRole('combobox', { name: 'Numbers up to' }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'crossing' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Numbers up to' }), {
+      target: { value: '12' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+  }
+
+  it('fine-tunes a preset, locks wider pictures and starts sums within it', () => {
+    render(<App />);
+    chooseCrossingTo12();
+    expect(saved().exercises).toEqual({
+      maxNumber: 12,
+      crossTen: true,
+      operations: 'both',
+    });
+    expect(
+      screen.getByText('Exercises: Crossing ten · Numbers up to 12'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Biscuit pup · Needs numbers up to 13',
+      }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ginger cat · Let’s play' }),
+    );
+    const attempt = saved().attempts.cat!;
+    expect(attempt.rules).toEqual(saved().exercises);
+    for (const { equation } of attempt.queue) {
+      expect(equation.a).toBeLessThanOrEqual(12);
+      expect(equation.c).toBeLessThanOrEqual(12);
+      expect(equation.op2).toBeUndefined();
+    }
+    expect(
+      screen.getByText('Crossing ten · Numbers up to 12'),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps pictures in progress and switches operations or back to picture mode', () => {
+    render(<App />);
+    openFish();
+    const fishQueue = saved().attempts.fish!.queue;
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
+    chooseCrossingTo12();
+    expect(saved().attempts.fish!.queue).toEqual(fishQueue);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sums' }), {
+      target: { value: 'subtract' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sums' }), {
+      target: { value: 'invalid' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'noCrossing' },
+    });
+    expect(saved().exercises).toEqual({
+      maxNumber: 12,
+      crossTen: false,
+      operations: 'subtract',
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'picture' },
+    });
+    expect(saved().exercises).toBe('picture');
+  });
+
+  it('disables restart and replay when a picture needs larger numbers', () => {
+    const dog = puzzles.find(({ id }) => id === 'dog')!;
+    const owl = puzzles.find(({ id }) => id === 'owl')!;
+    const done = createAttempt(dog, () => 0.4);
+    const progress: Progress = {
+      ...emptyProgress('en'),
+      exercises: { maxNumber: 10, crossTen: false, operations: 'both' },
+      attempts: {
+        dog: { ...done, solved: done.queue.map(({ pixelId }) => pixelId) },
+        owl: createAttempt(owl, () => 0.4),
+      },
+      completed: ['dog'],
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    render(<App />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Twilight owl · Keep going' }),
+    );
+    expect(screen.getByText('Standard')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Restart this picture' }),
+    ).toBeDisabled();
+    expect(screen.getByText('Needs numbers up to 12')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Biscuit pup · Discovered' }),
+    );
+    expect(screen.getByRole('button', { name: 'Play again' })).toBeDisabled();
+    expect(screen.getByText('Needs numbers up to 13')).toBeInTheDocument();
+  });
+
+  it('uses Czech labels', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['cs-CZ']);
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Nastavení' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Druh příkladů' }), {
+      target: { value: 'crossing' },
+    });
+    expect(screen.getByRole('combobox', { name: 'Čísla do' })).toHaveValue(
+      '20',
+    );
+    expect(
+      screen.getByRole('option', { name: 'S přechodem přes desítku' }),
+    ).toBeInTheDocument();
+  });
+});

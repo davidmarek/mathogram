@@ -59,6 +59,19 @@ export const en = {
   showRowHints: 'Show row hints',
   rowHintsHelp:
     'Highlight the current row and show its letter. Turn this off to solve without hints from the picture.',
+  exercisesTitle: 'Exercises',
+  exerciseMode: 'Exercise type',
+  modePicture: 'Each picture’s own',
+  modeNoCrossing: 'Without crossing ten',
+  modeCrossing: 'Crossing ten',
+  numbersUpTo: 'Numbers up to',
+  operations: 'Sums',
+  operationsBoth: 'Adding and subtracting',
+  operationsAdd: 'Adding only',
+  operationsSubtract: 'Subtracting only',
+  exercisesHelp:
+    'Each picture’s own exercises follow its difficulty. Choose a type and a limit to use two-number sums for every picture you start, restart or play again. Pictures in progress keep their sums. The answer is the column, so pictures wider than the limit wait until you raise it. Crossing ten picks sums like 8 + 4 or 12 − 5 whenever a column allows one.',
+  needsNumbers: 'Needs numbers up to',
   close: 'Back to play',
   howTitle: 'One sum, one little pixel',
   howBody:
