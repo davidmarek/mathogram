@@ -26,6 +26,8 @@ for (const language of ['en', 'cs'] as const) {
         { key: STORAGE_KEY, progress },
       );
       await page.goto('./');
+      await expect(page.locator('.brand')).toHaveText('Mathixel');
+      await expect(page.locator('.brand-icon')).toHaveCount(0);
       for (const width of [1280, 900, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(page.locator('.park-creature')).toHaveCount(3);

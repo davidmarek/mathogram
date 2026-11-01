@@ -50,7 +50,6 @@ typography:
     lineHeight: 1.2
     letterSpacing: '-0.025em'
 rounded:
-  logo: '10px'
   pill: '50px'
   picture-card: '20px'
   keypad-key: '20px 16px 20px 16px'
@@ -208,7 +207,7 @@ Capsule-shaped actions and signposts recur alongside soft island silhouettes. Pi
 ### Navigation
 
 - **Application header:** Wordmark and utility actions share a single flexible row; utility buttons use a subtle outline and theme surface.
-- **Logo:** A green square with 10px corners, three solid contrasting pixels and one outlined pixel. All marks use the primary foreground; no yellow-on-green detail.
+- **Brand:** Use the Mathixel text wordmark alone, without a four-tile symbol.
 - **Gallery artwork:** Center previews on the colored artwork bounds in a padded square viewBox. Preserve rect coordinates and palette; never crop or translate the playable puzzle grid to center a thumbnail.
 - **Game navigation:** A text back action and compact level pill sit above the picture title.
 

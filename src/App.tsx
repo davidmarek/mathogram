@@ -305,12 +305,6 @@ export function App() {
     <div className="app-shell">
       <header className="app-header">
         <button className="brand" onClick={goHome} aria-label={t.homeLabel}>
-          <span className="brand-icon" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
           Mathixel
         </button>
         <div className="header-actions">

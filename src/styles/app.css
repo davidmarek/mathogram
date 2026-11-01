@@ -197,29 +197,10 @@ p {
   background: none;
   display: flex;
   align-items: center;
-  gap: 12px;
   padding: 0;
   font-size: 1.7rem;
   font-weight: 850;
   letter-spacing: -0.04em;
-}
-.brand-icon {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3px;
-  padding: 9px;
-  background: var(--green);
-  border-radius: 10px;
-}
-.brand-icon span {
-  border-radius: 1px;
-  background: var(--primary-ink);
-}
-.brand-icon span:nth-child(4) {
-  background: transparent;
-  border: 2px solid var(--primary-ink);
 }
 .header-actions {
   display: flex;

@@ -33,7 +33,7 @@ seams; centered arrow icons indicate play without repeated start text. Localized
 headings use the available width rather than a narrow character measure.
 Gallery thumbnails center on their colored artwork rather than the arithmetic
 grid's empty margins. Playable coordinates remain unchanged. The exercise grid
-has a neutral surround, and the header mark uses contrasting solid/outlined pixels.
+has a neutral surround, and the header uses the Mathixel text wordmark alone.
 Light, dark, and system appearance use the
 same layout without changing puzzle colors. Product and visual-system context
 are recorded in `PRODUCT.md` and `DESIGN.md`.
