@@ -44,7 +44,7 @@ interactive visual inspection or saving screenshots as test artifacts.
 - Build before running end-to-end tests: `npm run build`, then
   `npm run test:e2e`. The Playwright configuration starts the required preview and
   fixture servers; the preview base URL is
-  `http://127.0.0.1:4173/mathogram/`.
+  `http://127.0.0.1:4173/`.
 - Never describe saved screenshots as visually reviewed unless they actually
   were. When visual inspection would normally be required, explicitly state that
   it was skipped because of the cloud image-handling workaround and describe the

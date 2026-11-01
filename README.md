@@ -34,14 +34,14 @@ npm ci
 npm run dev
 ```
 
-Open the printed URL at **`/mathogram/`**. Development intentionally does not register a service worker. For the actual installable/offline build:
+Open the printed URL at **`/`**. Development intentionally does not register a service worker. For the actual installable/offline build:
 
 ```powershell
 npm run build
 npm run preview
 ```
 
-Open **http://127.0.0.1:4173/mathogram/**. HTTPS is required when not on localhost. Nothing in these commands publishes the site.
+Open **http://127.0.0.1:4173/**. HTTPS is required when not on localhost. Nothing in these commands publishes the site.
 
 ## Play
 
@@ -150,7 +150,7 @@ Browser acceptance simulates the iOS standalone flag to verify this code path; i
 
 ### Privacy and limitations
 
-- Event payloads contain only the configured Website ID, site hostname, canonical `/mathogram/` path, event name, stable puzzle ID and, for timing events, active seconds. Current URL paths, query strings, fragments, answers, equations, screen size, page title, language, saved progress and completion badges are not added to the payload. Pointer/key interactions only reset a local idle timer; their content and individual timestamps are never sent. HTTP referrers are suppressed.
+- Event payloads contain only the configured Website ID, site hostname, canonical deployment base path, event name, stable puzzle ID and, for timing events, active seconds. Current URL paths, query strings, fragments, answers, equations, screen size, page title, language, saved progress and completion badges are not added to the payload. Pointer/key interactions only reset a local idle timer; their content and individual timestamps are never sent. HTTP referrers are suppressed.
 - Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage. Umami's returned cache/session/visit IDs are discarded; no `identify` calls or custom visitor IDs are used.
 - Like any receiving service, Umami receives the connection's IP address and browser information. It derives visitor/session identifiers server-side from the website, IP and User-Agent with a rotating salt; these are estimates, not exact counts of people. The [Umami documentation](https://docs.umami.is/docs/metric-definitions) states raw IP addresses are not stored by analytics, but separately configured proxy/server logs may retain them. Review hosting and retention settings. Ignoring the response cache can split visits at hour boundaries.
 - Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and a link to Umami's privacy-related FAQ when analytics is configured.
@@ -174,7 +174,7 @@ Dedicated analytics browser tests block service workers so requests remain inter
 
 ## Offline installation and updates
 
-Vite, the manifest ID/start URL/scope, icons and service worker all use **`/mathogram/`**. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all nineteen puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
+Vite assets, manifest ID/start URL/scope, icons and service worker use relative URLs, so the same build works at a domain root or a project subpath. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all twenty-nine puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 
@@ -195,17 +195,17 @@ npm run validate
 
 Linux CI uses `npx playwright install --with-deps chromium webkit`.
 
-| Command                                     | Purpose                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run format:check` / `npm run format`   | Check/apply Prettier formatting                                           |
-| `npm run lint`                              | ESLint, TypeScript and React hooks rules                                  |
-| `npm run typecheck`                         | Strict TypeScript, including tests/configuration                          |
-| `npm test`                                  | All domain, content, storage, component and lifecycle tests               |
-| `npm test -- src\domain\arithmetic.test.ts` | Focused exhaustive arithmetic test                                        |
-| `npm run test:coverage`                     | Coverage with per-domain/storage gates, not a cosmetic global target      |
-| `npm run build`                             | Type-check and build the production PWA into `dist`                       |
-| `npm run test:e2e`                          | Chromium/WebKit against the existing production artifact at `/mathogram/` |
-| `npm run validate`                          | Formatting → lint → types → coverage → build → browser acceptance         |
+| Command                                     | Purpose                                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `npm run format:check` / `npm run format`   | Check/apply Prettier formatting                                                   |
+| `npm run lint`                              | ESLint, TypeScript and React hooks rules                                          |
+| `npm run typecheck`                         | Strict TypeScript, including tests/configuration                                  |
+| `npm test`                                  | All domain, content, storage, component and lifecycle tests                       |
+| `npm test -- src\domain\arithmetic.test.ts` | Focused exhaustive arithmetic test                                                |
+| `npm run test:coverage`                     | Coverage with per-domain/storage gates, not a cosmetic global target              |
+| `npm run build`                             | Type-check and build the production PWA into `dist`                               |
+| `npm run test:e2e`                          | Chromium/WebKit against the existing production artifact at `/` and `/mathogram/` |
+| `npm run validate`                          | Formatting → lint → types → coverage → build → browser acceptance                 |
 
 Domain and storage require at least **95% line / 90% branch coverage**. Arithmetic tests enumerate the bounded operand/operator/result space with an independent crossing-ten oracle and explicit boundaries. Tests also cover content shape, all target columns, stale/repeated submissions, completed attempts, replay, recovery, quota/security failures, translation, keyboard/keypad, and immediate saves.
 
@@ -223,9 +223,9 @@ Physical-device acceptance remains outstanding independently of automated browse
 
 ## Production delivery
 
-The production URL is **https://mathixel.com/**, which redirects to **https://mathixel.com/mathogram/**. Azure Static Web Apps hosts production in its default production slot, separate from the named `preview` environment. **https://davidmarek.github.io/mathogram/** remains available as a GitHub Pages mirror. The protected publishing branch is explicitly `main`.
+The production URL is **https://mathixel.com/**. Azure Static Web Apps hosts the app directly at the domain root in its default production slot, separate from the named `preview` environment. **https://davidmarek.github.io/mathogram/** remains available as a GitHub Pages mirror. The protected publishing branch is explicitly `main`.
 
-`.github\workflows\pages.yml` runs only for `main` pushes or manual dispatches. Validation and both deployment jobs independently require the exact repository, `refs/heads/main`, and **both the original actor and the rerun actor to be `davidmarek`**. Pull requests, fork contributions, schedules, issue comments, tags and other branches do not trigger this workflow. A manual dispatch publishes only when its `deploy` boolean is selected. Both deploy jobs consume the same already-tested build; neither rebuilds. Azure stages it under `/mathogram/`, preserving the tested asset, manifest and worker paths, without the preview's `noindex` headers.
+`.github\workflows\pages.yml` runs only for `main` pushes or manual dispatches. Validation and both deployment jobs independently require the exact repository, `refs/heads/main`, and **both the original actor and the rerun actor to be `davidmarek`**. Pull requests, fork contributions, schedules, issue comments, tags and other branches do not trigger this workflow. A manual dispatch publishes only when its `deploy` boolean is selected. Both deploy jobs consume the same already-tested build; neither rebuilds. Azure deploys the files at its domain root; the relative asset, manifest and worker URLs also preserve the GitHub Pages `/mathogram/` mirror.
 
 The workflow has no default token permissions. Validation gets only `contents: read`, no persisted checkout credentials, and no Pages/OIDC write token or Azure secret. Only the Pages deployment job has `pages: write` and `id-token: write` and uses the `github-pages` environment. The Azure deployment job gets only `actions: read` and uses `azure-production`; it does not check out or execute application code, and both Azure app and API builds are disabled. Workflow concurrency serializes releases without cancelling one mid-flight, with bounded job timeouts. All actions are pinned to full commit revisions, including the upload action used by the pinned Pages composite action. Failure artifacts expire after seven days, Pages artifacts after one day, and Azure production artifacts after thirty days to allow environment approval. Configure Pages uses `enablement: false`; it will not silently enable Pages.
 
@@ -235,7 +235,7 @@ The workflow has no default token permissions. Validation gets only `contents: r
 2. Create a GitHub environment named **`azure-production`**, with **`davidmarek` as a required reviewer**, self-review allowed if needed, administrator bypass disabled where available, and a selected **branch** deployment policy permitting only **`main`** (not a tag). This is separate from `azure-preview`.
 3. From Azure's **Manage deployment token**, add **`AZURE_STATIC_WEB_APPS_API_TOKEN`** as an environment secret in `azure-production`. It is the same app-scoped token used for previews, but GitHub cannot copy or reveal the existing environment secret. Do not move it to repository secrets or paste it into chat or source files. If rotating it, update both Azure environments.
 4. Keep the preview action repositories and pinned revisions in the Actions allowlist; production reuses them. Merge this change to `main`, or manually run **Validate and deploy production** on `main` with **deploy** selected, then approve the production deployment. An empty `deployment_environment` selects the production slot; preview deployments still explicitly select `preview`.
-5. Verify HTTPS at `https://mathixel.com/`, its redirect, `/mathogram/`, assets, manifest, icons, service worker and offline reopening. If analytics remains enabled, configure the existing Umami website to accept `mathixel.com` as well as the Pages hostname. Local saves and installed apps on Pages do not migrate automatically: the new domain has a separate storage origin.
+5. Verify HTTPS at `https://mathixel.com/`, assets, manifest, icons, service worker and offline reopening. If analytics remains enabled, configure the existing Umami website to accept `mathixel.com` as well as the Pages hostname. Local saves and installed apps on Pages do not migrate automatically: the new domain has a separate storage origin.
 
 Adding this workflow does not itself publish production, add the environment secret, bind the Azure custom domain, or verify live acceptance. Production and Pages deployments run independently after validation; one can succeed while the other fails.
 
@@ -258,7 +258,7 @@ Pages must be configured to use **GitHub Actions**. After each release, check th
 
 `.github/workflows/azure-preview.yml` uses one Azure Static Web Apps named environment, **`preview`**, shared by all PRs. Opening, reopening, or updating a same-repository PR targeting `main` validates its exact head commit with `npm run validate`. A fresh deployment job downloads that run's artifact, waits for environment approval, and publishes static files with **both app and API builds disabled**. It does not check out or execute PR code. The Azure token is referenced only by the upload action, and validation uses no shared dependency cache.
 
-Production at **https://mathixel.com/** and the GitHub Pages mirror use the separate `main` workflow; PRs deploy only to the named `preview` slot. Azure hosts the tested artifact under **`/mathogram/`**, including the manifest and service worker, and redirects its root there. No application path changes or second build are needed. The PR comment and workflow environment link identify the preview; the comment includes the PR number and tested head SHA. **The next approved deployment replaces the shared preview, including the content at earlier PR comments' URLs.** Azure's separate preview origin isolates preview saves and offline caches from production and GitHub Pages, but all PR previews share saves and offline caches with each other. Refresh and allow the service worker to update when switching between PRs. Previews are public; `noindex` headers discourage indexing but do not restrict access.
+Production at **https://mathixel.com/** and the GitHub Pages mirror use the separate `main` workflow; PRs deploy only to the named `preview` slot. Azure hosts the tested artifact at the domain root; the same relative URLs support the Pages `/mathogram/` path. No second build is needed. The PR comment and workflow environment link identify the root preview; the comment includes the PR number and tested head SHA. **The next approved deployment replaces the shared preview, including the content at earlier PR comments' URLs.** Azure's separate preview origin isolates preview saves and offline caches from production and GitHub Pages, but all PR previews share saves and offline caches with each other. Refresh and allow the service worker to update when switching between PRs. Previews are public; `noindex` headers discourage indexing but do not restrict access.
 
 ### One-time setup
 
@@ -267,7 +267,7 @@ Production at **https://mathixel.com/** and the GitHub Pages mirror use the sepa
 3. Restrict that environment to the selected branch **`refs/pull/*/merge`** for PR runs. Leave the production **`github-pages`** environment restricted to `main`.
 4. In Azure, select **Manage deployment token**. Store it only as an **environment secret** named **`AZURE_STATIC_WEB_APPS_API_TOKEN`** in `azure-preview`, not as a repository secret or Dependabot secret. Never paste it into a PR, chat, or source file. This token can deploy to the entire dedicated Azure app; it is not a preview-only credential.
 5. In GitHub **Settings → Actions → General**, retain read-only default tokens and approval for **all outside collaborators**. Add **`Azure/static-web-apps-deploy`**, **`actions/download-artifact`**, and **`actions/github-script`** to the existing allowed actions, using the full revisions pinned in the preview workflow. The Azure wrapper is pinned, but its upstream Dockerfile uses a mutable Microsoft deployment-client image; review that supply-chain dependency as part of enabling it.
-6. Merge the workflow after review. Open or update a same-repository PR, wait for validation, inspect the exact commit and workflow changes, then approve the `azure-preview` deployment. Verify the posted `/mathogram/` URL, assets, installation, offline play, and local-save isolation. No live Azure deployment is established merely by adding this workflow.
+6. Merge the workflow after review. Open or update a same-repository PR, wait for validation, inspect the exact commit and workflow changes, then approve the `azure-preview` deployment. Verify the posted root URL, assets, installation, offline play, and local-save isolation. No live Azure deployment is established merely by adding this workflow.
 
 ### Approval, updates, and cleanup
 

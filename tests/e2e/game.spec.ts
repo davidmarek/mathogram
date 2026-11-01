@@ -300,7 +300,7 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   });
   await context.route(analyticsEndpoint, (route) => route.abort());
   const page = await context.newPage();
-  await page.goto('http://127.0.0.1:4173/mathogram/');
+  await page.goto('http://127.0.0.1:4173/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
   await page.evaluate(() => {
     localStorage.setItem('other-project', 'untouched');
@@ -439,7 +439,7 @@ for (const [name, width, height] of [
   });
 }
 
-test('production subpath serves local assets and only configured analytics without errors', async ({
+test('production build serves local assets at the domain root without errors', async ({
   page,
   request,
 }) => {
@@ -458,23 +458,26 @@ test('production subpath serves local assets and only configured analytics witho
   await expect(page.getByRole('button', { name: 'Save & update' })).toHaveCount(
     0,
   );
-  expect(manifestURL).toBe('/mathogram/manifest.webmanifest');
-  const response = await request.get(manifestURL!);
+  expect(manifestURL).toBe('./manifest.webmanifest');
+  const resolvedManifestURL = new URL(manifestURL!, page.url()).href;
+  const response = await request.get(resolvedManifestURL);
   const manifest = await response.json();
   expect(manifest).toMatchObject({
-    id: '/mathogram/',
-    start_url: '/mathogram/',
-    scope: '/mathogram/',
+    id: './',
+    start_url: './',
+    scope: './',
     display: 'standalone',
   });
   for (const icon of manifest.icons) {
-    const response = await request.get(`/mathogram/${icon.src}`);
+    const response = await request.get(
+      new URL(icon.src, resolvedManifestURL).href,
+    );
     expect(response.ok()).toBe(true);
     const png = await response.body();
     expect(png.readUInt32BE(16)).toBe(Number(icon.sizes.split('x')[0]));
     expect(png.readUInt32BE(20)).toBe(Number(icon.sizes.split('x')[1]));
   }
-  const apple = await request.get('/mathogram/icons/apple-touch-icon.png');
+  const apple = await request.get('/icons/apple-touch-icon.png');
   expect((await apple.body()).readUInt32BE(16)).toBe(180);
   const optedOut = await page.evaluate(() => navigator.doNotTrack === '1');
   expect(external).toEqual(
