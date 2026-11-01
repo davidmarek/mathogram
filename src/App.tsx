@@ -307,7 +307,7 @@ export function App() {
             <span />
             <span />
           </span>
-          Mathogram
+          Mathixel
           <span className="brand-dot" aria-hidden="true">
             .
           </span>
@@ -318,7 +318,7 @@ export function App() {
             onClick={() =>
               changeLanguage(progress.language === 'en' ? 'cs' : 'en')
             }
-            aria-label={`${t.language}: ${progress.language === 'en' ? 'Čeština' : 'English'}`}
+            aria-label={`${progress.language === 'en' ? 'Česky' : 'English'} · ${t.language}: ${progress.language === 'en' ? 'Čeština' : 'English'}`}
           >
             {progress.language === 'en' ? 'Česky' : 'English'}
           </button>
@@ -441,7 +441,6 @@ export function App() {
                         className={`picture-card picture-${animal.id}${needsMore ? ' is-locked' : ''}`}
                         onClick={() => openPuzzle(animal.id)}
                         disabled={needsMore}
-                        aria-label={`${t[animal.name]} · ${action}`}
                         aria-describedby={`category-${animal.id}`}
                       >
                         <div className="card-art">

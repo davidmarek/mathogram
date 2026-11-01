@@ -33,7 +33,7 @@ for (const language of ['en', 'cs'] as const) {
 
     await expect(
       page.getByRole('button', {
-        name: `${t.dog} · ${t.needsNumbers} 13`,
+        name: new RegExp(t.dog),
       }),
     ).toBeDisabled();
     expect(
@@ -44,9 +44,7 @@ for (const language of ['en', 'cs'] as const) {
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
     await page.reload();
-    await page
-      .getByRole('button', { name: new RegExp(`^${t.cat} · `) })
-      .click();
+    await page.getByRole('button', { name: new RegExp(t.cat) }).click();
     await expect(page.locator('.level-pill')).toHaveText(
       `${t.modeCrossing} · ${t.numbersUpTo} 12`,
     );

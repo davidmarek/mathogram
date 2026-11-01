@@ -1,4 +1,4 @@
-# Mathogram
+# Mathixel
 
 **Little sums. Lovely discoveries.** A bright, touch-first pixel-picture game for early learners, in English and Czech. Solve a sum, check the answer, and one colored pixel appears automatically. No player accounts, ads, external assets, penalties, timers, or sound. Analytics is off by default; deployments may explicitly enable the limited, cookieless usage statistics described below.
 
@@ -180,7 +180,7 @@ Wait for **Ready for offline play / Připraveno na hraní offline** before disco
 
 On iPhone/iPad (target **iOS/iPadOS 17+**), open the site in Safari, tap **Share → Add to Home Screen**, enable **Open as Web App** if shown, then Add. Install instructions are hidden when standalone is detected. This is a native-like Home Screen web app, **not an App Store app**.
 
-Updates install in a waiting worker. **Later** leaves the current game alone; the update remains accessible in Settings. **Save & update** first saves progress, then sends Workbox's `SKIP_WAITING` message and reloads after the worker takes control. Another tab accepting an update does not trigger an unsolicited reload here. Registration, caching, messaging, and activation-timeout failures are surfaced. Workbox cache names and navigation fallback are scoped to Mathogram; obsolete-cache cleanup does not sweep other projects' storage.
+Updates install in a waiting worker. **Later** leaves the current game alone; the update remains accessible in Settings. **Save & update** first saves progress, then sends Workbox's `SKIP_WAITING` message and reloads after the worker takes control. Another tab accepting an update does not trigger an unsolicited reload here. Registration, caching, messaging, and activation-timeout failures are surfaced. Workbox cache names and navigation fallback are scoped to Mathixel; obsolete-cache cleanup does not sweep other projects' storage.
 
 If changing the hosting path, change `base`, manifest ID/start URL/scope, and navigation fallback/allowlist together, then update and rerun the subpath acceptance tests.
 
