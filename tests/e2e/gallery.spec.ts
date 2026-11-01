@@ -45,7 +45,6 @@ for (const language of ['en', 'cs'] as const) {
     await expect(page.locator('.picture-card')).toHaveCount(puzzles.length);
     const artwork = await page.locator('.card-art svg').evaluateAll((images) =>
       images.map((image) => ({
-        viewBox: image.getAttribute('viewBox'),
         pixels: [...image.querySelectorAll('rect')].map((pixel) => ({
           x: pixel.getAttribute('x'),
           y: pixel.getAttribute('y'),
@@ -63,7 +62,6 @@ for (const language of ['en', 'cs'] as const) {
             .sort((a, b) => a.pixels.length - b.pixels.length),
         )
         .map((puzzle) => ({
-          viewBox: `0 0 ${puzzle.width} ${puzzle.height}`,
           pixels: puzzle.pixels.map((pixel) => ({
             x: String(pixel.col - 1),
             y: String(pixel.row - 1),
@@ -121,14 +119,12 @@ for (const language of ['en', 'cs'] as const) {
         const layouts = await cards.evaluateAll((elements) =>
           elements.map((card) => {
             const art = card.querySelector('.card-art')!;
-            const halo = card.querySelector('.art-halo')!;
             const bounds = card.getBoundingClientRect();
             const artBounds = art.getBoundingClientRect();
             const style = getComputedStyle(card);
             return {
               name: card.getAttribute('aria-label'),
               background: getComputedStyle(art).backgroundColor,
-              halo: getComputedStyle(halo).backgroundColor,
               cardBackground: style.backgroundColor,
               topGap:
                 artBounds.top - bounds.top - parseFloat(style.borderTopWidth),
@@ -136,10 +132,7 @@ for (const language of ['en', 'cs'] as const) {
                 artBounds.left -
                 bounds.left -
                 parseFloat(style.borderLeftWidth),
-              rightGap:
-                bounds.right -
-                artBounds.right -
-                parseFloat(style.borderRightWidth),
+              fits: artBounds.right <= bounds.right,
               height: artBounds.height,
             };
           }),
@@ -148,13 +141,12 @@ for (const language of ['en', 'cs'] as const) {
           const context = `${layout.name} at ${width}px`;
           expect(layout.background, context).not.toBe('rgba(0, 0, 0, 0)');
           expect(layout.background, context).not.toBe(layout.cardBackground);
-          expect(layout.halo, context).not.toBe('rgba(0, 0, 0, 0)');
           expect(Math.abs(layout.topGap), context).toBeLessThan(1);
           expect(Math.abs(layout.leftGap), context).toBeLessThan(1);
-          expect(Math.abs(layout.rightGap), context).toBeLessThan(1);
-          expect(layout.height, context).toBe(
-            width <= 360 ? 125 : width <= 700 ? 145 : 162,
-          );
+          expect(layout.fits, context).toBe(true);
+          if (width <= 700)
+            expect(layout.height, context).toBe(width <= 360 ? 125 : 145);
+          else expect(layout.height, context).toBeGreaterThanOrEqual(190);
         }
       }
     });

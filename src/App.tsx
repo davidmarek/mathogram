@@ -58,6 +58,10 @@ const puzzleGroups = difficulties.map((difficulty) => ({
     .sort((a, b) => a.pixels.length - b.pixels.length),
 }));
 
+const parkPictures = puzzles.filter((puzzle) =>
+  ['rabbit', 'butterfly', 'fish'].includes(puzzle.id),
+);
+
 export function App() {
   const [initial] = useState(initialProgress);
   const [progress, setProgress] = useState(initial.progress);
@@ -135,7 +139,7 @@ export function App() {
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute('content', dark ? '#1c2528' : '#fff8ec');
+        ?.setAttribute('content', dark ? '#1c2528' : '#f5f1e4');
     }
     applyTheme();
     preference.addEventListener?.('change', applyTheme);
@@ -301,16 +305,7 @@ export function App() {
     <div className="app-shell">
       <header className="app-header">
         <button className="brand" onClick={goHome} aria-label={t.homeLabel}>
-          <span className="brand-icon" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
           Mathixel
-          <span className="brand-dot" aria-hidden="true">
-            .
-          </span>
         </button>
         <div className="header-actions">
           <button
@@ -329,9 +324,18 @@ export function App() {
               setModal('settings');
             }}
           >
-            <span className="header-tool-icon" aria-hidden="true">
-              ⚙
-            </span>
+            <svg
+              className="header-tool-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M4 7h16M4 17h16" />
+              <circle cx="9" cy="7" r="3" fill="var(--tool-bg)" />
+              <circle cx="15" cy="17" r="3" fill="var(--tool-bg)" />
+            </svg>
             {t.settings}
           </button>
           <button
@@ -389,22 +393,51 @@ export function App() {
         {!puzzle || !attempt ? (
           <section className="gallery" aria-labelledby="gallery-title">
             <div className="hero">
-              <span className="hero-spark spark-one" aria-hidden="true">
-                ✦
-              </span>
-              <span className="eyebrow">{t.tagline}</span>
-              <h1 id="gallery-title" tabIndex={-1} ref={heading}>
-                {t.galleryTitle}
-              </h1>
-              <p>{t.galleryIntro}</p>
-              <span className="hero-spark spark-two" aria-hidden="true">
-                ✧
-              </span>
+              <div className="hero-copy">
+                <h1 id="gallery-title" tabIndex={-1} ref={heading}>
+                  {t.galleryTitle}
+                </h1>
+                <p>{t.galleryIntro}</p>
+                <a className="explore-button" href="#picture-collection">
+                  {t.gallery}
+                  <span aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 5v14m-6-6 6 6 6-6" />
+                    </svg>
+                  </span>
+                </a>
+              </div>
+              <div className="hero-landscape" aria-hidden="true">
+                <svg
+                  className="park-island"
+                  viewBox="0 0 600 420"
+                  preserveAspectRatio="none"
+                >
+                  <path d="M320 25C225 25 265 90 170 108C75 126 35 195 35 258C35 330 120 316 180 367C240 417 385 392 455 357C530 320 575 264 565 184C556 112 470 12 320 25Z" />
+                </svg>
+                {parkPictures.map((picture) => (
+                  <div
+                    key={picture.id}
+                    className={`park-creature creature-${picture.id}`}
+                  >
+                    <PixelArt puzzle={picture} />
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="collection-heading">
+            <div className="collection-heading" id="picture-collection">
               <h2>{t.collection}</h2>
               <span>
-                <span aria-hidden="true">✦ </span>
+                <span className="collection-check" aria-hidden="true">
+                  ✓
+                </span>
                 {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
@@ -415,7 +448,7 @@ export function App() {
             )}
             {puzzleGroups.map((group) => (
               <section
-                className="difficulty-group"
+                className={`difficulty-group difficulty-${group.difficulty}`}
                 key={group.difficulty}
                 aria-labelledby={`difficulty-${group.difficulty}`}
               >
@@ -444,12 +477,6 @@ export function App() {
                         aria-describedby={`category-${animal.id}`}
                       >
                         <div className="card-art">
-                          <span className="picture-number" aria-hidden="true">
-                            {String(puzzles.indexOf(animal) + 1).padStart(
-                              2,
-                              '0',
-                            )}
-                          </span>
                           {badge && (
                             <span
                               className="discovery-badge"
@@ -458,13 +485,10 @@ export function App() {
                               ✓
                             </span>
                           )}
-                          <span className="art-halo" />
-                          <PixelArt puzzle={animal} />
-                          <span className="card-spark" aria-hidden="true">
-                            ✦
-                          </span>
+                          <PixelArt puzzle={animal} centered />
                         </div>
                         <div className="card-copy">
+                          <h3>{t[animal.name]}</h3>
                           <span
                             className="card-level"
                             id={`category-${animal.id}`}
@@ -474,11 +498,43 @@ export function App() {
                               {animal.pixels.length} {t.exercises}
                             </span>
                           </span>
-                          <h3>{t[animal.name]}</h3>
                           <div className="card-action">
-                            <span>{action}</span>
-                            <span aria-hidden="true">
-                              {needsMore ? '🔒' : done ? '✓' : '↗'}
+                            <span
+                              className={
+                                !saved && !needsMore ? 'sr-only' : undefined
+                              }
+                            >
+                              {action}
+                            </span>
+                            <span
+                              className="card-action-icon"
+                              aria-hidden="true"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                {needsMore ? (
+                                  <>
+                                    <rect
+                                      x="5"
+                                      y="10"
+                                      width="14"
+                                      height="10"
+                                      rx="2"
+                                    />
+                                    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                                  </>
+                                ) : done ? (
+                                  <path d="m5 12 4 4L19 6" />
+                                ) : (
+                                  <path d="M5 12h14m-6-6 6 6-6 6" />
+                                )}
+                              </svg>
                             </span>
                           </div>
                           {saved && !done && (
@@ -502,9 +558,6 @@ export function App() {
           </section>
         ) : complete ? (
           <section className="completion" aria-labelledby="complete-title">
-            <span className="eyebrow">
-              {t.completed} · {t[puzzle.name]}
-            </span>
             <h1 id="complete-title" ref={heading} tabIndex={-1}>
               {t.completeTitle}
             </h1>
@@ -513,14 +566,12 @@ export function App() {
               role="img"
               aria-label={`${t.fullGrid}: ${t[puzzle.name]}`}
             >
-              <span className="celebrate-star star-left" aria-hidden="true">
-                ✦
+              <span className="completion-check" aria-hidden="true">
+                ✓
               </span>
               <PixelArt puzzle={puzzle} />
-              <span className="celebrate-star star-right" aria-hidden="true">
-                ✧
-              </span>
             </div>
+            <h2 className="completed-name">{t[puzzle.name]}</h2>
             <p>{t.completeBody}</p>
             <div className="button-row">
               <button className="primary" onClick={goHome}>
@@ -596,7 +647,7 @@ export function App() {
                 }}
               >
                 <div className="equation-heading">
-                  <span className="eyebrow">
+                  <span className="equation-label">
                     {reviewing ? t.practice : t.solve}
                   </span>
                   {activeRow !== undefined && (

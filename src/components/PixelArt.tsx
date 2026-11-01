@@ -5,14 +5,25 @@ import type { Messages } from '../i18n/en';
 export function PixelArt({
   puzzle,
   className = '',
+  centered = false,
 }: {
   puzzle: Puzzle;
   className?: string;
+  centered?: boolean;
 }) {
+  let viewBox = `0 0 ${puzzle.width} ${puzzle.height}`;
+  if (centered) {
+    const left = Math.min(...puzzle.pixels.map((pixel) => pixel.col - 1));
+    const right = Math.max(...puzzle.pixels.map((pixel) => pixel.col));
+    const top = Math.min(...puzzle.pixels.map((pixel) => pixel.row - 1));
+    const bottom = Math.max(...puzzle.pixels.map((pixel) => pixel.row));
+    const size = Math.max(right - left, bottom - top) + 2;
+    viewBox = `${(left + right - size) / 2} ${(top + bottom - size) / 2} ${size} ${size}`;
+  }
   return (
     <svg
       className={`pixel-art ${className}`}
-      viewBox={`0 0 ${puzzle.width} ${puzzle.height}`}
+      viewBox={viewBox}
       aria-hidden="true"
       shapeRendering="crispEdges"
     >

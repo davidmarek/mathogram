@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-01T22:38:44.310+01:00",
+  "title": "Design System: Mathixel",
+  "extensions": {
+    "colorMeta": {
+      "park-green": {
+        "role": "primary",
+        "displayName": "Park Green"
+      },
+      "park-green-dark": {
+        "role": "primary",
+        "displayName": "Dark-theme Park Green"
+      },
+      "sun-yellow": {
+        "role": "secondary",
+        "displayName": "Sun Yellow"
+      },
+      "sun-yellow-dark": {
+        "role": "secondary",
+        "displayName": "Dark-theme Sun Yellow"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Ink"
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink"
+      },
+      "muted-ink-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Muted Ink"
+      },
+      "paper-cream": {
+        "role": "neutral",
+        "displayName": "Paper Cream"
+      },
+      "paper-cream-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Paper"
+      },
+      "warm-surface": {
+        "role": "neutral",
+        "displayName": "Warm Surface"
+      },
+      "warm-surface-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Surface"
+      },
+      "secondary-surface": {
+        "role": "neutral",
+        "displayName": "Secondary Surface"
+      },
+      "secondary-surface-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Secondary Surface"
+      },
+      "island-green": {
+        "role": "tertiary",
+        "displayName": "Island Green"
+      },
+      "island-green-dark": {
+        "role": "tertiary",
+        "displayName": "Dark-theme Island Green"
+      },
+      "picture-mint": {
+        "role": "tertiary",
+        "displayName": "Picture Mint"
+      },
+      "pill-green": {
+        "role": "tertiary",
+        "displayName": "Pill Green"
+      },
+      "pill-green-dark": {
+        "role": "tertiary",
+        "displayName": "Dark-theme Pill Green"
+      },
+      "pond-blue": {
+        "role": "tertiary",
+        "displayName": "Pond Blue"
+      },
+      "pond-blue-dark": {
+        "role": "tertiary",
+        "displayName": "Dark-theme Pond Blue"
+      },
+      "coral": {
+        "role": "tertiary",
+        "displayName": "Coral"
+      },
+      "coral-dark": {
+        "role": "tertiary",
+        "displayName": "Dark-theme Coral"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border"
+      },
+      "border-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Border"
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Danger"
+      },
+      "danger-dark": {
+        "role": "secondary",
+        "displayName": "Dark-theme Danger"
+      },
+      "button-ink": {
+        "role": "neutral",
+        "displayName": "Button Ink"
+      },
+      "button-ink-dark": {
+        "role": "neutral",
+        "displayName": "Dark-theme Button Ink"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Gallery welcome heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Supporting copy and instructions."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Picture-card titles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "keypad-depth",
+        "value": "0 3px 2px var(--key-shadow)",
+        "purpose": "Small structural shadow below keypad keys."
+      },
+      {
+        "name": "primary-action-depth",
+        "value": "0 3px 2px var(--primary-shadow)",
+        "purpose": "Small structural shadow below primary actions."
+      },
+      {
+        "name": "modal-separation",
+        "value": "0 16px 80px #28332e40",
+        "purpose": "Separate the modal from the page backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "150ms ease",
+        "purpose": "Enabled button transform, background-color, and shadow transitions."
+      },
+      {
+        "name": "card-action-color",
+        "value": "150ms ease",
+        "purpose": "Change picture-card action colors on hover or focus without moving the icon."
+      },
+      {
+        "name": "picture-reveal",
+        "value": "550ms ease",
+        "purpose": "Pop animation for a newly revealed grid cell."
+      },
+      {
+        "name": "completion-arrival",
+        "value": "600ms ease-out",
+        "purpose": "Entry animation for the completed picture."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "700px"
+      },
+      {
+        "name": "compact",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Garden-green capsule action with a small structural shadow.",
+      "html": "<button class=\"ds-primary\">Check answer</button>",
+      "css": ".ds-primary { background: var(--green); color: var(--primary-ink); padding: 13px 22px; border: 0; border-radius: 50px; font: 750 0.9rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; box-shadow: 0 3px 2px var(--primary-shadow); transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease; } .ds-primary:hover { background: var(--primary-hover); } .ds-primary:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; } .ds-primary:active { transform: translateY(2px); }"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined capsule action on the secondary theme surface.",
+      "html": "<button class=\"ds-secondary\">Cancel</button>",
+      "css": ".ds-secondary { background: var(--secondary-bg); color: var(--ink); padding: 13px 22px; border: 1px solid var(--secondary-border); border-radius: 50px; font: 750 0.9rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease; } .ds-secondary:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; } .ds-secondary:active { transform: translateY(2px); }"
+    },
+    {
+      "name": "Collection Action",
+      "kind": "custom",
+      "refersTo": "collection-action",
+      "description": "Green capsule link with a contrasting, centered SVG arrow.",
+      "html": "<a class=\"ds-collection\" href=\"#collection\"><span>Picture collection</span><span class=\"ds-collection-arrow\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14m-6-6 6 6 6-6\" /></svg></span></a>",
+      "css": ".ds-collection { display: inline-flex; align-items: center; gap: 30px; min-height: 52px; padding: 8px 9px 8px 23px; color: var(--primary-ink); background: var(--green); border-radius: 50px; font: 700 1rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; text-decoration: none; } .ds-collection-arrow { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--primary-ink); color: var(--green); } .ds-collection-arrow svg { display: block; width: 20px; height: 20px; } .ds-collection:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+    },
+    {
+      "name": "Picture Card",
+      "kind": "card",
+      "refersTo": "picture-card",
+      "description": "Evenly rounded card with a straight artwork seam and a centered SVG action icon.",
+      "html": "<button class=\"ds-picture-card\" aria-label=\"Rabbit: Start picture\"><span class=\"ds-picture-art\" aria-hidden=\"true\"></span><span class=\"ds-picture-copy\"><span class=\"ds-picture-title\">Rabbit</span><span class=\"ds-card-action\"><span class=\"ds-card-arrow\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14m-6-6 6 6-6 6\" /></svg></span></span></span></button>",
+      "css": ".ds-picture-card { display: flex; padding: 0; overflow: hidden; border: 1px solid var(--card-border); border-radius: 20px; background: var(--surface); color: var(--ink); text-align: left; font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-picture-art { width: 180px; min-height: 190px; flex: 0 0 auto; background: var(--picture-bg); border-radius: 0; } .ds-picture-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 22px; } .ds-picture-title { margin-bottom: 8px; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; } .ds-card-action { display: flex; align-items: center; margin-top: auto; } .ds-card-arrow { display: grid; place-items: center; flex-shrink: 0; margin-left: auto; width: 32px; height: 32px; background: var(--land); border-radius: 50%; transition: background-color 150ms ease, color 150ms ease; } .ds-card-arrow svg { display: block; width: 20px; height: 20px; } .ds-picture-card:hover { border-color: var(--green); background: var(--tool-bg); } .ds-picture-card:hover .ds-card-arrow, .ds-picture-card:focus-visible .ds-card-arrow { background: var(--green); color: var(--primary-ink); } .ds-picture-card:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+    },
+    {
+      "name": "Answer Field",
+      "kind": "input",
+      "refersTo": "answer-field",
+      "description": "Large centered field for entering a short numeric answer.",
+      "html": "<label class=\"ds-answer-wrap\"><span class=\"ds-answer-label\">Answer</span><input class=\"ds-answer\" inputmode=\"none\" value=\"\" /></label>",
+      "css": ".ds-answer-wrap { display: inline-grid; } .ds-answer-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } .ds-answer { width: 78px; height: 66px; padding: 3px; border: 2px solid var(--input-border); border-radius: 15px; background: var(--surface); color: var(--green); caret-color: var(--green); text-align: center; font: 800 2rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-answer:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+    },
+    {
+      "name": "Number Key",
+      "kind": "button",
+      "refersTo": "keypad-key",
+      "description": "Rounded numeric keypad key with a slim border and small lower shadow.",
+      "html": "<button class=\"ds-key\">7</button>",
+      "css": ".ds-key { min-height: 56px; padding: 0; border: 1px solid var(--key-border); border-radius: 20px 16px 20px 16px; background: var(--pill-bg); color: var(--ink); box-shadow: 0 3px 2px var(--key-shadow); font: 750 1.45rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease; } .ds-key:hover { background: var(--key-hover); } .ds-key:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; } .ds-key:active { transform: translateY(2px); }"
+    },
+    {
+      "name": "Game Navigation",
+      "kind": "nav",
+      "description": "Text back action and level indicator above the active picture.",
+      "html": "<div class=\"ds-game-nav\"><button class=\"ds-back\">← Picture collection</button><span class=\"ds-level\">Standard</span></div>",
+      "css": ".ds-game-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; } .ds-back { padding: 0 8px 0 0; border: 0; background: transparent; color: var(--ink); font: 700 0.86rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-level { padding: 8px 12px; border-radius: 20px; background: var(--pill-bg); color: var(--ink); font: 400 0.73rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-game-nav button:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Picture Park Guide Map",
+    "overview": "Mathixel is a picture park with contained green islands in the gallery, green actions, centered original pixel previews, and evenly rounded cards with straight artwork seams. The exercise grid has a neutral surface without a colored decorative surround. The header uses the Mathixel text wordmark alone. Localized headings use the available width. Yellow is reserved for completion discovery marks.",
+    "keyCharacteristics": [
+      "Pale paper, ink, garden greens, and yellow discovery marks.",
+      "Original pixel artwork presented on softly colored picture grounds.",
+      "Preview framing centers colored bounds without changing playable grid coordinates.",
+      "Neutral exercise grid and a simple Mathixel text wordmark.",
+      "Capsule actions and contained islands alongside equal-corner cards.",
+      "A consistent picture-first thread from collection through solving to completion."
+    ],
+    "rules": [
+      {
+        "name": "The Garden-Action Rule",
+        "body": "Use garden green for primary actions and active states; reserve yellow for completion discovery marks. Labels use dark ink on pale fills.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-Sans Rule",
+        "body": "Keep interface copy in the shared sans-serif family; let the pixel pictures, not novelty display lettering, carry the playful character.",
+        "section": "typography"
+      },
+      {
+        "name": "The Picture-Stays-With-the-Task Rule",
+        "body": "Keep the selected picture alongside the equation during play and repeat that picture as the focus of completion.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Do use the original pixel pictures as the recurring visual subject.",
+      "Do use green for primary actions and active progress, and yellow only for completion discovery marks.",
+      "Do keep the picture visible beside the arithmetic task and prominent on completion.",
+      "Do preserve the light and dark semantic color mappings when extending the interface."
+    ],
+    "donts": [
+      "Don't reintroduce decorative slogan badges, mismatched card corners, or narrow localized headings.",
+      "Don't replace the original pixel artwork with external artwork.",
+      "Don't apply shadows as a universal surface treatment; the implemented shadows are reserved for controls and modal separation."
+    ]
+  }
+}

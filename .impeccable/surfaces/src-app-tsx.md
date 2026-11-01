@@ -1,0 +1,35 @@
+---
+version: 1
+slug: 'src-app-tsx'
+primary_target: 'src/App.tsx'
+related_targets: ['src/styles/app.css']
+---
+
+## Scope and mode
+
+Gallery, game, and completion in src/App.tsx. Operate: children choose a picture
+and solve arithmetic to reveal it. The artwork leads without hiding the task.
+
+## Direction
+
+User selected the zoo-and-gardens guide-map challenger, seed f2ea23b4.
+Contained green islands, green capsule actions, ink sans, original pixel creatures.
+Desktop welcome left and landscape right; phone stacks the same scene.
+Picture stays central through play and completion, using carried-object staging.
+User-directed refinement: full-width localized headings, equal card corners and
+straight artwork seams, centered SVG action icons, no decorative slogan badge.
+Start text is screen-reader-only; resume, completion, and locked states stay visible.
+The header uses the Mathixel wordmark without a four-tile symbol. Exercise grids
+have no green decorative surround. Gallery previews center on colored artwork
+bounds; actual puzzle coordinates and saved attempts remain unchanged.
+
+## Constraints
+
+Keep all existing copy, puzzle ordering, arithmetic, saved attempts, settings,
+Czech/English, light/dark/system, accessibility, and offline support.
+No invented personalities, routes, rewards, rankings, or game mechanics.
+
+## Memorable moment
+
+The quiet empty grid grows into the same original picture featured in the park,
+then receives a yellow discovery mark.

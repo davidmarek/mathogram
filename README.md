@@ -25,6 +25,19 @@ Length counts colored pixels, not grid dimensions: one colored pixel requires on
 
 The gallery groups all pictures under Beginner, Standard, and Advanced headings. Within each group, pictures appear from smallest to largest by exercise count. Cards show their length band and exact exercise count; saved attempts and discovery badges remain available in every group.
 
+The interface uses a picture-park visual language: original pixel creatures on
+contained green islands, colored difficulty signposts, and large touch controls.
+Desktop picture tiles place artwork beside the name and progress; phone tiles
+stack artwork above their labels. Cards use equal corners and straight artwork
+seams; centered arrow icons indicate play without repeated start text. Localized
+headings use the available width rather than a narrow character measure.
+Gallery thumbnails center on their colored artwork rather than the arithmetic
+grid's empty margins. Playable coordinates remain unchanged. The exercise grid
+has a neutral surround, and the header uses the Mathixel text wordmark alone.
+Light, dark, and system appearance use the
+same layout without changing puzzle colors. Product and visual-system context
+are recorded in `PRODUCT.md` and `DESIGN.md`.
+
 ## Run locally
 
 Use **Node 24 LTS**, at least **24.15.0** within the 24.x line, and npm. `.nvmrc` records the reproducible baseline. The lockfile is included. TypeScript 6 is intentional: the maintained TypeScript ESLint parser currently supports TypeScript below 6.1.
@@ -256,9 +269,9 @@ Pages must be configured to use **GitHub Actions**. After each release, check th
 
 ## Azure PR previews
 
-`.github/workflows/azure-preview.yml` uses one Azure Static Web Apps named environment, **`preview`**, shared by all PRs. Opening, reopening, or updating a same-repository PR targeting `main` validates its exact head commit with `npm run validate`. A fresh deployment job downloads that run's artifact, waits for environment approval, and publishes static files with **both app and API builds disabled**. It does not check out or execute PR code. The Azure token is referenced only by the upload action, and validation uses no shared dependency cache.
+`.github/workflows/azure-preview.yml` uses one Azure Static Web Apps named environment, **`preview`**, shared by all PRs. Opening, reopening, or updating a same-repository PR targeting `main` starts two independent jobs for its exact head commit: full validation with `npm run validate`, and a preview build with `npm run build`. Deployment depends only on the preview build, so environment approval and publishing can proceed while the slower validation job runs. A fresh deployment job waits for environment approval, downloads that run's build artifact, and publishes static files with **both app and API builds disabled**. It does not check out or execute PR code. The Azure token is referenced only by the upload action, and neither build nor validation uses a shared dependency cache.
 
-Production at **https://mathixel.com/** and the GitHub Pages mirror use the separate `main` workflow; PRs deploy only to the named `preview` slot. Azure hosts the tested artifact at the domain root; the same relative URLs support the Pages `/mathogram/` path. No second build is needed. The PR comment and workflow environment link identify the root preview; the comment includes the PR number and tested head SHA. **The next approved deployment replaces the shared preview, including the content at earlier PR comments' URLs.** Azure's separate preview origin isolates preview saves and offline caches from production and GitHub Pages, but all PR previews share saves and offline caches with each other. Refresh and allow the service worker to update when switching between PRs. Previews are public; `noindex` headers discourage indexing but do not restrict access.
+Production at **https://mathixel.com/** and the GitHub Pages mirror use the separate `main` workflow and still require full validation before publishing; PRs deploy only to the named `preview` slot. Azure hosts the preview build at the domain root; the same relative URLs support the Pages `/mathogram/` path. Deployment does not rebuild the artifact; full validation builds separately. The PR comment and workflow environment link identify the root preview; the comment includes the PR number and built head SHA and warns that validation runs independently. **An approved preview may deploy before validation finishes or even when validation fails; a later failure does not roll back the preview.** Check the validation result before merging. **The next approved deployment replaces the shared preview, including the content at earlier PR comments' URLs.** Azure's separate preview origin isolates preview saves and offline caches from production and GitHub Pages, but all PR previews share saves and offline caches with each other. Refresh and allow the service worker to update when switching between PRs. Previews are public; `noindex` headers discourage indexing but do not restrict access.
 
 ### One-time setup
 
@@ -267,14 +280,14 @@ Production at **https://mathixel.com/** and the GitHub Pages mirror use the sepa
 3. Restrict that environment to the selected branch **`refs/pull/*/merge`** for PR runs. Leave the production **`github-pages`** environment restricted to `main`.
 4. In Azure, select **Manage deployment token**. Store it only as an **environment secret** named **`AZURE_STATIC_WEB_APPS_API_TOKEN`** in `azure-preview`, not as a repository secret or Dependabot secret. Never paste it into a PR, chat, or source file. This token can deploy to the entire dedicated Azure app; it is not a preview-only credential.
 5. In GitHub **Settings → Actions → General**, retain read-only default tokens and approval for **all outside collaborators**. Add **`Azure/static-web-apps-deploy`**, **`actions/download-artifact`**, and **`actions/github-script`** to the existing allowed actions, using the full revisions pinned in the preview workflow. The Azure wrapper is pinned, but its upstream Dockerfile uses a mutable Microsoft deployment-client image; review that supply-chain dependency as part of enabling it.
-6. Merge the workflow after review. Open or update a same-repository PR, wait for validation, inspect the exact commit and workflow changes, then approve the `azure-preview` deployment. Verify the posted root URL, assets, installation, offline play, and local-save isolation. No live Azure deployment is established merely by adding this workflow.
+6. Merge the workflow after review. Open or update a same-repository PR, inspect the exact commit and workflow changes, then approve the `azure-preview` deployment when its build completes; full validation need not have finished. Verify the posted root URL, assets, installation, offline play, and local-save isolation, and check the independent validation result before merging. No live Azure deployment is established merely by adding this workflow.
 
 ### Approval, updates, and cleanup
 
 Required environment review is the authorization boundary: a PR can change workflow YAML, so inspect it before approving any job that could receive the token. Keep write access limited to trusted maintainers. Fork PRs are deliberately skipped rather than using `pull_request_target` to execute outside code with elevated privileges. To preview an external or Dependabot change, first review it and bring the approved changes onto a maintainer-controlled branch with a new same-repository PR; do not expose the token to an untrusted workflow.
 
-Each new commit starts validation again and requires a new deployment approval. The deployment rechecks that the PR is open at the validated SHA after the approval wait, rejecting stale runs. Runs retain per-PR concurrency, while deployment jobs across all PRs share a separate concurrency group without cancelling active uploads. GitHub may replace pending jobs in that group; re-run the latest run for a still-open PR if its deployment was cancelled. The last successful deployment owns the shared URL.
+Each new commit starts validation and a preview build again and requires a new deployment approval. The deployment rechecks that the PR is open at the built SHA after the approval wait, rejecting stale runs. Preview artifacts expire after one day; approve within that window or re-run the latest run to rebuild. Runs retain per-PR concurrency, while deployment jobs across all PRs share a separate concurrency group without cancelling active uploads. GitHub may replace pending jobs in that group; re-run the latest run for a still-open PR if its deployment was cancelled. The last successful deployment owns the shared URL.
 
-Closing or merging a PR does not delete the shared environment or start a cleanup job: deleting it could remove another PR's preview. A reopened PR can replace the same slot after validation and approval.
+Closing or merging a PR does not delete the shared environment or start a cleanup job: deleting it could remove another PR's preview. A reopened PR can replace the same slot after its build and approval.
 
 **Migrating from per-PR environments:** cancel old workflow runs still awaiting deployment or cleanup approval so they cannot create or delete environments using the old workflow. In the Azure app's **Environments** page, delete the old PR environments once; do not delete the production environment or the named `preview` environment. If all three slots are already occupied, free at least one before the first shared deployment. Update any SHA-specific Actions allowlist to permit `Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1`, whose input schema supports named environments. Open or update a PR after the workflow is merged and approve its latest run; re-running an old run still uses its old workflow. The shared slot is subsequently reused without per-PR cleanup approvals.
