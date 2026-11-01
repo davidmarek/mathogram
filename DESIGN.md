@@ -51,7 +51,7 @@ typography:
     letterSpacing: '-0.025em'
 rounded:
   pill: '50px'
-  picture-card: '28px 16px 28px 16px'
+  picture-card: '20px'
   keypad-key: '20px 16px 20px 16px'
   answer-field: '15px'
 components:
@@ -66,8 +66,8 @@ components:
     rounded: '{rounded.pill}'
     padding: '13px 22px'
   collection-action:
-    backgroundColor: '{colors.sun-yellow}'
-    textColor: '{colors.ink}'
+    backgroundColor: '{colors.park-green}'
+    textColor: '{colors.button-ink}'
     rounded: '{rounded.pill}'
     padding: '8px 9px 8px 23px'
     height: '52px'
@@ -95,15 +95,15 @@ components:
 
 **Creative North Star: "The Picture Park Guide Map"**
 
-Mathixel's interface is a playful park for discovering original pixel pictures through arithmetic. Pale paper grounds the scenes; broad green islands, bright yellow sign-like actions, and small pixel creatures give the experience its park-map character. Trebuchet MS and system sans-serif keep the lettering direct and readable beside the artwork.
+Mathixel's interface is a playful park for discovering original pixel pictures through arithmetic. Pale paper grounds the scenes; contained green islands, green actions, and pixel creatures give the experience its park-map character. Trebuchet MS and system sans-serif keep the lettering direct and readable beside the artwork.
 
 The same visual vocabulary appears in the picture collection, the carried picture and answer staging during play, and the completed-picture screen. Flat color fields and asymmetrical rounded forms organize the interface; the original pixel picture remains the focus rather than decorative chrome.
 
 **Key Characteristics:**
 
-- Pale paper, ink, garden greens, and a concentrated yellow action color.
+- Pale paper, ink, garden greens, and yellow reserved for discovery marks.
 - Original pixel artwork presented on softly colored picture grounds.
-- Capsule actions alongside irregular island and card silhouettes.
+- Capsule actions and organic islands alongside evenly rounded picture cards.
 - A consistent picture-first thread from collection through solving to completion.
 
 ## Colors
@@ -113,7 +113,7 @@ The palette pairs garden greens and discovery yellow with warm paper and ink, wh
 ### Primary
 
 - **Park Green** (`park-green`): Main links, primary actions, focus indicators, and active progress cues.
-- **Sun Yellow** (`sun-yellow`): Collection action and the easiest difficulty sign.
+- **Sun Yellow** (`sun-yellow`): Completion discovery mark, not routine navigation.
 
 ### Secondary
 
@@ -136,7 +136,7 @@ The dark theme remaps the principal green, yellow, ink, paper, surface, island, 
 
 ### Named Rules
 
-**The Garden-Action Rule.** Use garden green for primary actions and active states; use bright yellow for the collection action, easiest-difficulty sign, and completion discovery mark.
+**The Garden-Action Rule.** Use garden green for primary actions and active states; reserve yellow for the completion discovery mark. Labels use dark ink on pale fills, never green lettering on yellow.
 
 ## Typography
 
@@ -147,7 +147,7 @@ The dark theme remaps the principal green, yellow, ink, paper, surface, island, 
 
 ### Hierarchy
 
-- **Display** (weight 850, `clamp(2.4rem, 5vw, 4.4rem)`, line-height 1.02): Gallery welcome heading; it tightens to a smaller range on narrow screens.
+- **Display** (weight 850, `clamp(2.4rem, 4.3vw, 3.6rem)`, line-height 1.02): Gallery welcome heading; it uses the full text column and tightens to `clamp(2rem, 7vw, 3rem)` on phones. Do not constrain translated headings by a narrow character measure.
 - **Headline** (weight 850, 2.6rem in the game view): Names the picture being solved; reduced on mobile.
 - **Title** (weight 700, 1.4rem, line-height 1.2): Picture-card title, reduced on mobile.
 - **Body** (weight 400, 1rem default, paragraph line-height 1.65): Explanatory and supporting copy; selected hero copy is larger.
@@ -178,7 +178,7 @@ Most surfaces are flat, separated by color, shape, and occasional outlines. Smal
 
 ## Shapes
 
-Capsule-shaped actions and signposts recur alongside soft, irregular silhouettes. Picture cards use alternating rounded corners, artwork crops into a curved edge, and the green park island and completion artwork use organic, asymmetric outlines. The answer field, keypad, and panels use rounded corners without replacing the larger park shapes.
+Capsule-shaped actions and signposts recur alongside soft island silhouettes. Picture cards use equal 20px corners and straight, unrounded internal artwork edges so the image and text regions meet cleanly. The hero island is a closed SVG path entirely inside its viewBox; it must not be cropped by the page edge. The answer field, keypad, and game panels retain their own rounded forms.
 
 ## Components
 
@@ -186,7 +186,7 @@ Capsule-shaped actions and signposts recur alongside soft, irregular silhouettes
 
 - **Primary:** Garden-green fill, light text, capsule form, and compact horizontal padding. A small shadow gives it structural depth; hover shifts to the theme's primary-hover color.
 - **Secondary:** Cream or dark secondary surface with an outline and capsule form.
-- **Collection action:** Yellow capsule link with a dark circular arrow inset at its trailing edge.
+- **Collection action:** Green capsule link with a contrasting circular SVG arrow inset at its trailing edge.
 - **Focus / press:** Interactive controls use a visible 3px focus outline with offset; enabled buttons transition state properties and move down 2px while pressed.
 
 ### Chips
@@ -195,7 +195,7 @@ Capsule-shaped actions and signposts recur alongside soft, irregular silhouettes
 
 ### Cards / Containers
 
-- **Picture cards:** Warm surface with a fine border, alternating rounded corners, a softly colored curved artwork area, and a separate text/action area. Hover reinforces the border and shifts the trailing action mark.
+- **Picture cards:** Warm surface with a fine border, equal corners, and a softly colored rectangular artwork area. Center SVG action icons within their circles; hover changes color without shifting them. New pictures show only the arrow, with start text preserved for screen readers. Resume, completion, and number-limit states remain visible.
 - **Panels:** The picture grid sits on a green organic panel; the equation area and grid shell use warm surfaces with a light outline.
 - **Modal:** Bordered warm surface with generous corner rounding and a broad shadow.
 
@@ -218,12 +218,12 @@ Capsule-shaped actions and signposts recur alongside soft, irregular silhouettes
 ### Do:
 
 - **Do** use the original pixel pictures as the recurring visual subject.
-- **Do** use green for primary actions and active progress, and yellow for the collection action, easiest-difficulty sign, and completion discovery mark.
+- **Do** use green for primary actions and active progress, and yellow only for completion discovery marks.
 - **Do** keep the picture visible beside the arithmetic task and prominent on completion.
 - **Do** preserve the light and dark semantic color mappings when extending the interface.
 
 ### Don't:
 
-- **Don't** turn the picture park into a pastel marketing gallery; the implemented world uses bold green islands, ink sans, and yellow actions.
+- **Don't** reintroduce decorative slogan badges, mismatched card corners, or narrow localized headings; the pictures and task should lead.
 - **Don't** replace the original pixel artwork with external artwork.
 - **Don't** apply shadows as a universal surface treatment; the implemented shadows are reserved for controls and modal separation.

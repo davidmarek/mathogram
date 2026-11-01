@@ -406,7 +406,18 @@ export function App() {
                 <p>{t.galleryIntro}</p>
                 <a className="explore-button" href="#picture-collection">
                   {t.gallery}
-                  <span aria-hidden="true">↓</span>
+                  <span aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 5v14m-6-6 6 6 6-6" />
+                    </svg>
+                  </span>
                 </a>
               </div>
               <div className="hero-landscape" aria-hidden="true">
@@ -415,7 +426,7 @@ export function App() {
                   viewBox="0 0 600 420"
                   preserveAspectRatio="none"
                 >
-                  <path d="M600 0H310C222 0 270 68 175 83C72 99 116 162 49 189C-37 224-12 306 70 323C159 342 121 420 231 420H600Z" />
+                  <path d="M320 25C225 25 265 90 170 108C75 126 35 195 35 258C35 330 120 316 180 367C240 417 385 392 455 357C530 320 575 264 565 184C556 112 470 12 320 25Z" />
                 </svg>
                 {parkPictures.map((picture) => (
                   <div
@@ -425,7 +436,6 @@ export function App() {
                     <PixelArt puzzle={picture} />
                   </div>
                 ))}
-                <span className="park-caption">{t.tagline}</span>
               </div>
             </div>
             <div className="collection-heading" id="picture-collection">
@@ -495,9 +505,42 @@ export function App() {
                             </span>
                           </span>
                           <div className="card-action">
-                            <span>{action}</span>
-                            <span aria-hidden="true">
-                              {needsMore ? '🔒' : done ? '✓' : '→'}
+                            <span
+                              className={
+                                !saved && !needsMore ? 'sr-only' : undefined
+                              }
+                            >
+                              {action}
+                            </span>
+                            <span
+                              className="card-action-icon"
+                              aria-hidden="true"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                {needsMore ? (
+                                  <>
+                                    <rect
+                                      x="5"
+                                      y="10"
+                                      width="14"
+                                      height="10"
+                                      rx="2"
+                                    />
+                                    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                                  </>
+                                ) : done ? (
+                                  <path d="m5 12 4 4L19 6" />
+                                ) : (
+                                  <path d="M5 12h14m-6-6 6 6-6 6" />
+                                )}
+                              </svg>
                             </span>
                           </div>
                           {saved && !done && (

@@ -266,7 +266,7 @@ main {
 .hero {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   align-items: center;
   min-height: 390px;
   isolation: isolate;
@@ -277,7 +277,8 @@ main {
   z-index: 1;
 }
 .hero h1 {
-  max-width: 9ch;
+  max-width: none;
+  font-size: clamp(2.4rem, 4.3vw, 3.6rem);
   margin-bottom: 22px;
 }
 .hero p {
@@ -293,8 +294,8 @@ main {
   gap: 30px;
   min-height: 52px;
   padding: 8px 9px 8px 23px;
-  color: var(--sun-ink);
-  background: var(--sun);
+  color: var(--primary-ink);
+  background: var(--green);
   border-radius: 50px;
   font-weight: 700;
   text-decoration: none;
@@ -305,9 +306,14 @@ main {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--sun-ink);
-  color: var(--sun);
-  font-size: 1.4rem;
+  background: var(--primary-ink);
+  color: var(--green);
+}
+.explore-button svg,
+.card-action-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 .explore-button:focus-visible {
   outline: 3px solid var(--green);
@@ -320,9 +326,9 @@ main {
 }
 .park-island {
   position: absolute;
-  inset: -12px -28px 0 -25px;
-  width: calc(100% + 53px);
-  height: calc(100% + 12px);
+  inset: 0;
+  width: 100%;
+  height: 100%;
   fill: var(--land);
 }
 .park-creature {
@@ -342,26 +348,13 @@ main {
   width: 135px;
   height: 135px;
   top: 10px;
-  right: 0;
+  right: 8%;
 }
 .creature-fish {
   width: 130px;
   height: 130px;
   left: 3%;
   bottom: 38px;
-}
-.park-caption {
-  position: absolute;
-  right: 18px;
-  bottom: 42px;
-  max-width: 20ch;
-  padding: 14px 20px;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  font-weight: 700;
-  background: var(--sun);
-  color: var(--sun-ink);
-  border-radius: 45% 55% 48% 52% / 30% 40% 60% 70%;
 }
 .collection-heading {
   display: flex;
@@ -401,8 +394,8 @@ main {
 }
 .difficulty-group {
   margin-top: 34px;
-  --area: var(--sun);
-  --area-ink: var(--sun-ink);
+  --area: var(--pill-bg);
+  --area-ink: var(--ink);
 }
 .difficulty-standard {
   --area: var(--pond);
@@ -440,7 +433,7 @@ main {
   text-align: left;
   padding: 0;
   border: 1px solid var(--card-border);
-  border-radius: 28px 16px 28px 16px;
+  border-radius: 20px;
   background: var(--surface);
   overflow: hidden;
 }
@@ -448,9 +441,10 @@ main {
   border-color: var(--green);
   background: var(--tool-bg);
 }
-.picture-card:not(:disabled):hover .card-action > span:last-child,
-.picture-card:focus-visible .card-action > span:last-child {
-  transform: translateX(4px);
+.picture-card:not(:disabled):hover .card-action-icon,
+.picture-card:focus-visible .card-action-icon {
+  background: var(--green);
+  color: var(--primary-ink);
 }
 .picture-card.is-locked .card-action {
   color: var(--muted);
@@ -510,7 +504,7 @@ main {
   position: relative;
   display: grid;
   place-items: center;
-  border-radius: 0 40% 40% 0 / 0 20% 25% 0;
+  border-radius: 0;
 }
 .pixel-art {
   display: block;
@@ -560,17 +554,18 @@ main {
   font-weight: 800;
   margin-top: auto;
 }
-.card-action > span:last-child {
+.card-action-icon {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: auto;
   width: 32px;
   height: 32px;
   background: var(--land);
   border-radius: 50%;
-  font-size: 1.2rem;
-  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 progress {
   appearance: none;
@@ -1086,8 +1081,8 @@ progress::-moz-progress-bar {
     padding: 20px 0 0;
   }
   .hero h1 {
-    font-size: clamp(2.5rem, 8vw, 3.5rem);
-    max-width: 14ch;
+    font-size: clamp(2rem, 7vw, 3rem);
+    max-width: none;
     margin-bottom: 14px;
   }
   .hero p {
@@ -1100,8 +1095,8 @@ progress::-moz-progress-bar {
     margin-top: 10px;
   }
   .park-island {
-    inset: 0 -18px 0 30px;
-    width: calc(100% - 12px);
+    inset: 0;
+    width: 100%;
     height: 100%;
   }
   .creature-rabbit {
@@ -1122,13 +1117,6 @@ progress::-moz-progress-bar {
     left: 5%;
     bottom: 38px;
   }
-  .park-caption {
-    right: 8px;
-    bottom: 8px;
-    padding: 10px 16px;
-    font-size: 0.75rem;
-    max-width: 24ch;
-  }
   .picture-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
@@ -1137,7 +1125,6 @@ progress::-moz-progress-bar {
     width: 100%;
     min-height: 145px;
     height: 145px;
-    border-radius: 0 0 45% 10% / 0 0 10% 15%;
   }
   .card-art .pixel-art {
     width: 120px;
@@ -1145,7 +1132,6 @@ progress::-moz-progress-bar {
   }
   .picture-card {
     flex-direction: column;
-    border-radius: 20px 12px 20px 12px;
   }
   .card-copy {
     padding: 14px;
@@ -1167,7 +1153,7 @@ progress::-moz-progress-bar {
   .card-action {
     font-size: 0.76rem;
   }
-  .card-action > span:last-child {
+  .card-action-icon {
     width: 26px;
     height: 26px;
   }
@@ -1255,10 +1241,6 @@ progress::-moz-progress-bar {
   .pixel-grid {
     gap: 1px;
   }
-  .park-island {
-    right: -12px;
-    width: calc(100% - 18px);
-  }
   .language-toggle {
     padding: 0 6px;
     font-size: 0.8rem;
@@ -1274,39 +1256,32 @@ progress::-moz-progress-bar {
   .card-copy {
     padding: 12px;
   }
-  .hero h1 {
-    font-size: 2.5rem;
-  }
-  @media (min-width: 701px) and (max-width: 950px) {
-    .card-art {
-      width: 135px;
-    }
-    .card-art .pixel-art {
-      width: 110px;
-      height: 110px;
-    }
-    .card-copy {
-      padding: 16px;
-    }
-    .card-copy h3 {
-      font-size: 1.2rem;
-    }
-    .creature-rabbit {
-      width: 180px;
-      height: 180px;
-      left: 8%;
-    }
-    .creature-butterfly {
-      width: 105px;
-      height: 105px;
-    }
-    .park-caption {
-      right: 0;
-      bottom: 20px;
-    }
-  }
   .collection-heading {
     flex-wrap: wrap;
+  }
+}
+@media (min-width: 701px) and (max-width: 950px) {
+  .card-art {
+    width: 135px;
+  }
+  .card-art .pixel-art {
+    width: 110px;
+    height: 110px;
+  }
+  .card-copy {
+    padding: 16px;
+  }
+  .card-copy h3 {
+    font-size: 1.2rem;
+  }
+  .creature-rabbit {
+    width: 180px;
+    height: 180px;
+    left: 8%;
+  }
+  .creature-butterfly {
+    width: 105px;
+    height: 105px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

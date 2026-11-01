@@ -13,9 +13,12 @@ and solve arithmetic to reveal it. The artwork leads without hiding the task.
 ## Direction
 
 User selected the zoo-and-gardens guide-map challenger, seed f2ea23b4.
-Flat green islands, yellow capsule actions, ink sans, original pixel creatures.
+Contained green islands, green capsule actions, ink sans, original pixel creatures.
 Desktop welcome left and landscape right; phone stacks the same scene.
 Picture stays central through play and completion, using carried-object staging.
+User-directed refinement: full-width localized headings, equal card corners and
+straight artwork seams, centered SVG action icons, no decorative slogan badge.
+Start text is screen-reader-only; resume, completion, and locked states stay visible.
 
 ## Constraints
 

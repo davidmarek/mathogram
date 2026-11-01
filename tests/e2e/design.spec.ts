@@ -26,9 +26,60 @@ for (const language of ['en', 'cs'] as const) {
         { key: STORAGE_KEY, progress },
       );
       await page.goto('./');
-      for (const width of [1280, 390, 320]) {
+      for (const width of [1280, 900, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(page.locator('.park-creature')).toHaveCount(3);
+        await expect(page.locator('.park-caption')).toHaveCount(0);
+        const titleLines = await page
+          .locator('.hero h1')
+          .evaluate((heading) => {
+            const range = document.createRange();
+            range.selectNodeContents(heading);
+            return range.getClientRects().length;
+          });
+        expect(titleLines).toBeLessThanOrEqual(3);
+        const geometry = await page
+          .locator('.picture-card')
+          .evaluateAll((cards) =>
+            cards.every((card) => {
+              const style = getComputedStyle(card);
+              const art = getComputedStyle(card.querySelector('.card-art')!);
+              return (
+                [
+                  style.borderTopLeftRadius,
+                  style.borderTopRightRadius,
+                  style.borderBottomLeftRadius,
+                  style.borderBottomRightRadius,
+                ].every((radius) => radius === '20px') &&
+                [
+                  art.borderTopLeftRadius,
+                  art.borderTopRightRadius,
+                  art.borderBottomLeftRadius,
+                  art.borderBottomRightRadius,
+                ].every((radius) => radius === '0px')
+              );
+            }),
+          );
+        expect(geometry).toBe(true);
+        const centered = await page
+          .locator('.card-action-icon')
+          .evaluateAll((icons) =>
+            icons.every((icon) => {
+              const circle = icon.getBoundingClientRect();
+              const svg = icon.querySelector('svg')!.getBoundingClientRect();
+              return (
+                Math.abs(svg.x + svg.width / 2 - circle.x - circle.width / 2) <
+                  1 &&
+                Math.abs(
+                  svg.y + svg.height / 2 - circle.y - circle.height / 2,
+                ) < 1
+              );
+            }),
+          );
+        expect(centered).toBe(true);
+        await expect(
+          page.locator('.picture-butterfly .card-action > span:first-child'),
+        ).toHaveClass('sr-only');
         expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,

@@ -26,9 +26,12 @@ Length counts colored pixels, not grid dimensions: one colored pixel requires on
 The gallery groups all pictures under Beginner, Standard, and Advanced headings. Within each group, pictures appear from smallest to largest by exercise count. Cards show their length band and exact exercise count; saved attempts and discovery badges remain available in every group.
 
 The interface uses a picture-park visual language: original pixel creatures on
-flat green islands, colored difficulty signposts, and large touch controls.
+contained green islands, colored difficulty signposts, and large touch controls.
 Desktop picture tiles place artwork beside the name and progress; phone tiles
-stack artwork above their labels. Light, dark, and system appearance use the
+stack artwork above their labels. Cards use equal corners and straight artwork
+seams; centered arrow icons indicate play without repeated start text. Localized
+headings use the available width rather than a narrow character measure.
+Light, dark, and system appearance use the
 same layout without changing puzzle colors. Product and visual-system context
 are recorded in `PRODUCT.md` and `DESIGN.md`.
 

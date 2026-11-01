@@ -159,9 +159,9 @@
         "purpose": "Enabled button transform, background-color, and shadow transitions."
       },
       {
-        "name": "card-action-shift",
-        "value": "400ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Move the picture-card trailing action on hover or focus."
+        "name": "card-action-color",
+        "value": "150ms ease",
+        "purpose": "Change picture-card action colors on hover or focus without moving the icon."
       },
       {
         "name": "picture-reveal",
@@ -206,17 +206,17 @@
       "name": "Collection Action",
       "kind": "custom",
       "refersTo": "collection-action",
-      "description": "Yellow capsule link with a contrasting inset arrow.",
-      "html": "<a class=\"ds-collection\" href=\"#collection\"><span>Picture collection</span><span class=\"ds-collection-arrow\" aria-hidden=\"true\">↓</span></a>",
-      "css": ".ds-collection { display: inline-flex; align-items: center; gap: 30px; min-height: 52px; padding: 8px 9px 8px 23px; color: var(--sun-ink); background: var(--sun); border-radius: 50px; font: 700 1rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; text-decoration: none; } .ds-collection-arrow { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--sun-ink); color: var(--sun); font-size: 1.4rem; } .ds-collection:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+      "description": "Green capsule link with a contrasting, centered SVG arrow.",
+      "html": "<a class=\"ds-collection\" href=\"#collection\"><span>Picture collection</span><span class=\"ds-collection-arrow\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14m-6-6 6 6 6-6\" /></svg></span></a>",
+      "css": ".ds-collection { display: inline-flex; align-items: center; gap: 30px; min-height: 52px; padding: 8px 9px 8px 23px; color: var(--primary-ink); background: var(--green); border-radius: 50px; font: 700 1rem 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; text-decoration: none; } .ds-collection-arrow { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--primary-ink); color: var(--green); } .ds-collection-arrow svg { display: block; width: 20px; height: 20px; } .ds-collection:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
     },
     {
       "name": "Picture Card",
       "kind": "card",
       "refersTo": "picture-card",
-      "description": "Picture-card shell with a curved art slot; the application supplies its original pixel artwork.",
-      "html": "<button class=\"ds-picture-card\"><span class=\"ds-picture-art\" aria-hidden=\"true\"></span><span class=\"ds-picture-copy\"><span class=\"ds-picture-title\">Rabbit</span><span class=\"ds-card-action\"><span>Start picture</span><span class=\"ds-card-arrow\" aria-hidden=\"true\">→</span></span></span></button>",
-      "css": ".ds-picture-card { display: flex; flex-direction: row; padding: 0; overflow: hidden; border: 1px solid var(--card-border); border-radius: 28px 16px 28px 16px; background: var(--surface); color: var(--ink); text-align: left; font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-picture-art { width: 180px; min-height: 190px; flex: 0 0 auto; background: var(--picture-bg); border-radius: 0 40% 40% 0 / 0 20% 25% 0; } .ds-picture-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 22px; } .ds-picture-title { margin-bottom: 8px; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; } .ds-card-action { display: flex; align-items: center; justify-content: space-between; margin-top: auto; font-size: 0.85rem; color: var(--ink); font-weight: 800; } .ds-card-arrow { display: grid; place-items: center; flex-shrink: 0; margin-left: 8px; width: 32px; height: 32px; background: var(--land); border-radius: 50%; font-size: 1.2rem; transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-picture-card:hover { border-color: var(--green); background: var(--tool-bg); } .ds-picture-card:hover .ds-card-arrow, .ds-picture-card:focus-visible .ds-card-arrow { transform: translateX(4px); } .ds-picture-card:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
+      "description": "Evenly rounded card with a straight artwork seam and a centered SVG action icon.",
+      "html": "<button class=\"ds-picture-card\" aria-label=\"Rabbit: Start picture\"><span class=\"ds-picture-art\" aria-hidden=\"true\"></span><span class=\"ds-picture-copy\"><span class=\"ds-picture-title\">Rabbit</span><span class=\"ds-card-action\"><span class=\"ds-card-arrow\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14m-6-6 6 6-6 6\" /></svg></span></span></span></button>",
+      "css": ".ds-picture-card { display: flex; padding: 0; overflow: hidden; border: 1px solid var(--card-border); border-radius: 20px; background: var(--surface); color: var(--ink); text-align: left; font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif; } .ds-picture-art { width: 180px; min-height: 190px; flex: 0 0 auto; background: var(--picture-bg); border-radius: 0; } .ds-picture-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 22px; } .ds-picture-title { margin-bottom: 8px; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; } .ds-card-action { display: flex; align-items: center; margin-top: auto; } .ds-card-arrow { display: grid; place-items: center; flex-shrink: 0; margin-left: auto; width: 32px; height: 32px; background: var(--land); border-radius: 50%; transition: background-color 150ms ease, color 150ms ease; } .ds-card-arrow svg { display: block; width: 20px; height: 20px; } .ds-picture-card:hover { border-color: var(--green); background: var(--tool-bg); } .ds-picture-card:hover .ds-card-arrow, .ds-picture-card:focus-visible .ds-card-arrow { background: var(--green); color: var(--primary-ink); } .ds-picture-card:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }"
     },
     {
       "name": "Answer Field",
@@ -244,17 +244,17 @@
   ],
   "narrative": {
     "northStar": "The Picture Park Guide Map",
-    "overview": "Mathixel's interface is a playful park for discovering original pixel pictures through arithmetic. Pale paper grounds the scenes; broad green islands, bright yellow sign-like actions, and small pixel creatures give the experience its park-map character. Trebuchet MS and system sans-serif keep the lettering direct and readable beside the artwork.\n\nThe same visual vocabulary appears in the picture collection, the carried picture and answer staging during play, and the completed-picture screen. Flat color fields and asymmetrical rounded forms organize the interface; the original pixel picture remains the focus rather than decorative chrome.",
+    "overview": "Mathixel is a picture park with contained green islands, green actions, original pixel creatures, and evenly rounded cards with straight artwork seams. Localized headings use the available width. Yellow is reserved for completion discovery marks.",
     "keyCharacteristics": [
-      "Pale paper, ink, garden greens, and a concentrated yellow action color.",
+      "Pale paper, ink, garden greens, and yellow discovery marks.",
       "Original pixel artwork presented on softly colored picture grounds.",
-      "Capsule actions alongside irregular island and card silhouettes.",
+      "Capsule actions and contained islands alongside equal-corner cards.",
       "A consistent picture-first thread from collection through solving to completion."
     ],
     "rules": [
       {
         "name": "The Garden-Action Rule",
-        "body": "Use garden green for primary actions and active states; use bright yellow for the collection action, easiest-difficulty sign, and completion discovery mark.",
+        "body": "Use garden green for primary actions and active states; reserve yellow for completion discovery marks. Labels use dark ink on pale fills.",
         "section": "colors"
       },
       {
@@ -270,12 +270,12 @@
     ],
     "dos": [
       "Do use the original pixel pictures as the recurring visual subject.",
-      "Do use green for primary actions and active progress, and yellow for the collection action, easiest-difficulty sign, and completion discovery mark.",
+      "Do use green for primary actions and active progress, and yellow only for completion discovery marks.",
       "Do keep the picture visible beside the arithmetic task and prominent on completion.",
       "Do preserve the light and dark semantic color mappings when extending the interface."
     ],
     "donts": [
-      "Don't turn the picture park into a pastel marketing gallery; the implemented world uses bold green islands, ink sans, and yellow actions.",
+      "Don't reintroduce decorative slogan badges, mismatched card corners, or narrow localized headings.",
       "Don't replace the original pixel artwork with external artwork.",
       "Don't apply shadows as a universal surface treatment; the implemented shadows are reserved for controls and modal separation."
     ]
