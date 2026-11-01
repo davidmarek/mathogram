@@ -50,6 +50,7 @@ typography:
     lineHeight: 1.2
     letterSpacing: '-0.025em'
 rounded:
+  logo: '10px'
   pill: '50px'
   picture-card: '20px'
   keypad-key: '20px 16px 20px 16px'
@@ -117,7 +118,7 @@ The palette pairs garden greens and discovery yellow with warm paper and ink, wh
 
 ### Secondary
 
-- **Island Green** (`island-green`): Large landscape shapes, picture panels, and completion artwork.
+- **Island Green** (`island-green`): Gallery landscape and completion artwork, never the exercise-grid surround.
 - **Pond Blue** (`pond-blue`): Standard-difficulty sign.
 - **Coral** (`coral`): Advanced-difficulty sign and a group of picture backgrounds.
 - **Picture Mint** (`picture-mint`): Default picture ground.
@@ -196,7 +197,7 @@ Capsule-shaped actions and signposts recur alongside soft island silhouettes. Pi
 ### Cards / Containers
 
 - **Picture cards:** Warm surface with a fine border, equal corners, and a softly colored rectangular artwork area. Center SVG action icons within their circles; hover changes color without shifting them. New pictures show only the arrow, with start text preserved for screen readers. Resume, completion, and number-limit states remain visible.
-- **Panels:** The picture grid sits on a green organic panel; the equation area and grid shell use warm surfaces with a light outline.
+- **Panels:** The exercise grid uses a neutral, evenly rounded surface with a fine outline, without an additional colored surround. The equation area uses a warm surface with a light outline.
 - **Modal:** Bordered warm surface with generous corner rounding and a broad shadow.
 
 ### Inputs / Fields
@@ -207,6 +208,8 @@ Capsule-shaped actions and signposts recur alongside soft island silhouettes. Pi
 ### Navigation
 
 - **Application header:** Wordmark and utility actions share a single flexible row; utility buttons use a subtle outline and theme surface.
+- **Logo:** A green square with 10px corners, three solid contrasting pixels and one outlined pixel. All marks use the primary foreground; no yellow-on-green detail.
+- **Gallery artwork:** Center previews on the colored artwork bounds in a padded square viewBox. Preserve rect coordinates and palette; never crop or translate the playable puzzle grid to center a thumbnail.
 - **Game navigation:** A text back action and compact level pill sit above the picture title.
 
 ### Keypad

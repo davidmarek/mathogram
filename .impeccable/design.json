@@ -244,10 +244,12 @@
   ],
   "narrative": {
     "northStar": "The Picture Park Guide Map",
-    "overview": "Mathixel is a picture park with contained green islands, green actions, original pixel creatures, and evenly rounded cards with straight artwork seams. Localized headings use the available width. Yellow is reserved for completion discovery marks.",
+    "overview": "Mathixel is a picture park with contained green islands in the gallery, green actions, centered original pixel previews, and evenly rounded cards with straight artwork seams. The exercise grid has a neutral surface without a colored decorative surround. The logo uses contrasting solid/outlined pixels. Localized headings use the available width. Yellow is reserved for completion discovery marks.",
     "keyCharacteristics": [
       "Pale paper, ink, garden greens, and yellow discovery marks.",
       "Original pixel artwork presented on softly colored picture grounds.",
+      "Preview framing centers colored bounds without changing playable grid coordinates.",
+      "Neutral exercise grid and high-contrast solid/outlined pixel logo.",
       "Capsule actions and contained islands alongside equal-corner cards.",
       "A consistent picture-first thread from collection through solving to completion."
     ],

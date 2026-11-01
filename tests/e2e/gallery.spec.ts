@@ -45,7 +45,6 @@ for (const language of ['en', 'cs'] as const) {
     await expect(page.locator('.picture-card')).toHaveCount(puzzles.length);
     const artwork = await page.locator('.card-art svg').evaluateAll((images) =>
       images.map((image) => ({
-        viewBox: image.getAttribute('viewBox'),
         pixels: [...image.querySelectorAll('rect')].map((pixel) => ({
           x: pixel.getAttribute('x'),
           y: pixel.getAttribute('y'),
@@ -63,7 +62,6 @@ for (const language of ['en', 'cs'] as const) {
             .sort((a, b) => a.pixels.length - b.pixels.length),
         )
         .map((puzzle) => ({
-          viewBox: `0 0 ${puzzle.width} ${puzzle.height}`,
           pixels: puzzle.pixels.map((pixel) => ({
             x: String(pixel.col - 1),
             y: String(pixel.row - 1),

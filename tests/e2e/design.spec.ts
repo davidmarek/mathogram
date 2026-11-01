@@ -77,6 +77,26 @@ for (const language of ['en', 'cs'] as const) {
             }),
           );
         expect(centered).toBe(true);
+        const centeredArtwork = await page
+          .locator('.card-art svg')
+          .evaluateAll((images) =>
+            images.every((image) => {
+              const svg = image as SVGSVGElement;
+              const art = svg.getBBox();
+              const frame = svg.viewBox.baseVal;
+              return (
+                Math.abs(art.x + art.width / 2 - frame.x - frame.width / 2) <
+                  0.01 &&
+                Math.abs(art.y + art.height / 2 - frame.y - frame.height / 2) <
+                  0.01 &&
+                art.x >= frame.x &&
+                art.y >= frame.y &&
+                art.x + art.width <= frame.x + frame.width &&
+                art.y + art.height <= frame.y + frame.height
+              );
+            }),
+          );
+        expect(centeredArtwork).toBe(true);
         await expect(
           page.locator('.picture-butterfly .card-action > span:first-child'),
         ).toHaveClass('sr-only');
@@ -104,6 +124,21 @@ for (const language of ['en', 'cs'] as const) {
             () => document.documentElement.scrollWidth <= innerWidth,
           ),
         ).toBe(true);
+        const panelStyle = await page
+          .locator('.picture-panel')
+          .evaluate((panel) => {
+            const style = getComputedStyle(panel);
+            return {
+              background: style.backgroundColor,
+              radius: style.borderRadius,
+              padding: style.padding,
+            };
+          });
+        expect(panelStyle).toEqual({
+          background: 'rgba(0, 0, 0, 0)',
+          radius: '0px',
+          padding: '0px',
+        });
         const keys = await page
           .locator('.keypad button')
           .evaluateAll((buttons) =>

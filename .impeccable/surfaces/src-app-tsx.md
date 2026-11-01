@@ -19,6 +19,9 @@ Picture stays central through play and completion, using carried-object staging.
 User-directed refinement: full-width localized headings, equal card corners and
 straight artwork seams, centered SVG action icons, no decorative slogan badge.
 Start text is screen-reader-only; resume, completion, and locked states stay visible.
+The logo uses contrasting solid/outlined pixels without yellow. Exercise grids
+have no green decorative surround. Gallery previews center on colored artwork
+bounds; actual puzzle coordinates and saved attempts remain unchanged.
 
 ## Constraints
 

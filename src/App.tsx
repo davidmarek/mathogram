@@ -491,7 +491,7 @@ export function App() {
                               ✓
                             </span>
                           )}
-                          <PixelArt puzzle={animal} />
+                          <PixelArt puzzle={animal} centered />
                         </div>
                         <div className="card-copy">
                           <h3>{t[animal.name]}</h3>

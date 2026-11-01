@@ -210,21 +210,16 @@ p {
   grid-template-columns: repeat(2, 1fr);
   gap: 3px;
   padding: 9px;
-  background: var(--land);
-  border-radius: 48% 52% 36% 64% / 57% 40% 60% 43%;
+  background: var(--green);
+  border-radius: 10px;
 }
 .brand-icon span {
   border-radius: 1px;
-  background: var(--ink);
-}
-.brand-icon span:nth-child(2) {
-  background: var(--ink);
-}
-.brand-icon span:nth-child(3) {
-  background: var(--ink);
+  background: var(--primary-ink);
 }
 .brand-icon span:nth-child(4) {
-  background: var(--sun);
+  background: transparent;
+  border: 2px solid var(--primary-ink);
 }
 .header-actions {
   display: flex;
@@ -665,10 +660,8 @@ progress::-moz-progress-bar {
   align-items: start;
 }
 .picture-panel {
-  padding: 20px;
+  padding: 0;
   min-width: 0;
-  background: var(--land);
-  border-radius: 36% 10% 26% 8% / 10% 28% 10% 30%;
 }
 .grid-shell {
   padding: 16px 18px 20px;
@@ -1177,7 +1170,7 @@ progress::-moz-progress-bar {
     gap: 15px;
   }
   .picture-panel {
-    padding: 12px;
+    padding: 0;
   }
   .grid-shell {
     padding: 10px 16px 13px;
