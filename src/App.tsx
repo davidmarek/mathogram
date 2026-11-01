@@ -269,7 +269,7 @@ export function App() {
             onClick={() =>
               changeLanguage(progress.language === 'en' ? 'cs' : 'en')
             }
-            aria-label={`${t.language}: ${progress.language === 'en' ? 'Čeština' : 'English'}`}
+            aria-label={`${progress.language === 'en' ? 'Česky' : 'English'} · ${t.language}: ${progress.language === 'en' ? 'Čeština' : 'English'}`}
           >
             {progress.language === 'en' ? 'Česky' : 'English'}
           </button>
@@ -378,7 +378,6 @@ export function App() {
                         key={animal.id}
                         className={`picture-card picture-${animal.id}`}
                         onClick={() => openPuzzle(animal.id)}
-                        aria-label={`${t[animal.name]} · ${done ? t.completed : saved ? t.continue : t.start}`}
                         aria-describedby={`category-${animal.id}`}
                       >
                         <div className="card-art">

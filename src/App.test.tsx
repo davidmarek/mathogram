@@ -318,7 +318,7 @@ describe('bilingual gallery and settings', () => {
       expect(
         screen.getByRole('region', { name: messages.en[difficulty] }),
       ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language: Čeština/ }));
     for (const difficulty of difficulties)
       expect(
         screen.getByRole('region', { name: messages.cs[difficulty] }),
@@ -341,7 +341,7 @@ describe('bilingual gallery and settings', () => {
           name: new RegExp(messages.en[puzzle.name]),
         }),
       ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language: Čeština/ }));
     expect(document.documentElement.lang).toBe('cs');
     expect(saved().language).toBe('cs');
     for (const puzzle of puzzles)
@@ -398,7 +398,7 @@ describe('bilingual gallery and settings', () => {
     expect(screen.getByTestId('equation').textContent).toMatch(
       /^\d+ [+−] \d+ [+−] \d+$/,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language: Čeština/ }));
     expect(screen.getByText(messages.cs.advanced)).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Gepard' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Nápověda' }));
@@ -477,7 +477,7 @@ describe('bilingual gallery and settings', () => {
     submit();
     expect(screen.getByText('Correct! You revealed a pixel.')).toBeVisible();
     expect(screen.queryByText(/Pixel revealed:/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language: Čeština/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Nastavení' }));
     const translated = screen.getByRole('checkbox', {
       name: 'Zobrazovat nápovědu řádku',

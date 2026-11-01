@@ -66,7 +66,7 @@ test.describe('real Workbox lifecycle', () => {
             .queue,
       ),
     ).toEqual(queue);
-    await cold.getByRole('button', { name: 'Language: Čeština' }).click();
+    await cold.getByRole('button', { name: /Language: Čeština/ }).click();
     await cold.reload();
     await expect(
       cold.getByRole('heading', { name: 'Který obrázek si dnes vybereš?' }),

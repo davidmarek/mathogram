@@ -208,7 +208,7 @@ test('row hints are optional, accessible, translated and remembered after reopen
     page.locator('.row-pill, .active-row, .active-row-label'),
   ).toHaveCount(0);
   expect((await saved(page)).showRowHints).toBe(false);
-  await page.getByRole('button', { name: 'Language: Čeština' }).click();
+  await page.getByRole('button', { name: /Language: Čeština/ }).click();
   await page.getByRole('button', { name: 'Nastavení' }).click();
   const translated = page.getByRole('checkbox', {
     name: 'Zobrazovat nápovědu řádku',
@@ -371,7 +371,7 @@ for (const [name, width, height] of [
         .analyze();
       expect(results.violations).toEqual([]);
     }
-    await page.getByRole('button', { name: 'Language: Čeština' }).click();
+    await page.getByRole('button', { name: /Language: Čeština/ }).click();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
