@@ -258,7 +258,7 @@ export function App() {
             <span />
             <span />
           </span>
-          Mathogram
+          Mathixel
           <span className="brand-dot" aria-hidden="true">
             .
           </span>

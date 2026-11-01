@@ -115,8 +115,8 @@ jobs:
           <!doctype html>
           <html lang="en">
             <meta charset="utf-8">
-            <title>Mathogram preview</title>
-            <a href="/mathogram/">Open Mathogram preview</a>
+            <title>Mathixel preview</title>
+            <a href="/mathogram/">Open Mathixel preview</a>
           </html>
           HTML
           cat > preview/staticwebapp.config.json <<'JSON'

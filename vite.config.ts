@@ -12,8 +12,8 @@ export default defineConfig({
       includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
         id: '/mathogram/',
-        name: 'Mathogram',
-        short_name: 'Mathogram',
+        name: 'Mathixel',
+        short_name: 'Mathixel',
         description:
           'Little sums, lovely discoveries. Pixel animals in English and Czech.',
         start_url: '/mathogram/',
