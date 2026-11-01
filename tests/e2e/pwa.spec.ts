@@ -20,8 +20,8 @@ test.describe('real Workbox lifecycle', () => {
     });
     await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByRole('checkbox', { name: 'Show row hints' }).uncheck();
-    await page.getByRole('button', { name: 'Back to play' }).click();
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     const queue = await page.evaluate(
       () =>
         JSON.parse(localStorage.getItem('mathogram.progress')!).attempts.fish
@@ -33,15 +33,15 @@ test.describe('real Workbox lifecycle', () => {
     const cold = await context.newPage();
     await cold.goto('http://127.0.0.1:4173/mathogram/');
     await expect(
-      cold.getByRole('heading', { name: 'What will you discover?' }),
+      cold.getByRole('heading', { name: 'What will you make today?' }),
     ).toBeVisible();
     for (const name of [
-      'Sunny fish',
-      'Berry butterfly',
-      'Ginger cat',
-      'Clover bunny',
-      'Biscuit pup',
-      'Twilight owl',
+      'Fish',
+      'Butterfly',
+      'Cat',
+      'Rabbit',
+      'Dog',
+      'Owl',
       'Watermelon',
       'Fries',
       'Cheddar fingers',
@@ -69,15 +69,15 @@ test.describe('real Workbox lifecycle', () => {
     await cold.getByRole('button', { name: 'Language: Čeština' }).click();
     await cold.reload();
     await expect(
-      cold.getByRole('heading', { name: 'Co dnes objevíš?' }),
+      cold.getByRole('heading', { name: 'Který obrázek si dnes vybereš?' }),
     ).toBeVisible();
     for (const name of [
-      'Slunečná rybka',
-      'Borůvkový motýl',
-      'Zrzavá kočka',
-      'Jetelový králíček',
-      'Sušenkový pejsek',
-      'Soumračná sovička',
+      'Ryba',
+      'Motýl',
+      'Kočka',
+      'Králík',
+      'Pes',
+      'Sova',
       'Meloun',
       'Hranolky',
       'Čedarové tyčinky',
@@ -122,7 +122,7 @@ test.describe('real Workbox lifecycle', () => {
     await request.post(`${origin}/__release?version=1`);
     await page.goto(`${origin}/mathogram/`);
     await expect(page.getByText('Ready for offline play')).toBeVisible();
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     const state = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('mathogram.progress')!),
     );
@@ -140,9 +140,7 @@ test.describe('real Workbox lifecycle', () => {
     await expect(
       page.getByRole('button', { name: 'Save & update' }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Sunny fish' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Fish' })).toBeVisible();
     expect(await page.locator('meta[name="mathogram-release"]').count()).toBe(
       0,
     );
@@ -161,7 +159,7 @@ test.describe('real Workbox lifecycle', () => {
     await expect(
       page.locator('meta[name="mathogram-release"]'),
     ).toHaveAttribute('content', '2');
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await expect(page.locator('[data-filled="true"]')).toHaveCount(1);
     await expect(page.getByTestId('equation')).toBeVisible();
     await context.setOffline(false);

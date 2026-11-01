@@ -85,7 +85,7 @@ test('dark gameplay, feedback and completion retain progress and artwork', async
     { key: STORAGE_KEY, progress },
   );
   await page.goto('./');
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   await expect(page.getByTestId('equation')).toHaveText(
     `${attempt.queue.at(-1)!.equation.a} ${attempt.queue.at(-1)!.equation.op === '+' ? '+' : '−'} ${attempt.queue.at(-1)!.equation.b}`,
   );

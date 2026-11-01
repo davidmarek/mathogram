@@ -41,7 +41,7 @@ function firstAnswer(): string {
   return String(currentExercise(attempt)!.equation.c);
 }
 function openFish() {
-  fireEvent.click(screen.getByRole('button', { name: /Sunny fish/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Fish/ }));
 }
 function enter(value: string) {
   fireEvent.change(screen.getByRole('textbox', { name: 'Your answer' }), {
@@ -156,7 +156,7 @@ describe('aggregate puzzle analytics', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
     expect(analytics.trackPuzzleTime.mock.calls).toEqual([['fish', 10]]);
     act(() => vi.advanceTimersByTime(120_000));
-    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     act(() => vi.advanceTimersByTime(5_000));
     enter(firstAnswer());
     submit();
@@ -188,12 +188,12 @@ describe('aggregate puzzle analytics', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(analytics.trackPuzzle).toHaveBeenCalledTimes(1);
     fireEvent.click(
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
     expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
     view.unmount();
     render(<App />);
@@ -351,9 +351,9 @@ describe('bilingual gallery and settings', () => {
         }),
       ).toBeVisible();
     expect(
-      screen.getByRole('heading', { name: 'Co dnes objevíš?' }),
+      screen.getByRole('heading', { name: 'Který obrázek si dnes vybereš?' }),
     ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: /Slunečná rybka/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Ryba/ }));
     expect(
       screen.getByRole('textbox', { name: 'Tvůj výsledek' }),
     ).toHaveFocus();
@@ -426,20 +426,20 @@ describe('bilingual gallery and settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
     expect(screen.getByRole('dialog', { name: 'Help' })).toBeVisible();
     expect(screen.getByText(/Turn on Open as Web App/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     expect(screen.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     expect(screen.getByText(messages.en.storageBody)).toBeVisible();
     fireEvent.click(
       screen.getByRole('button', { name: 'Reset all my pictures' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(saved()).toEqual(before);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Reset all my pictures' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
     expect(saved()).toEqual(emptyProgress('en'));
     expect(localStorage.getItem('another-app')).toBe('safe');
   });
@@ -447,7 +447,9 @@ describe('bilingual gallery and settings', () => {
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
-    expect(screen.queryByText('Make yourself at home')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Add Mathixel to your home screen'),
+    ).not.toBeInTheDocument();
   });
   it('persists row hints and hides the active row visually and from screen readers', () => {
     let view = render(<App />);
@@ -460,7 +462,7 @@ describe('bilingual gallery and settings', () => {
     expect(setting).toBeChecked();
     fireEvent.click(setting);
     expect(saved().showRowHints).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
     expect(document.querySelector('.active-row')).not.toBeInTheDocument();
     expect(document.querySelector('.active-row-label')).not.toBeInTheDocument();
@@ -473,7 +475,7 @@ describe('bilingual gallery and settings', () => {
     expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
     enter(firstAnswer());
     submit();
-    expect(screen.getByText('Lovely! A new pixel!')).toBeVisible();
+    expect(screen.getByText('Correct! You revealed a pixel.')).toBeVisible();
     expect(screen.queryByText(/Pixel revealed:/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Language: Čeština' }));
     fireEvent.click(screen.getByRole('button', { name: 'Nastavení' }));
@@ -482,7 +484,7 @@ describe('bilingual gallery and settings', () => {
     });
     expect(translated).not.toBeChecked();
     fireEvent.click(translated);
-    fireEvent.click(screen.getByRole('button', { name: 'Zpátky ke hře' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zavřít' }));
     expect(document.querySelector('.row-pill')).toBeVisible();
     expect(document.querySelector('.active-row')).toBeVisible();
     view.unmount();
@@ -559,7 +561,7 @@ describe('bilingual gallery and settings', () => {
     expect(
       screen.queryByRole('button', { name: 'Ask to keep local data' }),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     await act(async () => {
       fireEvent.click(
@@ -633,7 +635,7 @@ describe('pixel game', () => {
     enter(firstAnswer());
     submit();
     expect(
-      screen.getByRole('heading', { name: 'Look what you found!' }),
+      screen.getByRole('heading', { name: 'You finished the picture!' }),
     ).toBeVisible();
     view.unmount();
   });
@@ -650,7 +652,7 @@ describe('pixel game', () => {
     enter(last.equation.c === 1 ? '2' : '1');
     submit();
     act(() => vi.advanceTimersByTime(900));
-    expect(screen.getByText('A LITTLE PRACTICE')).toBeVisible();
+    expect(screen.getByText('PRACTICE')).toBeVisible();
     expect(document.querySelector('.row-pill')).not.toBeInTheDocument();
     expect(document.querySelector('.active-row')).not.toBeInTheDocument();
     expect(saved().attempts.fish!.solved).toEqual(attempt.solved);
@@ -698,7 +700,7 @@ describe('pixel game', () => {
     expect(screen.getByRole('textbox')).toHaveValue(
       String(expected.equation.c),
     );
-    expect(screen.getByText(/Lovely! A new pixel!/)).toHaveAttribute(
+    expect(screen.getByText(/Correct! You revealed a pixel\./)).toHaveAttribute(
       'class',
       'feedback positive',
     );
@@ -751,12 +753,12 @@ describe('pixel game', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(saved()).toEqual(before);
     fireEvent.click(
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
     expect(saved().attempts.fish!.solved).toEqual([]);
   });
   it('finishes the final pixel, focuses celebration, and replays with retained badge', () => {
@@ -770,7 +772,7 @@ describe('pixel game', () => {
     enter(firstAnswer());
     submit();
     expect(
-      screen.getByRole('heading', { name: 'Look what you found!' }),
+      screen.getByRole('heading', { name: 'You finished the picture!' }),
     ).toHaveFocus();
     expect(saved().completed).toEqual(['fish']);
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
@@ -815,7 +817,7 @@ describe('visible persistence and PWA failures', () => {
       'Progress cannot be saved',
     );
     expect(
-      screen.queryByText('Every little step is saved here'),
+      screen.queryByText('Progress saved in this browser'),
     ).not.toBeInTheDocument();
   });
   it('handles denied localStorage access and blocks updates that cannot save', () => {

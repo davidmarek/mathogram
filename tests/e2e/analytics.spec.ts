@@ -36,12 +36,12 @@ test.describe('enabled analytics', () => {
     ]);
     await page.goto('./?private=value#secret');
     await expect.poll(() => events().length).toBe(1);
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await expect.poll(() => events().length).toBe(2);
     await page
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await page.evaluate(() => {
       const progress: Progress = JSON.parse(
         localStorage.getItem('mathogram.progress')!,
@@ -52,14 +52,14 @@ test.describe('enabled analytics', () => {
     });
     await page.reload();
     await expect.poll(() => events().length).toBe(3);
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await answerEquation(page);
     await page.keyboard.press('Enter');
     await expect.poll(() => events().length).toBe(4);
     await page
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await page.getByRole('button', { name: 'Play again' }).click();
     await expect.poll(() => events().length).toBe(5);
     expect(events().map((request) => request.postDataJSON())).toEqual(
@@ -93,7 +93,7 @@ test.describe('enabled analytics', () => {
   }) => {
     await page.clock.install();
     await page.goto('./');
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await page.clock.runFor(10_000);
     await page.getByRole('button', { name: 'Help' }).click();
     const durations = () =>
@@ -109,7 +109,7 @@ test.describe('enabled analytics', () => {
       data: { puzzleId: 'fish', activeSeconds: 10 },
     });
     await page.clock.runFor(120_000);
-    await page.getByRole('button', { name: 'Back to play' }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
     await page.clock.runFor(5_000);
     await page
       .getByRole('button', { name: 'My pictures', exact: true })
@@ -131,9 +131,11 @@ test.describe('enabled analytics', () => {
     await page.goto('./');
     await expect.poll(() => analyticsRequests.length).toBe(1);
     await page.getByRole('button', { name: 'Help' }).click();
-    await expect(page.getByText('Make yourself at home')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Back to play' }).click();
-    await page.getByRole('button', { name: /Sunny fish/ }).click();
+    await expect(
+      page.getByText('Add Mathixel to your home screen'),
+    ).toHaveCount(0);
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: /Fish/ }).click();
     await expect.poll(() => analyticsRequests.length).toBe(2);
     expect(analyticsRequests.map((request) => request.postDataJSON())).toEqual([
       {
@@ -178,7 +180,7 @@ test.describe('enabled analytics', () => {
             }),
       );
       await page.goto('./');
-      await page.getByRole('button', { name: /Sunny fish/ }).click();
+      await page.getByRole('button', { name: /Fish/ }).click();
       await answerEquation(page);
       await expect(page.locator('[data-filled="true"]')).toHaveCount(1);
       expect(errors).toEqual([]);
@@ -193,7 +195,7 @@ test.describe('enabled analytics', () => {
         });
       }, signal);
       await page.goto('./');
-      await page.getByRole('button', { name: /Sunny fish/ }).click();
+      await page.getByRole('button', { name: /Fish/ }).click();
       await answerEquation(page);
       await expect(page.locator('[data-filled="true"]')).toHaveCount(1);
       expect(analyticsRequests).toEqual([]);

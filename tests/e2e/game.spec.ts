@@ -138,7 +138,7 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
   page,
 }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   const initial = (await saved(page)).attempts.fish!;
   await page.getByRole('textbox').fill('99');
   await page.getByRole('button', { name: 'Check', exact: true }).click();
@@ -166,13 +166,13 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
     'true',
   );
   await page.reload();
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   expect((await saved(page)).attempts.fish!.queue).toEqual(deferred.queue);
   expect((await saved(page)).attempts.fish!.solved).toHaveLength(1);
   for (let index = 1; index < initial.queue.length; index++)
     await answerEquation(page, index % 2 === 0);
   await expect(
-    page.getByRole('heading', { name: 'Look what you found!' }),
+    page.getByRole('heading', { name: 'You finished the picture!' }),
   ).toBeFocused();
   expect((await saved(page)).completed).toContain('fish');
   await page.getByRole('button', { name: 'Play again' }).click();
@@ -184,7 +184,7 @@ test('row hints are optional, accessible, translated and remembered after reopen
   page,
 }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   await expect(page.locator('.row-pill')).toBeVisible();
   await page.getByRole('button', { name: 'Settings' }).click();
   const hints = page.getByRole('checkbox', { name: 'Show row hints' });
@@ -196,14 +196,14 @@ test('row hints are optional, accessible, translated and remembered after reopen
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
   expect(results.violations).toEqual([]);
-  await page.getByRole('button', { name: 'Back to play' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
   await expect(
     page.locator('.row-pill, .active-row, .active-row-label'),
   ).toHaveCount(0);
   await expect(page.getByTestId('pixel-grid')).not.toHaveAccessibleName(/Row /);
   await answerEquation(page);
   await page.reload();
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   await expect(
     page.locator('.row-pill, .active-row, .active-row-label'),
   ).toHaveCount(0);
@@ -215,7 +215,7 @@ test('row hints are optional, accessible, translated and remembered after reopen
   });
   await expect(translated).not.toBeChecked();
   await translated.check();
-  await page.getByRole('button', { name: 'Zpátky ke hře' }).click();
+  await page.getByRole('button', { name: 'Zavřít' }).click();
   await expect(page.locator('.row-pill')).toBeVisible();
   expect((await saved(page)).showRowHints).toBe(true);
 });
@@ -224,7 +224,7 @@ test('last missed pixel returns after a saved practice exercise without filling 
   page,
 }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   await page.evaluate(() => {
     const progress: Progress = JSON.parse(
       localStorage.getItem('mathogram.progress')!,
@@ -234,19 +234,17 @@ test('last missed pixel returns after a saved practice exercise without filling 
     localStorage.setItem('mathogram.progress', JSON.stringify(progress));
   });
   await page.reload();
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   const before = (await saved(page)).attempts.fish!;
   const last = currentExercise(before)!;
   await page.getByRole('textbox').fill(last.equation.c === 1 ? '2' : '1');
   await page.getByRole('textbox').press('Enter');
-  await expect(
-    page.getByText('A LITTLE PRACTICE', { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText('PRACTICE', { exact: true })).toBeVisible();
   const practice = (await saved(page)).attempts.fish!;
   expect(practice.solved).toEqual(before.solved);
   expect(practice.reviewPixelId).toBeDefined();
   await page.reload();
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   expect((await saved(page)).attempts.fish).toEqual(practice);
   await expect(page.locator('.row-pill, .active-row')).toHaveCount(0);
   await answerEquation(page);
@@ -255,7 +253,7 @@ test('last missed pixel returns after a saved practice exercise without filling 
   expect((await saved(page)).completed).toEqual([]);
   await answerEquation(page);
   await expect(
-    page.getByRole('heading', { name: 'Look what you found!' }),
+    page.getByRole('heading', { name: 'You finished the picture!' }),
   ).toBeVisible();
   expect((await saved(page)).attempts.fish!.solved).toHaveLength(
     before.queue.length,
@@ -266,11 +264,11 @@ test('later animal reveals columns above ten and keeps other attempts on confirm
   page,
 }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: /Sunny fish/ }).click();
+  await page.getByRole('button', { name: /Fish/ }).click();
   await answerEquation(page);
   const fish = (await saved(page)).attempts.fish;
   await page.getByRole('button', { name: 'My pictures', exact: true }).click();
-  await page.getByRole('button', { name: /Twilight owl/ }).click();
+  await page.getByRole('button', { name: /Owl/ }).click();
   let aboveTen = false;
   const count = (await saved(page)).attempts.owl!.queue.length;
   for (let index = 0; index < count && !aboveTen; index++) {
@@ -285,10 +283,10 @@ test('later animal reveals columns above ten and keeps other attempts on confirm
     'true',
   );
   await page.getByRole('button', { name: 'Restart this picture' }).click();
-  await page.getByRole('button', { name: 'Keep playing' }).click();
+  await page.getByRole('button', { name: 'Cancel' }).click();
   expect((await saved(page)).attempts.owl).toEqual(before);
   await page.getByRole('button', { name: 'Restart this picture' }).click();
-  await page.getByRole('button', { name: 'Yes, start over' }).click();
+  await page.getByRole('button', { name: 'Start over' }).click();
   expect((await saved(page)).attempts.owl!.solved).toEqual([]);
   expect((await saved(page)).attempts.fish).toEqual(fish);
 });
@@ -323,7 +321,7 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   await page.getByRole('button', { name: 'Nápověda' }).click();
   await expect(page.getByRole('dialog', { name: 'Nápověda' })).toBeVisible();
   await expect(page.getByText(/Otevřít jako webovou aplikaci/)).toBeVisible();
-  await page.getByRole('button', { name: 'Zpátky ke hře' }).focus();
+  await page.getByRole('button', { name: 'Zavřít' }).focus();
   await page.keyboard.press('Tab');
   expect(
     await page
@@ -337,7 +335,7 @@ test('Czech detection, translated help, focus trapping, recovery and isolated re
   await page
     .getByRole('button', { name: 'Smazat všechny moje obrázky' })
     .click();
-  await page.getByRole('button', { name: 'Ano, začít znovu' }).click();
+  await page.getByRole('button', { name: 'Začít znovu' }).click();
   expect((await saved(page)).completed).toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('other-project'))).toBe(
     'untouched',
@@ -379,7 +377,7 @@ for (const [name, width, height] of [
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.getByRole('button', { name: /Soumračná sovička/ }).click();
+    await page.getByRole('button', { name: /Sova/ }).click();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
