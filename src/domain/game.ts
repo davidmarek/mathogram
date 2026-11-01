@@ -1,4 +1,12 @@
-import { enumerateEquations, isValidEquation } from './arithmetic';
+import {
+  crossesTen,
+  enumerateEquations,
+  enumerateRuleEquations,
+  isValidEquation,
+  isValidRuleEquation,
+  isValidRules,
+} from './arithmetic';
+import type { ArithmeticRules } from './arithmetic';
 import { isRecord, validatePuzzle } from './puzzle';
 import type { Equation, Puzzle } from './puzzle';
 
@@ -8,6 +16,20 @@ export interface Attempt {
   queue: { pixelId: string; equation: Equation }[];
   solved: string[];
   reviewPixelId?: string;
+  /** Settings rules used to create the queue; absent means the picture's own mode. */
+  rules?: ArithmeticRules;
+}
+
+/** Largest answer a picture needs; answers are column numbers. */
+export function largestColumn(puzzle: Pick<Puzzle, 'pixels'>): number {
+  return Math.max(...puzzle.pixels.map(({ col }) => col));
+}
+
+export function fitsRules(
+  puzzle: Pick<Puzzle, 'pixels'>,
+  rules: ArithmeticRules | undefined,
+): boolean {
+  return rules === undefined || largestColumn(puzzle) <= rules.maxNumber;
 }
 
 function randomIndex(length: number, random: () => number): number {
@@ -25,8 +47,14 @@ function equationKey({ a, op, b, op2, d }: Equation): string {
 export function createAttempt(
   puzzle: Puzzle,
   random: () => number = Math.random,
+  rules?: ArithmeticRules,
 ): Attempt {
   if (!validatePuzzle(puzzle)) throw new TypeError('Invalid puzzle.');
+  if (
+    rules !== undefined &&
+    (!isValidRules(rules) || !fitsRules(puzzle, rules))
+  )
+    throw new RangeError('Puzzle needs larger numbers than these rules allow.');
   const pixels = [...puzzle.pixels];
   for (let index = pixels.length - 1; index > 0; index -= 1) {
     const other = randomIndex(index + 1, random);
@@ -34,11 +62,17 @@ export function createAttempt(
     pixels[index] = pixels[other]!;
     pixels[other] = current;
   }
-  const candidates = enumerateEquations(puzzle.intro, puzzle.threeNumbers);
+  const candidates = rules
+    ? enumerateRuleEquations(rules)
+    : enumerateEquations(puzzle.intro, puzzle.threeNumbers);
   const uses = new Map<string, number>();
   let previousOp: Equation['op'] | undefined;
   const queue = pixels.map((pixel) => {
     let choices = candidates.filter(({ c }) => c === pixel.col);
+    if (rules?.crossTen) {
+      const crossing = choices.filter(crossesTen);
+      if (crossing.length > 0) choices = crossing;
+    }
     const leastUsed = Math.min(
       ...choices.map((equation) => uses.get(equationKey(equation)) ?? 0),
     );
@@ -62,6 +96,7 @@ export function createAttempt(
     puzzleVersion: puzzle.version,
     queue,
     solved: [],
+    ...(rules ? { rules: { ...rules } } : {}),
   };
 }
 
@@ -174,10 +209,12 @@ export function validateAttempt(
     !Array.isArray(value.queue) ||
     value.queue.length !== puzzle.pixels.length ||
     !Array.isArray(value.solved) ||
-    value.solved.length > value.queue.length
+    value.solved.length > value.queue.length ||
+    ('rules' in value && !isValidRules(value.rules))
   ) {
     return false;
   }
+  const rules = isValidRules(value.rules) ? value.rules : undefined;
   const pixels = new Map(puzzle.pixels.map((pixel) => [pixel.id, pixel]));
   const seen = new Set<string>();
   for (const entry of value.queue) {
@@ -185,7 +222,10 @@ export function validateAttempt(
       !isRecord(entry) ||
       typeof entry.pixelId !== 'string' ||
       seen.has(entry.pixelId) ||
-      !isValidEquation(entry.equation, puzzle.intro, puzzle.threeNumbers) ||
+      !(rules
+        ? isValidRuleEquation(entry.equation, rules)
+        : isValidEquation(entry.equation, puzzle.intro, puzzle.threeNumbers)) ||
+      !isRecord(entry.equation) ||
       entry.equation.c !== pixels.get(entry.pixelId)?.col
     ) {
       return false;

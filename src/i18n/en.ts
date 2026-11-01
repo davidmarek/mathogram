@@ -89,6 +89,19 @@ export const en = {
   close: 'Close',
   // Help dialog explaining the normal reveal rule and final-pixel practice.
   howTitle: 'How to play',
+  exercisesTitle: 'Exercises',
+  exerciseMode: 'Exercise type',
+  modePicture: 'Picture difficulty',
+  modeNoCrossing: 'Without crossing ten',
+  modeCrossing: 'Crossing ten',
+  numbersUpTo: 'Numbers up to',
+  operations: 'Sums',
+  operationsBoth: 'Adding and subtracting',
+  operationsAdd: 'Adding only',
+  operationsSubtract: 'Subtracting only',
+  exercisesHelp:
+    'Picture difficulty uses sums suited to each picture. Choose an exercise type and number limit for new, restarted, and replayed pictures. Pictures already in progress keep their current sums. A sum’s answer gives its column, so you may need to raise the number limit to start a wide picture. When crossing ten is on, sums such as 8 + 4 or 12 − 5 are used when they fit the picture.',
+  needsNumbers: 'Requires numbers up to',
   howBody:
     'Solve the sum, enter your answer, then tap Check. A correct answer reveals a colored square, called a pixel. Your answer gives its column; row hints show which row it belongs in. If you get a sum wrong, you’ll try it again after other sums. When only one pixel remains, you’ll do a practice sum before trying again. Practice sums don’t reveal pixels. You don’t need to tap the picture.',
   gentle: 'Take as much time as you need.',

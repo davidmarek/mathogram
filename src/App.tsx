@@ -5,9 +5,13 @@ import {
   createAttempt,
   currentExercise,
   deferExercise,
+  fitsRules,
   isComplete,
+  largestColumn,
   submitAnswer,
 } from './domain/game';
+import { MAX_LIMIT, MIN_LIMIT } from './domain/arithmetic';
+import type { ArithmeticRules } from './domain/arithmetic';
 import { PixelArt, PixelGrid } from './components/PixelArt';
 import { Modal } from './components/Modal';
 import { detectLanguage, messages } from './i18n';
@@ -19,6 +23,7 @@ import {
   resetPuzzle,
 } from './storage/progress';
 import type { Language, LoadResult, Progress } from './storage/progress';
+import type { Puzzle } from './domain/puzzle';
 import { usePwa } from './pwa/usePwa';
 import { analyticsEnabled, trackPuzzle } from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
@@ -40,6 +45,11 @@ function initialProgress(): LoadResult {
     ? loadProgress(storage, language)
     : { progress: emptyProgress(language), notice: 'unavailable' };
 }
+
+const limits = Array.from(
+  { length: MAX_LIMIT - MIN_LIMIT + 1 },
+  (_, index) => MIN_LIMIT + index,
+);
 
 const puzzleGroups = difficulties.map((difficulty) => ({
   difficulty,
@@ -92,6 +102,23 @@ export function App() {
     current && progress.showRowHints && !reviewing
       ? Number(current.pixelId.split(':')[0])
       : undefined;
+  const rules: ArithmeticRules | undefined =
+    progress.exercises === 'picture' ? undefined : progress.exercises;
+  const canStart = (selected: Puzzle) => fitsRules(selected, rules);
+  const describeRules = ({
+    maxNumber,
+    crossTen,
+    operations,
+  }: ArithmeticRules) =>
+    [
+      crossTen ? t.modeCrossing : t.modeNoCrossing,
+      `${t.numbersUpTo} ${maxNumber}`,
+      ...(operations === 'add'
+        ? [t.operationsAdd]
+        : operations === 'subtract'
+          ? [t.operationsSubtract]
+          : []),
+    ].join(' · ');
   const standalone =
     window.matchMedia('(display-mode: standalone)').matches ||
     ('standalone' in navigator && navigator.standalone === true);
@@ -154,12 +181,19 @@ export function App() {
   function openPuzzle(id: string, replay = false) {
     const selected = puzzles.find((item) => item.id === id);
     if (!selected) throw new Error('Unknown puzzle.');
-    clearInteraction();
     const previous = progressRef.current;
-    if (replay || !previous.attempts[id]) {
+    const startNew = replay || !previous.attempts[id];
+    const chosen =
+      previous.exercises === 'picture' ? undefined : previous.exercises;
+    if (startNew && !fitsRules(selected, chosen)) return;
+    clearInteraction();
+    if (startNew) {
       store({
         ...previous,
-        attempts: { ...previous.attempts, [id]: createAttempt(selected) },
+        attempts: {
+          ...previous.attempts,
+          [id]: createAttempt(selected, Math.random, chosen),
+        },
       });
       trackPuzzle('Puzzle started', id);
     }
@@ -171,6 +205,21 @@ export function App() {
   }
   function changeLanguage(language: Language) {
     store({ ...progressRef.current, language });
+  }
+  function changeExercises(next: Partial<ArithmeticRules> | 'picture') {
+    const previous = progressRef.current;
+    store({
+      ...previous,
+      exercises:
+        next === 'picture'
+          ? 'picture'
+          : {
+              ...(previous.exercises === 'picture'
+                ? { maxNumber: MAX_LIMIT, crossTen: false, operations: 'both' }
+                : previous.exercises),
+              ...next,
+            },
+    });
   }
   function editAnswer(value: string) {
     if (locked.current) return;
@@ -240,10 +289,10 @@ export function App() {
     if (modal === 'reset') {
       store(resetAllProgress(progressRef.current));
       goHome();
-    } else if (modal === 'restart' && activeId) {
-      const next = resetPuzzle(progressRef.current, activeId);
+    } else if (modal === 'restart' && puzzle && canStart(puzzle)) {
+      const next = resetPuzzle(progressRef.current, puzzle.id);
       progressRef.current = next;
-      openPuzzle(activeId, true);
+      openPuzzle(puzzle.id, true);
     }
     setModal(null);
   }
@@ -359,6 +408,11 @@ export function App() {
                 {progress.completed.length} / {puzzles.length} {t.friends}
               </span>
             </div>
+            {rules && (
+              <p className="exercise-summary">
+                {t.exercisesTitle}: {describeRules(rules)}
+              </p>
+            )}
             {puzzleGroups.map((group) => (
               <section
                 className="difficulty-group"
@@ -373,11 +427,20 @@ export function App() {
                     const saved = progress.attempts[animal.id];
                     const done = saved && isComplete(saved);
                     const badge = progress.completed.includes(animal.id);
+                    const needsMore = !saved && !canStart(animal);
+                    const action = needsMore
+                      ? `${t.needsNumbers} ${largestColumn(animal)}`
+                      : done
+                        ? t.completed
+                        : saved
+                          ? t.continue
+                          : t.start;
                     return (
                       <button
                         key={animal.id}
-                        className={`picture-card picture-${animal.id}`}
+                        className={`picture-card picture-${animal.id}${needsMore ? ' is-locked' : ''}`}
                         onClick={() => openPuzzle(animal.id)}
+                        disabled={needsMore}
                         aria-describedby={`category-${animal.id}`}
                       >
                         <div className="card-art">
@@ -413,14 +476,10 @@ export function App() {
                           </span>
                           <h3>{t[animal.name]}</h3>
                           <div className="card-action">
-                            <span>
-                              {done
-                                ? t.completed
-                                : saved
-                                  ? t.continue
-                                  : t.start}
+                            <span>{action}</span>
+                            <span aria-hidden="true">
+                              {needsMore ? '🔒' : done ? '✓' : '↗'}
                             </span>
-                            <span aria-hidden="true">{done ? '✓' : '↗'}</span>
                           </div>
                           {saved && !done && (
                             <progress
@@ -470,10 +529,19 @@ export function App() {
               <button
                 className="secondary"
                 onClick={() => openPuzzle(puzzle.id, true)}
+                disabled={!canStart(puzzle)}
+                aria-describedby={
+                  canStart(puzzle) ? undefined : 'replay-needs-numbers'
+                }
               >
                 {t.replay}
               </button>
             </div>
+            {!canStart(puzzle) && (
+              <p id="replay-needs-numbers">
+                {t.needsNumbers} {largestColumn(puzzle)}
+              </p>
+            )}
           </section>
         ) : (
           <section className="game" aria-labelledby="game-title">
@@ -481,7 +549,11 @@ export function App() {
               <button className="back-button" onClick={goHome}>
                 <span aria-hidden="true">←</span> {t.gallery}
               </button>
-              <span className="level-pill">{t[getDifficulty(puzzle)]}</span>
+              <span className="level-pill">
+                {attempt.rules
+                  ? describeRules(attempt.rules)
+                  : t[getDifficulty(puzzle)]}
+              </span>
             </div>
             <h1 id="game-title">{t[puzzle.name]}</h1>
             <div className="game-layout">
@@ -632,6 +704,10 @@ export function App() {
             </div>
             <button
               className="text-button restart-button"
+              disabled={!canStart(puzzle)}
+              aria-describedby={
+                canStart(puzzle) ? undefined : 'restart-needs-numbers'
+              }
               onClick={(event) => {
                 event.currentTarget.focus();
                 setModal('restart');
@@ -639,6 +715,11 @@ export function App() {
             >
               {t.restart}
             </button>
+            {!canStart(puzzle) && (
+              <p className="restart-note" id="restart-needs-numbers">
+                {t.needsNumbers} {largestColumn(puzzle)}
+              </p>
+            )}
           </section>
         )}
       </main>
@@ -730,6 +811,73 @@ export function App() {
                 {t.showRowHints}
               </label>
               <p id="row-hints-help">{t.rowHintsHelp}</p>
+              <h3>{t.exercisesTitle}</h3>
+              <label className="language-setting">
+                {t.exerciseMode}
+                <select
+                  value={
+                    rules
+                      ? rules.crossTen
+                        ? 'crossing'
+                        : 'noCrossing'
+                      : 'picture'
+                  }
+                  aria-describedby="exercises-help"
+                  onChange={(event) =>
+                    changeExercises(
+                      event.target.value === 'picture'
+                        ? 'picture'
+                        : { crossTen: event.target.value === 'crossing' },
+                    )
+                  }
+                >
+                  <option value="picture">{t.modePicture}</option>
+                  <option value="noCrossing">{t.modeNoCrossing}</option>
+                  <option value="crossing">{t.modeCrossing}</option>
+                </select>
+              </label>
+              {rules && (
+                <>
+                  <label className="language-setting theme-setting">
+                    {t.numbersUpTo}
+                    <select
+                      value={rules.maxNumber}
+                      onChange={(event) =>
+                        changeExercises({
+                          maxNumber: Number(event.target.value),
+                        })
+                      }
+                    >
+                      {limits.map((limit) => (
+                        <option key={limit} value={limit}>
+                          {limit}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="language-setting theme-setting">
+                    {t.operations}
+                    <select
+                      value={rules.operations}
+                      onChange={(event) => {
+                        const operations = event.target.value;
+                        if (
+                          operations === 'both' ||
+                          operations === 'add' ||
+                          operations === 'subtract'
+                        ) {
+                          changeExercises({ operations });
+                        }
+                      }}
+                    >
+                      <option value="both">{t.operationsBoth}</option>
+                      <option value="add">{t.operationsAdd}</option>
+                      <option value="subtract">{t.operationsSubtract}</option>
+                    </select>
+                  </label>
+                </>
+              )}
+              <p id="exercises-help">{t.exercisesHelp}</p>
               <h3>{t.storageTitle}</h3>
               <p>{t.storageBody}</p>
               {analyticsEnabled && (
