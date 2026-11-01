@@ -19,8 +19,8 @@ export default defineConfig({
         start_url: '/mathogram/',
         scope: '/mathogram/',
         display: 'standalone',
-        theme_color: '#fff8ec',
-        background_color: '#fff8ec',
+        theme_color: '#f5f1e4',
+        background_color: '#f5f1e4',
         icons: [
           {
             src: 'icons/icon-192.png',

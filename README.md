@@ -25,6 +25,13 @@ Length counts colored pixels, not grid dimensions: one colored pixel requires on
 
 The gallery groups all pictures under Beginner, Standard, and Advanced headings. Within each group, pictures appear from smallest to largest by exercise count. Cards show their length band and exact exercise count; saved attempts and discovery badges remain available in every group.
 
+The interface uses a picture-park visual language: original pixel creatures on
+flat green islands, colored difficulty signposts, and large touch controls.
+Desktop picture tiles place artwork beside the name and progress; phone tiles
+stack artwork above their labels. Light, dark, and system appearance use the
+same layout without changing puzzle colors. Product and visual-system context
+are recorded in `PRODUCT.md` and `DESIGN.md`.
+
 ## Run locally
 
 Use **Node 24 LTS**, at least **24.15.0** within the 24.x line, and npm. `.nvmrc` records the reproducible baseline. The lockfile is included. TypeScript 6 is intentional: the maintained TypeScript ESLint parser currently supports TypeScript below 6.1.

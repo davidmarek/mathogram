@@ -5,3 +5,5 @@ playwright-report/
 test-results/
 *.local
 .DS_Store
+.impeccable/hook.cache.json
+.impeccable/questions/
