@@ -128,7 +128,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: upload
           app_location: production
-          config_file_location: production
           api_location: ''
           output_location: ''
           skip_app_build: true
