@@ -170,7 +170,7 @@ jobs:
             }
             const body = `Shared Azure preview for PR #${process.env.PR_NUMBER}, commit \`${process.env.HEAD_SHA}\`: ${url.href}\n\n` +
               'This URL is shared by all PRs and is replaced by the next approved deployment. ' +
-              'Public preview; production on GitHub Pages is unchanged.';
+              'Public preview; production at https://mathixel.com/ and the GitHub Pages mirror are unchanged.';
             await github.rest.issues.createComment({
               ...context.repo, issue_number: Number(process.env.PR_NUMBER), body,
             });
