@@ -6,7 +6,7 @@ import { validatePuzzle } from '../domain/puzzle';
 import { puzzles } from './animals';
 
 describe('original picture content', () => {
-  it('keeps existing pictures and appends ten original pictures', () => {
+  it('keeps existing pictures and appends fourteen original pictures', () => {
     expect(puzzles.map(({ name }) => name)).toEqual([
       'fish',
       'butterfly',
@@ -39,8 +39,12 @@ describe('original picture content', () => {
       'sunflower',
       'chick-and-pig',
       'donut',
+      'ambulance',
+      'police-car',
+      'firetruck',
+      'helicopter',
     ]);
-    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(31);
+    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(35);
     expect(puzzles.slice(0, 16).map(({ intro }) => intro)).toEqual([
       true,
       true,
@@ -243,6 +247,34 @@ describe('original picture content', () => {
         length: 60,
         difficulty: 'beginner',
         size: 'medium',
+      },
+      {
+        id: 'ambulance',
+        version: 1,
+        length: 85,
+        difficulty: 'standard',
+        size: 'large',
+      },
+      {
+        id: 'police-car',
+        version: 1,
+        length: 86,
+        difficulty: 'standard',
+        size: 'large',
+      },
+      {
+        id: 'firetruck',
+        version: 1,
+        length: 90,
+        difficulty: 'standard',
+        size: 'large',
+      },
+      {
+        id: 'helicopter',
+        version: 1,
+        length: 86,
+        difficulty: 'standard',
+        size: 'large',
       },
     ]);
   });

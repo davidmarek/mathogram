@@ -52,6 +52,10 @@ export const en = {
   sunflower: 'Sunflower',
   'chick-and-pig': 'Chick and piglet',
   donut: 'Donut',
+  ambulance: 'Ambulance',
+  'police-car': 'Police car',
+  firetruck: 'Firetruck',
+  helicopter: 'Helicopter',
   // Difficulty labels for arithmetic modes, not school grades.
   beginner: 'Beginner',
   standard: 'Standard',

@@ -8,7 +8,7 @@ Five original food pictures are also available: Watermelon (32 pixels), Fries (3
 
 The **Advanced** difficulty includes three extra-large original pictures: Cheetah (106 pixels), German shepherd (133), and Ferrari sports car (119). Their three-number sums add a second calculation without carrying or borrowing across a ten.
 
-Ten more original pictures separate arithmetic difficulty from puzzle length: Rocket and Robot face offer small advanced puzzles; Octopus and Dinosaur offer medium advanced puzzles; Train, Lighthouse, and Hot-air balloon offer large standard puzzles; Dragon and Space shuttle offer large advanced puzzles; Sunflower offers a medium beginner puzzle. Chick and piglet offers an extra-large standard puzzle, and Donut offers a medium beginner puzzle. All thirty-one pictures are unlocked and available offline after caching.
+Twelve more original pictures separate arithmetic difficulty from puzzle length: Rocket and Robot face offer small advanced puzzles; Octopus and Dinosaur offer medium advanced puzzles; Train, Lighthouse, and Hot-air balloon offer large standard puzzles; Dragon and Space shuttle offer large advanced puzzles; Sunflower and Donut offer medium beginner puzzles; and Chick and piglet offers an extra-large standard puzzle. Ambulance, Police car, Firetruck, and Helicopter add four large standard puzzles. All thirty-five pictures are unlocked and available offline after caching.
 
 ### Difficulty and length
 
@@ -19,9 +19,9 @@ Length counts colored pixels, not grid dimensions: one colored pixel requires on
 | Difficulty | Small (1–40) | Medium (41–70) | Large (71–100) | Extra-large (101+) | Total  |
 | ---------- | ------------ | -------------- | -------------- | ------------------ | ------ |
 | Beginner   | 6            | 2              | 0              | 0                  | 8      |
-| Standard   | 0            | 10             | 3              | 1                  | 14     |
+| Standard   | 0            | 10             | 7              | 1                  | 18     |
 | Advanced   | 2            | 2              | 2              | 3                  | 9      |
-| **Total**  | **8**        | **14**         | **5**          | **4**              | **31** |
+| **Total**  | **8**        | **14**         | **9**          | **4**              | **35** |
 
 The gallery groups all pictures under Beginner, Standard, and Advanced headings. Within each group, pictures appear from smallest to largest by exercise count. Cards show their length band and exact exercise count; saved attempts and discovery badges remain available in every group.
 
@@ -187,7 +187,7 @@ Dedicated analytics browser tests block service workers so requests remain inter
 
 ## Offline installation and updates
 
-Vite assets, manifest ID/start URL/scope, icons and service worker use relative URLs, so the same build works at a domain root or a project subpath. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all thirty-one puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
+Vite assets, manifest ID/start URL/scope, icons and service worker use relative URLs, so the same build works at a domain root or a project subpath. `vite-plugin-pwa` generates the complete Workbox precache, including both languages and all thirty-five puzzles. There are no external font/CDN dependencies or gameplay API requests. Optional analytics requests are never cached or queued by the service worker.
 
 Wait for **Ready for offline play / Připraveno na hraní offline** before disconnecting. This confirmation follows successful worker installation/caching, not merely a request to register. An active installed worker also confirms a prior successful cache. The first-ever visit cannot work offline; browser eviction can later remove cached files.
 
