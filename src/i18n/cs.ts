@@ -35,6 +35,8 @@ export const cs: Messages = {
   dragon: 'Drak',
   'space-shuttle': 'Raketoplán',
   sunflower: 'Slunečnice',
+  'chick-and-pig': 'Kuřátko a prasátko',
+  donut: 'Donut',
   beginner: 'Pro začátečníky',
   standard: 'Běžná obtížnost',
   advanced: 'Pro pokročilé',

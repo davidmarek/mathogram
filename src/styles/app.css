@@ -332,6 +332,18 @@ main {
   left: 3%;
   bottom: 38px;
 }
+.creature-chick-and-pig {
+  width: 190px;
+  height: 100px;
+  right: 6%;
+  bottom: 60px;
+}
+.creature-donut {
+  width: 80px;
+  height: 64px;
+  left: 30%;
+  top: 286px;
+}
 .collection-heading {
   display: flex;
   align-items: center;
@@ -445,6 +457,8 @@ main {
   --picture-bg: #e5d7f2;
 }
 .picture-cat,
+.picture-chick-and-pig,
+.picture-donut,
 .picture-train,
 .picture-hot-air-balloon,
 .picture-fox,
@@ -1091,6 +1105,20 @@ progress::-moz-progress-bar {
     left: 5%;
     bottom: 38px;
   }
+  .creature-chick-and-pig {
+    width: 95px;
+    height: 50px;
+    right: auto;
+    left: 35%;
+    bottom: 8px;
+  }
+  .creature-donut {
+    width: 50px;
+    height: 40px;
+    left: auto;
+    right: 4%;
+    top: 70px;
+  }
   .picture-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
@@ -1256,6 +1284,17 @@ progress::-moz-progress-bar {
   .creature-butterfly {
     width: 105px;
     height: 105px;
+  }
+  .creature-chick-and-pig {
+    width: 152px;
+    height: 80px;
+    right: 2%;
+    bottom: 110px;
+  }
+  .creature-donut {
+    width: 65px;
+    height: 52px;
+    left: 42%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

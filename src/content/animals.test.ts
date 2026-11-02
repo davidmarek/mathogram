@@ -37,8 +37,10 @@ describe('original picture content', () => {
       'dragon',
       'space-shuttle',
       'sunflower',
+      'chick-and-pig',
+      'donut',
     ]);
-    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(29);
+    expect(new Set(puzzles.map(({ id }) => id)).size).toBe(31);
     expect(puzzles.slice(0, 16).map(({ intro }) => intro)).toEqual([
       true,
       true,
@@ -225,6 +227,20 @@ describe('original picture content', () => {
         id: 'sunflower',
         version: 1,
         length: 50,
+        difficulty: 'beginner',
+        size: 'medium',
+      },
+      {
+        id: 'chick-and-pig',
+        version: 1,
+        length: 127,
+        difficulty: 'standard',
+        size: 'extraLarge',
+      },
+      {
+        id: 'donut',
+        version: 1,
+        length: 60,
         difficulty: 'beginner',
         size: 'medium',
       },
