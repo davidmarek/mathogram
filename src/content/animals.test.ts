@@ -264,8 +264,8 @@ describe('original picture content', () => {
       },
       {
         id: 'firetruck',
-        version: 1,
-        length: 90,
+        version: 2,
+        length: 98,
         difficulty: 'standard',
         size: 'large',
       },

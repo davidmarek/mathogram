@@ -642,8 +642,8 @@ export const puzzles: Puzzle[] = [
     false,
     { R: '#D94B4B', W: '#F4F1E9', B: '#72AFC8', Y: '#F5C84C', D: '#344254' },
     [
-      '......WWWW........',
-      '......WWWW........',
+      '.....WWWWWWWW.....',
+      '.....WDWDWDWD.....',
       '..RRRRRRRRRRRRRR..',
       '..RRRRRRRRRRRRRR..',
       '..RBBRRRRRRRRRWW..',
@@ -652,6 +652,8 @@ export const puzzles: Puzzle[] = [
       '...DD....DD.......',
       '..DDDD..DDDD......',
     ],
+    false,
+    2,
   ),
   picture(
     'helicopter',
