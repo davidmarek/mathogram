@@ -169,6 +169,29 @@ describe('progress persistence', () => {
     expect(restored.progress.showRowHints).toBe(progress.showRowHints);
   });
 
+  it.each([
+    ['ambulance', 1],
+    ['police-car', 1],
+    ['firetruck', 1],
+    ['firetruck', 2],
+    ['helicopter', 1],
+  ])(
+    'recovers %s artwork version %i without losing other progress',
+    (id, version) => {
+      const puzzle = puzzles.find((candidate) => candidate.id === id)!;
+      const progress = inProgress();
+      progress.completed.push(id);
+      progress.attempts[id] = createAttempt({ ...puzzle, version });
+
+      const restored = load(progress);
+      expect(restored.notice).toBe('recovered');
+      expect(restored.progress).toEqual({
+        ...progress,
+        attempts: { fish: progress.attempts.fish, cat: progress.attempts.cat },
+      });
+    },
+  );
+
   it.each([true, false])('persists row hint preference %s', (showRowHints) => {
     const progress = { ...inProgress(), showRowHints };
     const storage = memoryStorage();

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { enumerateEquations, isValidEquation } from '../domain/arithmetic';
 import { getDifficulty, getSize } from '../domain/categories';
-import { createAttempt, validateAttempt } from '../domain/game';
+import { createAttempt, largestColumn, validateAttempt } from '../domain/game';
 import { validatePuzzle } from '../domain/puzzle';
+import type { Puzzle } from '../domain/puzzle';
 import { puzzles } from './animals';
 
 describe('original picture content', () => {
@@ -250,33 +251,89 @@ describe('original picture content', () => {
       },
       {
         id: 'ambulance',
-        version: 1,
-        length: 85,
+        version: 2,
+        length: 95,
         difficulty: 'standard',
         size: 'large',
       },
       {
         id: 'police-car',
-        version: 1,
-        length: 86,
+        version: 2,
+        length: 83,
         difficulty: 'standard',
         size: 'large',
       },
       {
         id: 'firetruck',
-        version: 2,
-        length: 98,
+        version: 3,
+        length: 96,
         difficulty: 'standard',
         size: 'large',
       },
       {
         id: 'helicopter',
-        version: 1,
-        length: 86,
+        version: 2,
+        length: 82,
         difficulty: 'standard',
         size: 'large',
       },
     ]);
+  });
+
+  it.each(['ambulance', 'police-car', 'firetruck', 'helicopter'])(
+    '%s remains playable with numbers up to 16',
+    (id) => {
+      const puzzle = puzzles.find((candidate) => candidate.id === id)!;
+      expect(largestColumn(puzzle)).toBe(16);
+    },
+  );
+
+  it('keeps distinctive details on the emergency vehicles', () => {
+    const picture = (id: string) =>
+      puzzles.find((candidate) => candidate.id === id)!;
+    const colorAt = (puzzle: Puzzle, row: number, col: number) =>
+      puzzle.pixels.find((pixel) => pixel.row === row && pixel.col === col)
+        ?.color;
+
+    const ambulance = picture('ambulance');
+    const cross = [
+      [4, 7],
+      [5, 6],
+      [5, 7],
+      [5, 8],
+      [6, 7],
+    ] as const;
+    expect(cross.map(([row, col]) => colorAt(ambulance, row, col))).toEqual([
+      'R',
+      'R',
+      'R',
+      'R',
+      'R',
+    ]);
+
+    const police = picture('police-car');
+    expect(
+      police.pixels.filter(({ row }) => row === 1).map(({ color }) => color),
+    ).toEqual(['R', 'B']);
+
+    const firetruck = picture('firetruck');
+    expect(
+      firetruck.pixels.filter(({ row, color }) => row === 1 && color === 'L'),
+    ).toHaveLength(10);
+    expect(
+      firetruck.pixels.filter(({ row, color }) => row === 2 && color === 'S'),
+    ).toHaveLength(5);
+
+    const helicopter = picture('helicopter');
+    expect(helicopter.pixels.filter(({ row }) => row === 1)).toHaveLength(12);
+    expect([1, 2, 3].map((col) => colorAt(helicopter, 5, col))).toEqual([
+      'M',
+      'S',
+      'M',
+    ]);
+    expect(
+      helicopter.pixels.filter(({ row, color }) => row === 10 && color === 'M'),
+    ).toHaveLength(8);
   });
 
   it('connects every octopus tentacle to the body along pixel edges', () => {
