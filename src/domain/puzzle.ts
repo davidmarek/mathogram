@@ -32,6 +32,10 @@ const puzzleNames = [
   'sunflower',
   'chick-and-pig',
   'donut',
+  'ambulance',
+  'police-car',
+  'firetruck',
+  'helicopter',
 ] as const;
 
 type PuzzleName = (typeof puzzleNames)[number];
