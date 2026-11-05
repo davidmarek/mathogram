@@ -471,7 +471,7 @@ export function App() {
                     return (
                       <button
                         key={animal.id}
-                        className={`picture-card picture-${animal.id}${needsMore ? ' is-locked' : ''}`}
+                        className={`picture-card picture-${animal.id}${needsMore ? ' is-locked' : ''}${done ? ' is-done' : ''}`}
                         onClick={() => openPuzzle(animal.id)}
                         disabled={needsMore}
                         aria-describedby={`category-${animal.id}`}
