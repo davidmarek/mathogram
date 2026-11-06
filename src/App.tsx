@@ -24,6 +24,7 @@ import {
 } from './storage/progress';
 import type { Language, LoadResult, Progress } from './storage/progress';
 import type { Puzzle } from './domain/puzzle';
+import { isRecord } from './domain/puzzle';
 import { usePwa } from './pwa/usePwa';
 import { analyticsEnabled, trackPuzzle } from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
@@ -149,6 +150,24 @@ export function App() {
     modalOpen.current = modal !== null;
   }, [modal]);
   useEffect(() => {
+    window.history.replaceState({ mathogramPuzzle: null }, '');
+    function restoreScreen(event: PopStateEvent) {
+      const state: unknown = event.state;
+      const id = isRecord(state) ? state.mathogramPuzzle : undefined;
+      clearInteraction();
+      setModal(null);
+      setActiveId(
+        typeof id === 'string' &&
+          puzzles.some((item) => item.id === id) &&
+          progressRef.current.attempts[id]
+          ? id
+          : null,
+      );
+    }
+    window.addEventListener('popstate', restoreScreen);
+    return () => window.removeEventListener('popstate', restoreScreen);
+  }, []);
+  useEffect(() => {
     if (activeId && !complete)
       answerRef.current?.focus({ preventScroll: true });
     else heading.current?.focus({ preventScroll: true });
@@ -201,10 +220,16 @@ export function App() {
       });
       trackPuzzle('Puzzle started', id);
     }
+    if (activeId !== id) {
+      if (activeId === null)
+        window.history.pushState({ mathogramPuzzle: id }, '');
+      else window.history.replaceState({ mathogramPuzzle: id }, '');
+    }
     setActiveId(id);
   }
   function goHome() {
     clearInteraction();
+    window.history.replaceState({ mathogramPuzzle: null }, '');
     setActiveId(null);
   }
   function changeLanguage(language: Language) {
@@ -459,7 +484,6 @@ export function App() {
                   {group.puzzles.map((animal) => {
                     const saved = progress.attempts[animal.id];
                     const done = saved && isComplete(saved);
-                    const badge = progress.completed.includes(animal.id);
                     const needsMore = !saved && !canStart(animal);
                     const action = needsMore
                       ? `${t.needsNumbers} ${largestColumn(animal)}`
@@ -477,14 +501,6 @@ export function App() {
                         aria-describedby={`category-${animal.id}`}
                       >
                         <div className="card-art">
-                          {badge && (
-                            <span
-                              className="discovery-badge"
-                              aria-label={t.completed}
-                            >
-                              ✓
-                            </span>
-                          )}
                           <PixelArt puzzle={animal} centered />
                         </div>
                         <div className="card-copy">
@@ -558,6 +574,11 @@ export function App() {
           </section>
         ) : complete ? (
           <section className="completion" aria-labelledby="complete-title">
+            <div className="game-nav">
+              <button className="back-button" onClick={goHome} type="button">
+                <span aria-hidden="true">←</span> {t.gallery}
+              </button>
+            </div>
             <h1 id="complete-title" ref={heading} tabIndex={-1}>
               {t.completeTitle}
             </h1>
@@ -566,17 +587,11 @@ export function App() {
               role="img"
               aria-label={`${t.fullGrid}: ${t[puzzle.name]}`}
             >
-              <span className="completion-check" aria-hidden="true">
-                ✓
-              </span>
               <PixelArt puzzle={puzzle} />
             </div>
             <h2 className="completed-name">{t[puzzle.name]}</h2>
             <p>{t.completeBody}</p>
             <div className="button-row">
-              <button className="primary" onClick={goHome}>
-                {t.gallery}
-              </button>
               <button
                 className="secondary"
                 onClick={() => openPuzzle(puzzle.id, true)}
@@ -597,7 +612,7 @@ export function App() {
         ) : (
           <section className="game" aria-labelledby="game-title">
             <div className="game-nav">
-              <button className="back-button" onClick={goHome}>
+              <button className="back-button" onClick={goHome} type="button">
                 <span aria-hidden="true">←</span> {t.gallery}
               </button>
               <span className="level-pill">

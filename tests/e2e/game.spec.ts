@@ -19,6 +19,69 @@ async function saved(page: Page): Promise<Progress> {
   );
 }
 
+test('browser Back returns to the gallery and Forward resumes the picture', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Fish/ }).click();
+  await answerEquation(page);
+  const progress = await saved(page);
+  await page.getByRole('button', { name: messages.en.settings }).click();
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: messages.en.galleryTitle }),
+  ).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(await saved(page)).toEqual(progress);
+  await page.goForward();
+  await expect(
+    page.getByRole('heading', { name: messages.en.fish }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('textbox', { name: messages.en.answer }),
+  ).toHaveValue('');
+  expect(await saved(page)).toEqual(progress);
+  await page.getByRole('button', { name: messages.en.gallery }).click();
+  await page.getByRole('button', { name: /Cat/ }).click();
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: messages.en.galleryTitle }),
+  ).toBeVisible();
+});
+
+test('browser Back returns from completed pictures and replay adds no extra step', async ({
+  page,
+}) => {
+  const progress = emptyProgress('en');
+  const fish = puzzles.find((puzzle) => puzzle.id === 'fish')!;
+  const attempt = createAttempt(fish);
+  attempt.solved = attempt.queue.map((entry) => entry.pixelId);
+  progress.attempts.fish = attempt;
+  progress.completed = ['fish'];
+  await page.addInitScript(
+    ({ key, value }) => localStorage.setItem(key, value),
+    { key: STORAGE_KEY, value: JSON.stringify(progress) },
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: /Fish/ }).click();
+  await expect(
+    page.getByRole('heading', { name: messages.en.completeTitle }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: messages.en.galleryTitle }),
+  ).toBeVisible();
+  await page.goForward();
+  await page.getByRole('button', { name: messages.en.replay }).click();
+  await expect(
+    page.getByRole('heading', { name: messages.en.fish }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: messages.en.galleryTitle }),
+  ).toBeVisible();
+});
+
 for (const showRowHints of [true, false]) {
   test(`white pixels stay distinct after revealing and resuming (hints ${showRowHints})`, async ({
     page,
