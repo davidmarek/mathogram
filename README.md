@@ -60,6 +60,8 @@ Open **http://127.0.0.1:4173/**. HTTPS is required when not on localhost. Nothin
 
 Pick any picture. The answer to the equation is the column number. Enter up to two digits on the built-in keypad or a physical keyboard and press **Check / Ověřit** or Enter. Backspace works in either mode. Wrong answers (including out-of-range numbers) move the exercise to the back of the remaining queue without revealing a pixel. After brief feedback, the answer clears and another exercise appears; the missed exercise comes back later. Correct answers save immediately, reveal exactly one coordinate, then release a short duplicate-submission guard.
 
+The browser or phone **Back** button returns from a picture to the gallery without losing saved progress. Browser **Forward** reopens the picture, including completed pictures. Replaying or restarting a picture does not add an extra Back step.
+
 In **Settings / Nastavení** (the gear button), disable **Show row hints / Zobrazovat nápovědu řádku** to hide both the active-row highlight and the equation's row letter, including screen-reader row hints. Permanent grid coordinates remain visible. Hints default to on, including for existing saves; your choice is remembered across puzzles, reloads and collection resets.
 
 Choose **Appearance / Vzhled** in Settings: **System / Podle zařízení** follows your device's light or dark appearance, including changes while playing; **Light / Světlý** and **Dark / Tmavý** override it. System is the default for new and existing saves. Your choice is remembered across reloads and collection resets. Puzzle pixel colors and saved equations stay unchanged.
