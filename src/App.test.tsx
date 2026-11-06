@@ -778,6 +778,18 @@ describe('pixel game', () => {
       screen.getByRole('heading', { name: 'You finished the picture!' }),
     ).toHaveFocus();
     expect(saved().completed).toEqual(['fish']);
+    expect(document.querySelector('.completion-check')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
+    expect(
+      screen.getByRole('region', { name: messages.en.galleryTitle }),
+    ).toBeVisible();
+    const fishCard = screen.getByRole('button', { name: /Fish/ });
+    expect(fishCard.querySelector('.discovery-badge')).not.toBeInTheDocument();
+    expect(fishCard.querySelector('.card-action-icon path')).toHaveAttribute(
+      'd',
+      'm5 12 4 4L19 6',
+    );
+    fireEvent.click(fishCard);
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(saved().attempts.fish!.solved).toEqual([]);
     expect(saved().completed).toEqual(['fish']);

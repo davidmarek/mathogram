@@ -251,7 +251,7 @@ describe('original picture content', () => {
       },
       {
         id: 'ambulance',
-        version: 2,
+        version: 3,
         length: 95,
         difficulty: 'standard',
         size: 'large',
@@ -304,12 +304,13 @@ describe('original picture content', () => {
       [6, 7],
     ] as const;
     expect(cross.map(([row, col]) => colorAt(ambulance, row, col))).toEqual([
-      'R',
-      'R',
-      'R',
-      'R',
-      'R',
+      'W',
+      'W',
+      'W',
+      'W',
+      'W',
     ]);
+    expect(colorAt(ambulance, 3, 3)).toBe('R');
 
     const police = picture('police-car');
     expect(
