@@ -267,6 +267,24 @@ describe('aggregate puzzle analytics', () => {
 });
 
 describe('bilingual gallery and settings', () => {
+  function expectGalleryPictures(language: 'en' | 'cs') {
+    const gallery = screen.getByRole('region', {
+      name: messages[language].galleryTitle,
+    });
+    const cards = within(gallery).getAllByRole('button');
+    expect(cards).toHaveLength(puzzles.length);
+    const names = cards.map((card) => {
+      const name = within(card).getByRole('heading', { level: 3 }).textContent!;
+      expect(card).toHaveAccessibleName(new RegExp(name));
+      expect(card).toBeVisible();
+      expect(card).toBeEnabled();
+      return name;
+    });
+    expect(names.sort()).toEqual(
+      puzzles.map((puzzle) => messages[language][puzzle.name]).sort(),
+    );
+  }
+
   it('groups every picture by difficulty and orders each group by exercise count', () => {
     const { container } = render(<App />);
     expect(container.querySelectorAll('.picture-card')).toHaveLength(
@@ -323,33 +341,18 @@ describe('bilingual gallery and settings', () => {
       expect(
         screen.getByRole('region', { name: messages.cs[difficulty] }),
       ).toBeVisible();
-    for (const puzzle of puzzles)
-      expect(
-        screen.getByRole('button', {
-          name: new RegExp(messages.cs[puzzle.name]),
-        }),
-      ).toBeVisible();
+    expectGalleryPictures('cs');
     expect(saved().attempts.fish).toEqual(attempt);
     expect(saved().completed).toEqual(['butterfly']);
   });
 
   it('offers all pictures without locks and switches every translation', () => {
     render(<App />);
-    for (const puzzle of puzzles)
-      expect(
-        screen.getByRole('button', {
-          name: new RegExp(messages.en[puzzle.name]),
-        }),
-      ).toBeVisible();
+    expectGalleryPictures('en');
     fireEvent.click(screen.getByRole('button', { name: /Language: Čeština/ }));
     expect(document.documentElement.lang).toBe('cs');
     expect(saved().language).toBe('cs');
-    for (const puzzle of puzzles)
-      expect(
-        screen.getByRole('button', {
-          name: new RegExp(messages.cs[puzzle.name]),
-        }),
-      ).toBeVisible();
+    expectGalleryPictures('cs');
     expect(
       screen.getByRole('heading', { name: 'Který obrázek si dnes vybereš?' }),
     ).toBeVisible();
