@@ -503,6 +503,15 @@ main {
   display: grid;
   place-items: center;
   border-radius: 0;
+  transition: filter 0.3s ease;
+}
+.picture-card:not(.is-done) .card-art {
+  filter: grayscale(0.9);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-art {
+    transition: none;
+  }
 }
 .pixel-art {
   display: block;

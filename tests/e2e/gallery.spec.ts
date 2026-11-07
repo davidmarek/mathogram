@@ -152,3 +152,33 @@ for (const language of ['en', 'cs'] as const) {
     });
   }
 }
+
+test('unfinished gallery artwork is greyscale until completed', async ({
+  page,
+}) => {
+  const progress = emptyProgress('en');
+  const [done, started] = puzzles;
+  const finished = createAttempt(done!);
+  finished.solved = finished.queue.map((item) => item.pixelId);
+  progress.attempts[done!.id] = finished;
+  progress.completed = [done!.id];
+  const partial = createAttempt(started!);
+  partial.solved = [partial.queue[0]!.pixelId];
+  progress.attempts[started!.id] = partial;
+  await page.addInitScript(
+    ({ key, progress }) => localStorage.setItem(key, JSON.stringify(progress)),
+    { key: STORAGE_KEY, progress },
+  );
+  await page.goto('./');
+  const filter = (id: string) =>
+    page
+      .locator(`.picture-${id} .card-art`)
+      .evaluate((art) => getComputedStyle(art).filter);
+  await expect(page.locator(`.picture-${done!.id}`)).toHaveClass(/is-done/);
+  expect(await filter(done!.id)).toBe('none');
+  expect(await filter(started!.id)).toContain('grayscale');
+  const untouched = puzzles.find(
+    (puzzle) => puzzle !== done && puzzle !== started,
+  )!;
+  expect(await filter(untouched.id)).toContain('grayscale');
+});
