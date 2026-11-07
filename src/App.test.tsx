@@ -15,6 +15,8 @@ const analytics = vi.hoisted(() => ({
   trackPuzzleStarted: vi.fn(),
   trackPuzzleCompleted: vi.fn(),
   trackPuzzleLeft: vi.fn(),
+  trackDialogOpened: vi.fn(),
+  trackSettingChanged: vi.fn(),
   trackPuzzleTime: vi.fn(),
 }));
 vi.mock('./analytics', () => ({
@@ -25,6 +27,8 @@ vi.mock('./analytics', () => ({
   trackPuzzleStarted: analytics.trackPuzzleStarted,
   trackPuzzleCompleted: analytics.trackPuzzleCompleted,
   trackPuzzleLeft: analytics.trackPuzzleLeft,
+  trackDialogOpened: analytics.trackDialogOpened,
+  trackSettingChanged: analytics.trackSettingChanged,
   trackPuzzleTime: analytics.trackPuzzleTime,
   analyticsAllowed: () => analytics.enabled,
 }));
@@ -76,6 +80,8 @@ beforeEach(() => {
   analytics.trackPuzzleStarted.mockClear();
   analytics.trackPuzzleCompleted.mockClear();
   analytics.trackPuzzleLeft.mockClear();
+  analytics.trackDialogOpened.mockClear();
+  analytics.trackSettingChanged.mockClear();
   analytics.trackPuzzleTime.mockClear();
 });
 afterEach(() => {
@@ -255,6 +261,60 @@ describe('aggregate puzzle analytics', () => {
       { replay: true, exercises: 'picture', display: 'browser' },
     );
     expect(analytics.trackPuzzleCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports opened dialogs and each changed setting, not unchanged ones', () => {
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    expect(analytics.trackSettingChanged).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(analytics.trackDialogOpened.mock.calls).toEqual([
+      ['help'],
+      ['settings'],
+    ]);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Appearance' }), {
+      target: { value: 'dark' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show row hints' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'crossing' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Numbers up to' }), {
+      target: { value: '12' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sums' }), {
+      target: { value: 'add' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'picture' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    openFish();
+    enter(firstAnswer());
+    submit();
+    expect(analytics.trackSettingChanged.mock.calls).toEqual([
+      ['theme', 'dark'],
+      ['rowHints', false],
+      ['exercises', 'custom'],
+      ['maxNumber', 20],
+      ['crossTen', true],
+      ['operations', 'both'],
+      ['maxNumber', 12],
+      ['operations', 'add'],
+      ['exercises', 'picture'],
+    ]);
+    expect(analytics.trackDialogOpened).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: /^Česky/ }));
+    expect(analytics.trackSettingChanged).toHaveBeenLastCalledWith(
+      'language',
+      'cs',
+    );
+    expect(analytics.trackSettingChanged).toHaveBeenCalledTimes(10);
   });
 
   it('reports each screen once and unfinished pictures when leaving them', () => {

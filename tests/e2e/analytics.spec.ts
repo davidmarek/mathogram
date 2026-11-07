@@ -185,7 +185,7 @@ test.describe('enabled analytics', () => {
     ).toHaveCount(0);
     await page.getByRole('button', { name: 'Close' }).click();
     await page.getByRole('button', { name: /Fish/ }).click();
-    await expect.poll(() => analyticsRequests.length).toBe(3);
+    await expect.poll(() => analyticsRequests.length).toBe(4);
     expect(
       analyticsRequests.map((request) => {
         const { url, name, data } = request.postDataJSON().payload;
@@ -193,6 +193,7 @@ test.describe('enabled analytics', () => {
       }),
     ).toEqual([
       { url: '/' },
+      { url: '/', name: 'Dialog opened', data: { dialog: 'help' } },
       {
         url: '/',
         name: 'Puzzle started',
@@ -204,6 +205,46 @@ test.describe('enabled analytics', () => {
         },
       },
       { url: '/puzzle/fish' },
+    ]);
+  });
+
+  test('reports opened dialogs and changed settings with allowlisted values', async ({
+    page,
+    analyticsRequests,
+  }) => {
+    await page.goto('./');
+    await expect.poll(() => analyticsRequests.length).toBe(1);
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page
+      .getByRole('combobox', { name: 'Appearance' })
+      .selectOption('dark');
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: /^Česky/ }).click();
+    await expect.poll(() => analyticsRequests.length).toBe(4);
+    expect(
+      analyticsRequests.slice(1).map((request) => {
+        const { url, language, name, data } = request.postDataJSON().payload;
+        return { url, language, name, data };
+      }),
+    ).toEqual([
+      {
+        url: '/',
+        language: 'en',
+        name: 'Dialog opened',
+        data: { dialog: 'settings' },
+      },
+      {
+        url: '/',
+        language: 'en',
+        name: 'Setting changed',
+        data: { setting: 'theme', value: 'dark' },
+      },
+      {
+        url: '/',
+        language: 'cs',
+        name: 'Setting changed',
+        data: { setting: 'language', value: 'cs' },
+      },
     ]);
   });
 

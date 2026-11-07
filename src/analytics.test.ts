@@ -203,6 +203,50 @@ describe('optional analytics', () => {
     ]);
   });
 
+  it('reports only allowlisted dialogs, settings and values', async () => {
+    const { trackDialogOpened, trackSettingChanged } =
+      await import('./analytics');
+    trackDialogOpened('help');
+    trackDialogOpened('settings');
+    trackDialogOpened('restart' as 'help');
+    trackSettingChanged('language', 'cs');
+    trackSettingChanged('theme', 'dark');
+    trackSettingChanged('rowHints', false);
+    trackSettingChanged('exercises', 'custom');
+    trackSettingChanged('maxNumber', 12);
+    trackSettingChanged('crossTen', true);
+    trackSettingChanged('operations', 'subtract');
+    trackSettingChanged('language', 'de');
+    trackSettingChanged('theme', 'neon');
+    trackSettingChanged('rowHints', 'yes');
+    trackSettingChanged('maxNumber', 9);
+    trackSettingChanged('maxNumber', 21);
+    trackSettingChanged('maxNumber', 12.5);
+    trackSettingChanged('operations', 'multiply');
+    trackSettingChanged('toString' as 'theme', 'dark');
+    trackSettingChanged('private' as 'theme', 'dark');
+    expect(
+      request.mock.calls.map(([, init]) => {
+        const { name, data } = JSON.parse(init.body).payload;
+        return [name, data];
+      }),
+    ).toEqual([
+      ['Dialog opened', { dialog: 'help' }],
+      ['Dialog opened', { dialog: 'settings' }],
+      ...(
+        [
+          ['language', 'cs'],
+          ['theme', 'dark'],
+          ['rowHints', false],
+          ['exercises', 'custom'],
+          ['maxNumber', 12],
+          ['crossTen', true],
+          ['operations', 'subtract'],
+        ] as const
+      ).map(([setting, value]) => ['Setting changed', { setting, value }]),
+    ]);
+  });
+
   it('accepts non-animal IDs from the puzzle catalog without changing the event schema', async () => {
     vi.doMock('./content/animals', () => ({
       puzzles: [{ id: 'rocket' }],

@@ -1,4 +1,5 @@
 import { puzzles } from './content/animals';
+import { MAX_LIMIT, MIN_LIMIT } from './domain/arithmetic';
 
 const website = import.meta.env.VITE_UMAMI_WEBSITE_ID;
 function configuredEndpoint(): string | undefined {
@@ -134,6 +135,43 @@ export function trackPuzzleLeft(
       puzzleId,
       progress: Math.floor((solved / total) * 10) * 10,
     });
+}
+
+export function trackDialogOpened(dialog: 'settings' | 'help') {
+  if (dialog === 'settings' || dialog === 'help')
+    send('Dialog opened', { dialog });
+}
+
+const settingValues: Record<string, (value: unknown) => boolean> = {
+  language: (value) => value === 'en' || value === 'cs',
+  theme: (value) => value === 'system' || value === 'light' || value === 'dark',
+  rowHints: (value) => typeof value === 'boolean',
+  exercises: (value) => value === 'picture' || value === 'custom',
+  maxNumber: (value) =>
+    Number.isSafeInteger(value) &&
+    (value as number) >= MIN_LIMIT &&
+    (value as number) <= MAX_LIMIT,
+  crossTen: (value) => typeof value === 'boolean',
+  operations: (value) =>
+    value === 'both' || value === 'add' || value === 'subtract',
+};
+
+export type SettingName =
+  | 'language'
+  | 'theme'
+  | 'rowHints'
+  | 'exercises'
+  | 'maxNumber'
+  | 'crossTen'
+  | 'operations';
+
+/** Reports only allowlisted settings with their allowlisted values. */
+export function trackSettingChanged(
+  setting: SettingName,
+  value: string | number | boolean,
+) {
+  if (Object.hasOwn(settingValues, setting) && settingValues[setting]!(value))
+    send('Setting changed', { setting, value });
 }
 
 export function trackPuzzleTime(puzzleId: string, activeSeconds: number) {

@@ -110,7 +110,16 @@ test.describe('real Workbox lifecycle', () => {
     expect(analyticsRequests).toHaveLength(onlineEvents);
     await context.setOffline(false);
     await cold.getByRole('button', { name: 'Nastavení' }).click();
-    expect(analyticsRequests).toHaveLength(onlineEvents);
+    // Only the new dialog event may be sent; offline activity is never replayed.
+    expect(
+      analyticsRequests
+        .slice(onlineEvents)
+        .map((request) => request.postDataJSON().payload)
+        .filter(
+          ({ name, data }) =>
+            name !== 'Dialog opened' || data.dialog !== 'settings',
+        ),
+    ).toEqual([]);
   });
 
   test('waiting update never reloads midgame, saves on acceptance, and precaches updated shell', async ({

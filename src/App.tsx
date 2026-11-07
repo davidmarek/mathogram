@@ -28,11 +28,14 @@ import { isRecord } from './domain/puzzle';
 import { usePwa } from './pwa/usePwa';
 import {
   analyticsEnabled,
+  trackDialogOpened,
   trackPuzzleCompleted,
   trackPuzzleLeft,
   trackPuzzleStarted,
   trackScreen,
+  trackSettingChanged,
 } from './analytics';
+import type { SettingName } from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
 
 function browserStorage(): Storage | null {
@@ -65,6 +68,20 @@ const puzzleGroups = difficulties.map((difficulty) => ({
     .sort((a, b) => a.pixels.length - b.pixels.length),
 }));
 
+function settingValues(
+  progress: Progress,
+): Partial<Record<SettingName, string | number | boolean>> {
+  const { exercises } = progress;
+  return {
+    language: progress.language,
+    theme: progress.theme,
+    rowHints: progress.showRowHints,
+    ...(exercises === 'picture'
+      ? { exercises: 'picture' }
+      : { exercises: 'custom', ...exercises }),
+  };
+}
+
 const parkPictures = puzzles.filter((puzzle) =>
   ['rabbit', 'butterfly', 'fish', 'chick-and-pig', 'donut'].includes(puzzle.id),
 );
@@ -92,6 +109,7 @@ export function App() {
   >(null);
   const modalOpen = useRef(false);
   const trackedScreen = useRef<string | null>(undefined);
+  const trackedSettings = useRef(settingValues(progress));
   const [persistent, setPersistent] = useState<
     'persisted' | 'notPersisted' | 'persistError' | null
   >(null);
@@ -156,6 +174,19 @@ export function App() {
   useEffect(() => {
     modalOpen.current = modal !== null;
   }, [modal]);
+  useEffect(() => {
+    if (modal === 'settings' || modal === 'help') trackDialogOpened(modal);
+  }, [modal]);
+  useEffect(() => {
+    const previous = trackedSettings.current;
+    const next = settingValues(progress);
+    trackedSettings.current = next;
+    for (const [setting, value] of Object.entries(next) as [
+      SettingName,
+      string | number | boolean,
+    ][])
+      if (previous[setting] !== value) trackSettingChanged(setting, value);
+  }, [progress]);
   useEffect(() => {
     const previous = trackedScreen.current;
     if (previous === activeId) return;
