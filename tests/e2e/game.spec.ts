@@ -243,6 +243,20 @@ test('complete introductory animal, retry, repeat guard, reload, resume and repl
   expect((await saved(page)).completed).toContain('fish');
 });
 
+test('settings close when clicking outside the dialog', async ({ page }) => {
+  await page.goto('./');
+  const settingsButton = page.getByRole('button', { name: 'Settings' });
+  await settingsButton.click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog).toBeVisible();
+  const box = (await dialog.boundingBox())!;
+  await page.mouse.click(box.x + 4, box.y + 4);
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(2, 2);
+  await expect(dialog).toBeHidden();
+  await expect(settingsButton).toBeFocused();
+});
+
 test('row hints are optional, accessible, translated and remembered after reopening', async ({
   page,
 }) => {
