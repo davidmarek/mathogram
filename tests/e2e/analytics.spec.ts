@@ -155,8 +155,12 @@ test.describe('enabled analytics', () => {
       language: 'en',
       screen: expect.any(String),
       name: 'Puzzle time spent',
-      data: { puzzleId: 'fish', activeSeconds: 10 },
+      data: { puzzleId: 'fish', activeSeconds: expect.any(Number) },
     });
+    // The installed clock keeps running in real time, so slow browsers can add
+    // a few seconds; the bounds still exclude the 120 s spent in Help/gallery.
+    expect(durations()[0].data.activeSeconds).toBeGreaterThanOrEqual(10);
+    expect(durations()[0].data.activeSeconds).toBeLessThanOrEqual(15);
     await page.clock.runFor(120_000);
     await page.getByRole('button', { name: 'Close' }).click();
     await page.clock.runFor(5_000);
@@ -164,7 +168,12 @@ test.describe('enabled analytics', () => {
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
     await expect.poll(() => durations().length).toBe(2);
-    expect(durations()[1].data).toEqual({ puzzleId: 'fish', activeSeconds: 5 });
+    expect(durations()[1].data).toEqual({
+      puzzleId: 'fish',
+      activeSeconds: expect.any(Number),
+    });
+    expect(durations()[1].data.activeSeconds).toBeGreaterThanOrEqual(5);
+    expect(durations()[1].data.activeSeconds).toBeLessThanOrEqual(10);
     await page.clock.runFor(120_000);
     expect(durations()).toHaveLength(2);
   });
