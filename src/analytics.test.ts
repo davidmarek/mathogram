@@ -3,6 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const request = vi.fn().mockResolvedValue(new Response());
 const website = '00000000-0000-4000-8000-000000000001';
 const endpoint = 'https://analytics.example.com/api/send';
+const started = {
+  replay: false,
+  exercises: 'picture',
+  display: 'browser',
+} as const;
+const startedData = { replay: false, exercises: 'picture', display: 'browser' };
 
 beforeEach(() => {
   vi.resetModules();
@@ -68,8 +74,8 @@ describe('optional analytics', () => {
     else vi.stubEnv(key, value);
     const analytics = await import('./analytics');
     expect(analytics.analyticsEnabled).toBe(false);
-    analytics.trackPageview();
-    analytics.trackPuzzle('Puzzle started', 'fish');
+    analytics.trackScreen(null);
+    analytics.trackPuzzleStarted('fish', started);
     analytics.trackPuzzleTime('fish', 10);
     expect(request).not.toHaveBeenCalled();
   });
@@ -77,16 +83,17 @@ describe('optional analytics', () => {
   it('sends only canonical pageviews and allowlisted puzzle events, without credentials or referrers', async () => {
     window.history.replaceState(null, '', '/private?name=private#secret');
     const storage = vi.spyOn(Storage.prototype, 'setItem');
-    const { trackPageview, trackPuzzle } = await import('./analytics');
-    trackPageview();
-    trackPuzzle('Puzzle started', 'fish');
-    trackPuzzle('Puzzle completed', 'owl');
-    trackPuzzle('Puzzle started', 'private-user-input');
+    const { trackScreen, trackPuzzleStarted, trackPuzzleCompleted } =
+      await import('./analytics');
+    trackScreen(null);
+    trackPuzzleStarted('fish', started);
+    trackPuzzleCompleted('owl');
+    trackPuzzleStarted('private-user-input', started);
 
     expect(request).toHaveBeenCalledTimes(3);
     for (const [index, [name, data]] of [
       [undefined, undefined],
-      ['Puzzle started', { puzzleId: 'fish' }],
+      ['Puzzle started', { puzzleId: 'fish', ...startedData }],
       ['Puzzle completed', { puzzleId: 'owl' }],
     ].entries()) {
       expect(request).toHaveBeenNthCalledWith(index + 1, endpoint, {
@@ -110,15 +117,146 @@ describe('optional analytics', () => {
     expect(storage).not.toHaveBeenCalled();
   });
 
+  it('reports virtual screen pageviews with app language and screen size', async () => {
+    vi.stubEnv('BASE_URL', '/mathogram/');
+    vi.stubGlobal('screen', { width: 390, height: 844 });
+    document.documentElement.lang = 'cs';
+    try {
+      const { trackScreen, trackPuzzleCompleted } = await import('./analytics');
+      trackScreen(null);
+      trackScreen('fish');
+      trackScreen('../private');
+      trackPuzzleCompleted('fish');
+      const context = {
+        website,
+        hostname: window.location.hostname,
+        language: 'cs',
+        screen: '390x844',
+      };
+      expect(
+        request.mock.calls.map(([, init]) => JSON.parse(init.body).payload),
+      ).toEqual([
+        { ...context, url: '/mathogram/' },
+        { ...context, url: '/mathogram/puzzle/fish' },
+        {
+          ...context,
+          url: '/mathogram/puzzle/fish',
+          name: 'Puzzle completed',
+          data: { puzzleId: 'fish' },
+        },
+      ]);
+    } finally {
+      document.documentElement.lang = '';
+    }
+  });
+
+  it('omits unexpected languages and invalid screen sizes', async () => {
+    vi.stubGlobal('screen', { width: 0, height: 844 });
+    document.documentElement.lang = 'de';
+    try {
+      const { trackScreen } = await import('./analytics');
+      trackScreen(null);
+      expect(JSON.parse(request.mock.calls[0]![1].body).payload).toEqual({
+        website,
+        hostname: window.location.hostname,
+        url: '/',
+      });
+    } finally {
+      document.documentElement.lang = '';
+    }
+  });
+
+  it('reports start context and coarse progress when leaving unfinished puzzles', async () => {
+    const { trackPuzzleStarted, trackPuzzleLeft } = await import('./analytics');
+    trackPuzzleStarted('fish', {
+      replay: true,
+      exercises: 'custom',
+      display: 'standalone',
+    });
+    trackPuzzleLeft('fish', 0, 12);
+    trackPuzzleLeft('fish', 11, 12);
+    for (const [solved, total] of [
+      [12, 12],
+      [-1, 12],
+      [1.5, 12],
+      [1, NaN],
+    ])
+      trackPuzzleLeft('fish', solved!, total!);
+    trackPuzzleLeft('unknown', 1, 12);
+    expect(
+      request.mock.calls.map(([, init]) => {
+        const { name, data } = JSON.parse(init.body).payload;
+        return { name, data };
+      }),
+    ).toEqual([
+      {
+        name: 'Puzzle started',
+        data: {
+          puzzleId: 'fish',
+          replay: true,
+          exercises: 'custom',
+          display: 'standalone',
+        },
+      },
+      { name: 'Puzzle left', data: { puzzleId: 'fish', progress: 0 } },
+      { name: 'Puzzle left', data: { puzzleId: 'fish', progress: 90 } },
+    ]);
+  });
+
+  it('reports only allowlisted dialogs, settings and values', async () => {
+    const { trackDialogOpened, trackSettingChanged } =
+      await import('./analytics');
+    trackDialogOpened('help');
+    trackDialogOpened('settings');
+    trackDialogOpened('restart' as 'help');
+    trackSettingChanged('language', 'cs');
+    trackSettingChanged('theme', 'dark');
+    trackSettingChanged('rowHints', false);
+    trackSettingChanged('exercises', 'custom');
+    trackSettingChanged('maxNumber', 12);
+    trackSettingChanged('crossTen', true);
+    trackSettingChanged('operations', 'subtract');
+    trackSettingChanged('language', 'de');
+    trackSettingChanged('theme', 'neon');
+    trackSettingChanged('rowHints', 'yes');
+    trackSettingChanged('maxNumber', 9);
+    trackSettingChanged('maxNumber', 21);
+    trackSettingChanged('maxNumber', 12.5);
+    trackSettingChanged('operations', 'multiply');
+    trackSettingChanged('toString' as 'theme', 'dark');
+    trackSettingChanged('private' as 'theme', 'dark');
+    expect(
+      request.mock.calls.map(([, init]) => {
+        const { name, data } = JSON.parse(init.body).payload;
+        return [name, data];
+      }),
+    ).toEqual([
+      ['Dialog opened', { dialog: 'help' }],
+      ['Dialog opened', { dialog: 'settings' }],
+      ...(
+        [
+          ['language', 'cs'],
+          ['theme', 'dark'],
+          ['rowHints', false],
+          ['exercises', 'custom'],
+          ['maxNumber', 12],
+          ['crossTen', true],
+          ['operations', 'subtract'],
+        ] as const
+      ).map(([setting, value]) => ['Setting changed', { setting, value }]),
+    ]);
+  });
+
   it('accepts non-animal IDs from the puzzle catalog without changing the event schema', async () => {
     vi.doMock('./content/animals', () => ({
       puzzles: [{ id: 'rocket' }],
     }));
     try {
-      const { trackPuzzle } = await import('./analytics');
-      trackPuzzle('Puzzle started', 'rocket');
-      trackPuzzle('Puzzle completed', 'rocket');
-      trackPuzzle('Puzzle started', 'unknown');
+      const { trackPuzzleStarted, trackPuzzleCompleted } =
+        await import('./analytics');
+      trackPuzzleStarted('rocket', started);
+      trackPuzzleCompleted('rocket');
+      trackPuzzleStarted('unknown', started);
       expect(request).toHaveBeenCalledTimes(2);
       for (const [index, name] of [
         'Puzzle started',
@@ -129,7 +267,10 @@ describe('optional analytics', () => {
           hostname: window.location.hostname,
           url: '/',
           name,
-          data: { puzzleId: 'rocket' },
+          data:
+            name === 'Puzzle started'
+              ? { puzzleId: 'rocket', ...startedData }
+              : { puzzleId: 'rocket' },
         });
       }
     } finally {
@@ -144,7 +285,7 @@ describe('optional analytics', () => {
     vi.stubEnv('VITE_UMAMI_ENDPOINT', endpoint);
     const analytics = await import('./analytics');
     expect(analytics.analyticsEnabled).toBe(true);
-    analytics.trackPageview();
+    analytics.trackScreen(null);
     expect(request).toHaveBeenCalledWith(endpoint, expect.any(Object));
   });
 
@@ -159,9 +300,9 @@ describe('optional analytics', () => {
       ),
     );
     const analytics = await import('./analytics');
-    analytics.trackPageview();
+    analytics.trackScreen(null);
     await Promise.resolve();
-    analytics.trackPuzzle('Puzzle started', 'fish');
+    analytics.trackPuzzleStarted('fish', started);
     expect(request).toHaveBeenCalledTimes(2);
     expect(request.mock.calls[1]![1].headers).toEqual({
       'Content-Type': 'application/json',
@@ -179,14 +320,14 @@ describe('optional analytics', () => {
     async (navigator) => {
       vi.stubGlobal('navigator', navigator);
       const analytics = await import('./analytics');
-      analytics.trackPageview();
-      analytics.trackPuzzle('Puzzle completed', 'fish');
+      analytics.trackScreen(null);
+      analytics.trackPuzzleCompleted('fish');
       analytics.trackPuzzleTime('fish', 10);
       expect(request).not.toHaveBeenCalled();
       vi.stubGlobal('navigator', { onLine: true });
       await Promise.resolve();
       expect(request).not.toHaveBeenCalled();
-      analytics.trackPuzzle('Puzzle started', 'cat');
+      analytics.trackPuzzleStarted('cat', started);
       expect(request).toHaveBeenCalledOnce();
     },
   );
@@ -198,16 +339,16 @@ describe('optional analytics', () => {
       })
       .mockRejectedValueOnce(new TypeError('offline'))
       .mockResolvedValueOnce(new Response(null, { status: 500 }));
-    const { trackPageview } = await import('./analytics');
+    const { trackScreen } = await import('./analytics');
     for (let index = 0; index < 3; index++)
-      expect(() => trackPageview()).not.toThrow();
+      expect(() => trackScreen(null)).not.toThrow();
     await Promise.resolve();
     expect(request).toHaveBeenCalledTimes(3);
   });
 
   it('keeps working if fetch is unavailable', async () => {
     vi.stubGlobal('fetch', undefined);
-    const { trackPageview } = await import('./analytics');
-    expect(() => trackPageview()).not.toThrow();
+    const { trackScreen } = await import('./analytics');
+    expect(() => trackScreen(null)).not.toThrow();
   });
 });

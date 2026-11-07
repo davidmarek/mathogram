@@ -26,7 +26,16 @@ import type { Language, LoadResult, Progress } from './storage/progress';
 import type { Puzzle } from './domain/puzzle';
 import { isRecord } from './domain/puzzle';
 import { usePwa } from './pwa/usePwa';
-import { analyticsEnabled, trackPuzzle } from './analytics';
+import {
+  analyticsEnabled,
+  trackDialogOpened,
+  trackPuzzleCompleted,
+  trackPuzzleLeft,
+  trackPuzzleStarted,
+  trackScreen,
+  trackSettingChanged,
+} from './analytics';
+import type { SettingName } from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
 
 function browserStorage(): Storage | null {
@@ -59,6 +68,20 @@ const puzzleGroups = difficulties.map((difficulty) => ({
     .sort((a, b) => a.pixels.length - b.pixels.length),
 }));
 
+function settingValues(
+  progress: Progress,
+): Partial<Record<SettingName, string | number | boolean>> {
+  const { exercises } = progress;
+  return {
+    language: progress.language,
+    theme: progress.theme,
+    rowHints: progress.showRowHints,
+    ...(exercises === 'picture'
+      ? { exercises: 'picture' }
+      : { exercises: 'custom', ...exercises }),
+  };
+}
+
 const parkPictures = puzzles.filter((puzzle) =>
   ['rabbit', 'butterfly', 'fish', 'chick-and-pig', 'donut'].includes(puzzle.id),
 );
@@ -85,6 +108,8 @@ export function App() {
     'help' | 'settings' | 'restart' | 'reset' | null
   >(null);
   const modalOpen = useRef(false);
+  const trackedScreen = useRef<string | null>(undefined);
+  const trackedSettings = useRef(settingValues(progress));
   const [persistent, setPersistent] = useState<
     'persisted' | 'notPersisted' | 'persistError' | null
   >(null);
@@ -149,6 +174,28 @@ export function App() {
   useEffect(() => {
     modalOpen.current = modal !== null;
   }, [modal]);
+  useEffect(() => {
+    if (modal === 'settings' || modal === 'help') trackDialogOpened(modal);
+  }, [modal]);
+  useEffect(() => {
+    const previous = trackedSettings.current;
+    const next = settingValues(progress);
+    trackedSettings.current = next;
+    for (const [setting, value] of Object.entries(next) as [
+      SettingName,
+      string | number | boolean,
+    ][])
+      if (previous[setting] !== value) trackSettingChanged(setting, value);
+  }, [progress]);
+  useEffect(() => {
+    const previous = trackedScreen.current;
+    if (previous === activeId) return;
+    trackedScreen.current = activeId;
+    const left = previous ? progressRef.current.attempts[previous] : undefined;
+    if (previous && left && !isComplete(left))
+      trackPuzzleLeft(previous, left.solved.length, left.queue.length);
+    trackScreen(activeId);
+  }, [activeId]);
   useEffect(() => {
     window.history.replaceState({ mathogramPuzzle: null }, '');
     function restoreScreen(event: PopStateEvent) {
@@ -218,7 +265,11 @@ export function App() {
           [id]: createAttempt(selected, Math.random, chosen),
         },
       });
-      trackPuzzle('Puzzle started', id);
+      trackPuzzleStarted(id, {
+        replay,
+        exercises: chosen ? 'custom' : 'picture',
+        display: standalone ? 'standalone' : 'browser',
+      });
     }
     if (activeId !== id) {
       if (activeId === null)
@@ -284,7 +335,7 @@ export function App() {
         ? [...new Set([...previous.completed, activeId])]
         : previous.completed,
     });
-    if (revealed && isComplete(next)) trackPuzzle('Puzzle completed', activeId);
+    if (revealed && isComplete(next)) trackPuzzleCompleted(activeId);
     timer.current = setTimeout(
       () => {
         locked.current = false;

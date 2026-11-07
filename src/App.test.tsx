@@ -11,14 +11,24 @@ import { StrictMode } from 'react';
 
 const analytics = vi.hoisted(() => ({
   enabled: false,
-  trackPuzzle: vi.fn(),
+  trackScreen: vi.fn(),
+  trackPuzzleStarted: vi.fn(),
+  trackPuzzleCompleted: vi.fn(),
+  trackPuzzleLeft: vi.fn(),
+  trackDialogOpened: vi.fn(),
+  trackSettingChanged: vi.fn(),
   trackPuzzleTime: vi.fn(),
 }));
 vi.mock('./analytics', () => ({
   get analyticsEnabled() {
     return analytics.enabled;
   },
-  trackPuzzle: analytics.trackPuzzle,
+  trackScreen: analytics.trackScreen,
+  trackPuzzleStarted: analytics.trackPuzzleStarted,
+  trackPuzzleCompleted: analytics.trackPuzzleCompleted,
+  trackPuzzleLeft: analytics.trackPuzzleLeft,
+  trackDialogOpened: analytics.trackDialogOpened,
+  trackSettingChanged: analytics.trackSettingChanged,
   trackPuzzleTime: analytics.trackPuzzleTime,
   analyticsAllowed: () => analytics.enabled,
 }));
@@ -66,7 +76,12 @@ beforeEach(() => {
   pwa.ready = pwa.waiting = pwa.error = pwa.offline = false;
   pwa.acceptUpdate.mockClear();
   analytics.enabled = false;
-  analytics.trackPuzzle.mockClear();
+  analytics.trackScreen.mockClear();
+  analytics.trackPuzzleStarted.mockClear();
+  analytics.trackPuzzleCompleted.mockClear();
+  analytics.trackPuzzleLeft.mockClear();
+  analytics.trackDialogOpened.mockClear();
+  analytics.trackSettingChanged.mockClear();
   analytics.trackPuzzleTime.mockClear();
 });
 afterEach(() => {
@@ -177,11 +192,15 @@ describe('aggregate puzzle analytics', () => {
         <App />
       </StrictMode>,
     );
-    expect(analytics.trackPuzzle).not.toHaveBeenCalled();
+    expect(analytics.trackPuzzleStarted).not.toHaveBeenCalled();
     openFish();
-    expect(analytics.trackPuzzle).toHaveBeenCalledExactlyOnceWith(
-      'Puzzle started',
+    expect(analytics.trackPuzzleStarted).toHaveBeenCalledExactlyOnceWith(
       'fish',
+      {
+        replay: false,
+        exercises: 'picture',
+        display: 'browser',
+      },
     );
     fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
     openFish();
@@ -189,16 +208,21 @@ describe('aggregate puzzle analytics', () => {
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(1);
+    expect(analytics.trackPuzzleStarted).toHaveBeenCalledTimes(1);
     fireEvent.click(
       screen.getByRole('button', { name: 'Restart this picture' }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+    expect(analytics.trackPuzzleStarted).toHaveBeenCalledTimes(2);
+    expect(analytics.trackPuzzleStarted).toHaveBeenLastCalledWith('fish', {
+      replay: true,
+      exercises: 'picture',
+      display: 'browser',
+    });
     view.unmount();
     render(<App />);
     openFish();
-    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+    expect(analytics.trackPuzzleStarted).toHaveBeenCalledTimes(2);
   });
 
   it('counts only the final reveal once, not incorrect answers, practice or completed-picture reopening', () => {
@@ -216,27 +240,111 @@ describe('aggregate puzzle analytics', () => {
     enter(firstAnswer());
     submit();
     act(() => vi.advanceTimersByTime(650));
-    expect(analytics.trackPuzzle).not.toHaveBeenCalled();
+    expect(analytics.trackPuzzleCompleted).not.toHaveBeenCalled();
     enter(firstAnswer());
     const form = screen.getByRole('textbox').closest('form')!;
     act(() => {
       fireEvent.submit(form);
       fireEvent.submit(form);
     });
-    expect(analytics.trackPuzzle).toHaveBeenCalledExactlyOnceWith(
-      'Puzzle completed',
+    expect(analytics.trackPuzzleCompleted).toHaveBeenCalledExactlyOnceWith(
       'fish',
     );
     view.unmount();
     render(<App />);
     openFish();
-    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(1);
+    expect(analytics.trackPuzzleCompleted).toHaveBeenCalledTimes(1);
+    expect(analytics.trackPuzzleLeft).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
-    expect(analytics.trackPuzzle).toHaveBeenLastCalledWith(
-      'Puzzle started',
+    expect(analytics.trackPuzzleStarted).toHaveBeenCalledExactlyOnceWith(
       'fish',
+      { replay: true, exercises: 'picture', display: 'browser' },
     );
-    expect(analytics.trackPuzzle).toHaveBeenCalledTimes(2);
+    expect(analytics.trackPuzzleCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports opened dialogs and each changed setting, not unchanged ones', () => {
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    expect(analytics.trackSettingChanged).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Help' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(analytics.trackDialogOpened.mock.calls).toEqual([
+      ['help'],
+      ['settings'],
+    ]);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Appearance' }), {
+      target: { value: 'dark' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show row hints' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'crossing' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Numbers up to' }), {
+      target: { value: '12' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sums' }), {
+      target: { value: 'add' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Exercise type' }), {
+      target: { value: 'picture' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    openFish();
+    enter(firstAnswer());
+    submit();
+    expect(analytics.trackSettingChanged.mock.calls).toEqual([
+      ['theme', 'dark'],
+      ['rowHints', false],
+      ['exercises', 'custom'],
+      ['maxNumber', 20],
+      ['crossTen', true],
+      ['operations', 'both'],
+      ['maxNumber', 12],
+      ['operations', 'add'],
+      ['exercises', 'picture'],
+    ]);
+    expect(analytics.trackDialogOpened).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: /^Česky/ }));
+    expect(analytics.trackSettingChanged).toHaveBeenLastCalledWith(
+      'language',
+      'cs',
+    );
+    expect(analytics.trackSettingChanged).toHaveBeenCalledTimes(10);
+  });
+
+  it('reports each screen once and unfinished pictures when leaving them', () => {
+    const progress = emptyProgress('en');
+    const attempt = createAttempt(puzzles[0]!);
+    attempt.solved = attempt.queue.slice(0, 1).map(({ pixelId }) => pixelId);
+    progress.attempts.fish = attempt;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    expect(analytics.trackScreen.mock.calls).toEqual([[null]]);
+    openFish();
+    expect(analytics.trackScreen.mock.calls).toEqual([[null], ['fish']]);
+    expect(analytics.trackPuzzleLeft).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'My pictures' }));
+    expect(analytics.trackScreen.mock.calls).toEqual([
+      [null],
+      ['fish'],
+      [null],
+    ]);
+    expect(analytics.trackPuzzleLeft).toHaveBeenCalledExactlyOnceWith(
+      'fish',
+      1,
+      attempt.queue.length,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(analytics.trackScreen).toHaveBeenCalledTimes(3);
   });
 
   it.each(['en', 'cs'] as const)(

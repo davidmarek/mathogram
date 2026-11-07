@@ -37,11 +37,13 @@ test.describe('enabled analytics', () => {
     await page.goto('./?private=value#secret');
     await expect.poll(() => events().length).toBe(1);
     await page.getByRole('button', { name: /Fish/ }).click();
-    await expect.poll(() => events().length).toBe(2);
+    await expect.poll(() => events().length).toBe(3);
     await page
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
+    await expect.poll(() => events().length).toBe(5);
     await page.getByRole('button', { name: /Fish/ }).click();
+    await expect.poll(() => events().length).toBe(6);
     await page.evaluate(() => {
       const progress: Progress = JSON.parse(
         localStorage.getItem('mathogram.progress')!,
@@ -51,34 +53,79 @@ test.describe('enabled analytics', () => {
       localStorage.setItem('mathogram.progress', JSON.stringify(progress));
     });
     await page.reload();
-    await expect.poll(() => events().length).toBe(3);
+    await expect.poll(() => events().length).toBe(7);
     await page.getByRole('button', { name: /Fish/ }).click();
     await answerEquation(page);
     await page.keyboard.press('Enter');
-    await expect.poll(() => events().length).toBe(4);
+    await expect.poll(() => events().length).toBe(9);
     await page
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
     await page.getByRole('button', { name: /Fish/ }).click();
     await page.getByRole('button', { name: 'Play again' }).click();
-    await expect.poll(() => events().length).toBe(5);
-    expect(events().map((request) => request.postDataJSON())).toEqual(
-      [
-        'pageview',
-        'Puzzle started',
-        'pageview',
-        'Puzzle completed',
-        'Puzzle started',
-      ].map((name) => ({
-        type: 'event',
-        payload: {
-          website: process.env.VITE_UMAMI_WEBSITE_ID,
-          hostname: '127.0.0.1',
-          url: '/',
-          ...(name === 'pageview' ? {} : { name, data: { puzzleId: 'fish' } }),
-        },
+    await expect.poll(() => events().length).toBe(12);
+    const gallery = { url: '/' };
+    const fish = { url: '/puzzle/fish' };
+    const started = (replay: boolean) => ({
+      url: '/puzzle/fish',
+      name: 'Puzzle started',
+      data: {
+        puzzleId: 'fish',
+        replay,
+        exercises: 'picture',
+        display: 'browser',
+      },
+    });
+    const payloads = events().map((request) => {
+      const { type, payload } = request.postDataJSON();
+      expect(type).toBe('event');
+      return payload;
+    });
+    expect(
+      payloads.map(({ url, name, data }) => ({
+        url,
+        ...(name ? { name, data } : {}),
       })),
-    );
+    ).toEqual([
+      gallery,
+      { ...started(false), url: '/' },
+      fish,
+      {
+        url: '/puzzle/fish',
+        name: 'Puzzle left',
+        data: { puzzleId: 'fish', progress: 0 },
+      },
+      gallery,
+      fish,
+      gallery,
+      fish,
+      {
+        url: '/puzzle/fish',
+        name: 'Puzzle completed',
+        data: { puzzleId: 'fish' },
+      },
+      gallery,
+      fish,
+      started(true),
+    ]);
+    for (const payload of payloads)
+      expect(Object.keys(payload).sort()).toEqual(
+        [
+          'website',
+          'hostname',
+          'url',
+          'language',
+          'screen',
+          ...(payload.name ? ['name', 'data'] : []),
+        ].sort(),
+      );
+    expect(payloads[0]).toEqual({
+      website: process.env.VITE_UMAMI_WEBSITE_ID,
+      hostname: '127.0.0.1',
+      url: '/',
+      language: 'en',
+      screen: expect.stringMatching(/^[1-9][0-9]*x[1-9][0-9]*$/),
+    });
     for (const request of analyticsRequests) {
       expect(request.method()).toBe('POST');
       const headers = await request.allHeaders();
@@ -104,10 +151,16 @@ test.describe('enabled analytics', () => {
     expect(durations()[0]).toEqual({
       website: process.env.VITE_UMAMI_WEBSITE_ID,
       hostname: '127.0.0.1',
-      url: '/',
+      url: '/puzzle/fish',
+      language: 'en',
+      screen: expect.any(String),
       name: 'Puzzle time spent',
-      data: { puzzleId: 'fish', activeSeconds: 10 },
+      data: { puzzleId: 'fish', activeSeconds: expect.any(Number) },
     });
+    // The installed clock keeps running in real time, so slow browsers can add
+    // a few seconds; the bounds still exclude the 120 s spent in Help/gallery.
+    expect(durations()[0].data.activeSeconds).toBeGreaterThanOrEqual(10);
+    expect(durations()[0].data.activeSeconds).toBeLessThanOrEqual(15);
     await page.clock.runFor(120_000);
     await page.getByRole('button', { name: 'Close' }).click();
     await page.clock.runFor(5_000);
@@ -115,12 +168,17 @@ test.describe('enabled analytics', () => {
       .getByRole('button', { name: 'My pictures', exact: true })
       .click();
     await expect.poll(() => durations().length).toBe(2);
-    expect(durations()[1].data).toEqual({ puzzleId: 'fish', activeSeconds: 5 });
+    expect(durations()[1].data).toEqual({
+      puzzleId: 'fish',
+      activeSeconds: expect.any(Number),
+    });
+    expect(durations()[1].data.activeSeconds).toBeGreaterThanOrEqual(5);
+    expect(durations()[1].data.activeSeconds).toBeLessThanOrEqual(10);
     await page.clock.runFor(120_000);
     expect(durations()).toHaveLength(2);
   });
 
-  test('reports online Home Screen-style launches without adding a launch-mode property', async ({
+  test('reports online Home Screen-style launches as standalone starts', async ({
     page,
     context,
     analyticsRequests,
@@ -136,25 +194,65 @@ test.describe('enabled analytics', () => {
     ).toHaveCount(0);
     await page.getByRole('button', { name: 'Close' }).click();
     await page.getByRole('button', { name: /Fish/ }).click();
-    await expect.poll(() => analyticsRequests.length).toBe(2);
-    expect(analyticsRequests.map((request) => request.postDataJSON())).toEqual([
+    await expect.poll(() => analyticsRequests.length).toBe(4);
+    expect(
+      analyticsRequests.map((request) => {
+        const { url, name, data } = request.postDataJSON().payload;
+        return { url, name, data };
+      }),
+    ).toEqual([
+      { url: '/' },
+      { url: '/', name: 'Dialog opened', data: { dialog: 'help' } },
       {
-        type: 'event',
-        payload: {
-          website: process.env.VITE_UMAMI_WEBSITE_ID,
-          hostname: '127.0.0.1',
-          url: '/',
+        url: '/',
+        name: 'Puzzle started',
+        data: {
+          puzzleId: 'fish',
+          replay: false,
+          exercises: 'picture',
+          display: 'standalone',
         },
       },
+      { url: '/puzzle/fish' },
+    ]);
+  });
+
+  test('reports opened dialogs and changed settings with allowlisted values', async ({
+    page,
+    analyticsRequests,
+  }) => {
+    await page.goto('./');
+    await expect.poll(() => analyticsRequests.length).toBe(1);
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page
+      .getByRole('combobox', { name: 'Appearance' })
+      .selectOption('dark');
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: /^Česky/ }).click();
+    await expect.poll(() => analyticsRequests.length).toBe(4);
+    expect(
+      analyticsRequests.slice(1).map((request) => {
+        const { url, language, name, data } = request.postDataJSON().payload;
+        return { url, language, name, data };
+      }),
+    ).toEqual([
       {
-        type: 'event',
-        payload: {
-          website: process.env.VITE_UMAMI_WEBSITE_ID,
-          hostname: '127.0.0.1',
-          url: '/',
-          name: 'Puzzle started',
-          data: { puzzleId: 'fish' },
-        },
+        url: '/',
+        language: 'en',
+        name: 'Dialog opened',
+        data: { dialog: 'settings' },
+      },
+      {
+        url: '/',
+        language: 'en',
+        name: 'Setting changed',
+        data: { setting: 'theme', value: 'dark' },
+      },
+      {
+        url: '/',
+        language: 'cs',
+        name: 'Setting changed',
+        data: { setting: 'language', value: 'cs' },
       },
     ]);
   });
