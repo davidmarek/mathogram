@@ -37,10 +37,28 @@ export function analyticsAllowed(): boolean {
   );
 }
 
-function send(
-  name?: string,
-  data?: { puzzleId: string; activeSeconds?: number },
-) {
+type EventData = Record<string, string | number | boolean>;
+
+const isPuzzle = (puzzleId: string) =>
+  puzzles.some((puzzle) => puzzle.id === puzzleId);
+
+function context() {
+  const language = document.documentElement.lang;
+  const { width, height } = window.screen ?? {};
+  return {
+    ...(language === 'en' || language === 'cs' ? { language } : {}),
+    ...(Number.isSafeInteger(width) &&
+    Number.isSafeInteger(height) &&
+    width > 0 &&
+    height > 0
+      ? { screen: `${width}x${height}` }
+      : {}),
+  };
+}
+
+let screenPath = '';
+
+function send(name?: string, data?: EventData) {
   try {
     if (!analyticsAllowed()) return;
 
@@ -57,7 +75,10 @@ function send(
         payload: {
           website,
           hostname: window.location.hostname,
-          url: new URL(import.meta.env.BASE_URL, window.location.href).pathname,
+          url:
+            new URL(import.meta.env.BASE_URL, window.location.href).pathname +
+            screenPath,
+          ...context(),
           ...(name ? { name, data } : {}),
         },
       }),
@@ -67,21 +88,57 @@ function send(
   }
 }
 
-export function trackPageview() {
+/** A virtual pageview: the gallery, or `puzzle/<id>` below the app base path. */
+export function trackScreen(puzzleId: string | null) {
+  if (puzzleId !== null && !isPuzzle(puzzleId)) return;
+  // Later events are attributed to this screen.
+  screenPath = puzzleId === null ? '' : `puzzle/${puzzleId}`;
   send();
 }
 
-export function trackPuzzle(
-  event: 'Puzzle started' | 'Puzzle completed',
+export function trackPuzzleStarted(
   puzzleId: string,
+  details: {
+    replay: boolean;
+    exercises: 'picture' | 'custom';
+    display: 'standalone' | 'browser';
+  },
 ) {
-  if (puzzles.some((puzzle) => puzzle.id === puzzleId))
-    send(event, { puzzleId });
+  if (isPuzzle(puzzleId))
+    send('Puzzle started', {
+      puzzleId,
+      replay: details.replay === true,
+      exercises: details.exercises === 'custom' ? 'custom' : 'picture',
+      display: details.display === 'standalone' ? 'standalone' : 'browser',
+    });
+}
+
+export function trackPuzzleCompleted(puzzleId: string) {
+  if (isPuzzle(puzzleId)) send('Puzzle completed', { puzzleId });
+}
+
+/** Leaving an unfinished picture; progress is floored to 10% steps. */
+export function trackPuzzleLeft(
+  puzzleId: string,
+  solved: number,
+  total: number,
+) {
+  if (
+    isPuzzle(puzzleId) &&
+    Number.isSafeInteger(solved) &&
+    Number.isSafeInteger(total) &&
+    solved >= 0 &&
+    solved < total
+  )
+    send('Puzzle left', {
+      puzzleId,
+      progress: Math.floor((solved / total) * 10) * 10,
+    });
 }
 
 export function trackPuzzleTime(puzzleId: string, activeSeconds: number) {
   if (
-    puzzles.some((puzzle) => puzzle.id === puzzleId) &&
+    isPuzzle(puzzleId) &&
     Number.isSafeInteger(activeSeconds) &&
     activeSeconds > 0
   )

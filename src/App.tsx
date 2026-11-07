@@ -26,7 +26,13 @@ import type { Language, LoadResult, Progress } from './storage/progress';
 import type { Puzzle } from './domain/puzzle';
 import { isRecord } from './domain/puzzle';
 import { usePwa } from './pwa/usePwa';
-import { analyticsEnabled, trackPuzzle } from './analytics';
+import {
+  analyticsEnabled,
+  trackPuzzleCompleted,
+  trackPuzzleLeft,
+  trackPuzzleStarted,
+  trackScreen,
+} from './analytics';
 import { usePuzzleTime } from './usePuzzleTime';
 
 function browserStorage(): Storage | null {
@@ -85,6 +91,7 @@ export function App() {
     'help' | 'settings' | 'restart' | 'reset' | null
   >(null);
   const modalOpen = useRef(false);
+  const trackedScreen = useRef<string | null>(undefined);
   const [persistent, setPersistent] = useState<
     'persisted' | 'notPersisted' | 'persistError' | null
   >(null);
@@ -149,6 +156,15 @@ export function App() {
   useEffect(() => {
     modalOpen.current = modal !== null;
   }, [modal]);
+  useEffect(() => {
+    const previous = trackedScreen.current;
+    if (previous === activeId) return;
+    trackedScreen.current = activeId;
+    const left = previous ? progressRef.current.attempts[previous] : undefined;
+    if (previous && left && !isComplete(left))
+      trackPuzzleLeft(previous, left.solved.length, left.queue.length);
+    trackScreen(activeId);
+  }, [activeId]);
   useEffect(() => {
     window.history.replaceState({ mathogramPuzzle: null }, '');
     function restoreScreen(event: PopStateEvent) {
@@ -218,7 +234,11 @@ export function App() {
           [id]: createAttempt(selected, Math.random, chosen),
         },
       });
-      trackPuzzle('Puzzle started', id);
+      trackPuzzleStarted(id, {
+        replay,
+        exercises: chosen ? 'custom' : 'picture',
+        display: standalone ? 'standalone' : 'browser',
+      });
     }
     if (activeId !== id) {
       if (activeId === null)
@@ -284,7 +304,7 @@ export function App() {
         ? [...new Set([...previous.completed, activeId])]
         : previous.completed,
     });
-    if (revealed && isComplete(next)) trackPuzzle('Puzzle completed', activeId);
+    if (revealed && isComplete(next)) trackPuzzleCompleted(activeId);
     timer.current = setTimeout(
       () => {
         locked.current = false;

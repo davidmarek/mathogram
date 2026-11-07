@@ -124,16 +124,25 @@ Progress is **not permanent or synchronized**. Browser/device cleanup can remove
 
 Analytics is **disabled unless explicitly enabled at build time**, and always disabled in the Vite development server. The integration uses **Umami**, with no added dependencies or third-party scripts. It sends best-effort JSON POST requests to a configured HTTPS `/api/send` endpoint. Use Umami Cloud's free Hobby plan or your own self-hosted Umami instance; hosting and database maintenance are your responsibility for self-hosting. Check [current Cloud plans](https://umami.is/pricing) for quotas and retention. Custom-event data also contributes to Cloud usage.
 
-| Event                    | Meaning                                                                                                        | Custom properties                                       |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Pageview (no event name) | One online app load/reload, not each gallery/puzzle navigation                                                 | None                                                    |
-| `Puzzle started`         | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `puzzleId`: a stable ID from the current puzzle catalog |
-| `Puzzle completed`       | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `puzzleId`: the same stable puzzle ID                   |
-| `Puzzle time spent`      | A non-overlapping interval of approximate active online solving time                                           | `puzzleId`, `activeSeconds`: positive whole seconds     |
+| Event                    | Meaning                                                                                                        | Custom properties                                                                                                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pageview (no event name) | One online app load/reload, then each in-app switch between the gallery and a picture                          | None; the URL is a virtual screen path (see below)                                                                                                                                          |
+| `Puzzle started`         | A new attempt, including a replay or confirmed restart; not resuming an existing picture                       | `puzzleId`: a stable ID from the current puzzle catalog; `replay`: `true` for Play again/restart; `exercises`: `picture` or `custom` (Settings rules); `display`: `standalone` or `browser` |
+| `Puzzle left`            | Leaving an unfinished picture in-app (My pictures, logo, browser Back); not closing or reloading the page      | `puzzleId`; `progress`: revealed pixels as a percentage floored to 10 (`0`–`90`)                                                                                                            |
+| `Puzzle completed`       | The final pixel of an attempt is revealed; not practice, repeated submissions, or reopening a finished picture | `puzzleId`: the same stable puzzle ID                                                                                                                                                       |
+| `Puzzle time spent`      | A non-overlapping interval of approximate active online solving time                                           | `puzzleId`, `activeSeconds`: positive whole seconds                                                                                                                                         |
+
+### Screens, languages and devices
+
+Real browser URLs do not change. Instead, pageviews report a virtual path below the deployment base path: the base path itself for the gallery and `puzzle/<puzzleId>` for a picture (for example `/puzzle/fish`, or `/mathogram/puzzle/fish` on a project subpath). Custom events use the path of the screen they happened on. Umami's Pages, entry/exit, Journeys and Funnels reports therefore show which pictures players open and where they leave. Help and Settings dialogs are not separate screens.
+
+Every request also carries Umami's standard `language` (the game's `en`/`cs` language, not the browser's) and `screen` (`<width>x<height>` of the device screen) fields, enabling the Languages and Devices reports.
+
+Suggested dashboard use: a funnel of `/` → `/puzzle/<id>` → `Puzzle started` → `Puzzle completed`; `Puzzle left` grouped by `puzzleId` and `progress` to find pictures that lose players; `Puzzle started` grouped by `display`, `exercises` and `replay`.
 
 The dashboard provides visits and estimated visitors over time. Custom events show starts/completions, and their `puzzleId` property shows popular puzzles regardless of whether the picture is an animal or another subject. IDs are checked against the bundled catalog, not a separate animal-only list. These are aggregate counts, not identifiable players or individual learning histories. Starts and completions can occur on different days; their ratio is not a per-player completion rate.
 
-The earlier analytics implementation used `animal` for this property. New events use only `puzzleId`; existing Umami data is not rewritten. If the earlier build collected data, update dashboard property filters and account for both property names when comparing historical periods. Event names and puzzle IDs have not changed.
+The earlier analytics implementation used `animal` for this property. New events use only `puzzleId`; existing Umami data is not rewritten. If the earlier build collected data, update dashboard property filters and account for both property names when comparing historical periods. Event names and puzzle IDs have not changed. Builds before per-screen pageviews reported every request at the base path, so `/puzzle/<id>` pages and `Puzzle left` events only exist from that release onward.
 
 ### Solving time
 
@@ -145,14 +154,14 @@ To measure total reported solving time per picture, **sum `activeSeconds` groupe
 
 ### iOS Home Screen use
 
-Online launches from an iPhone/iPad Home Screen run the same analytics code as browser visits, provided the installed build has analytics enabled and requests are not blocked. A fresh app load/reload sends a pageview; merely returning to an already-running app does not. Puzzle starts, completions and active solving time are reported in either context; background time is excluded. Adding the site to the Home Screen is not tracked, and no property currently distinguishes standalone use from browser use. Offline launches and gameplay are not reported or backfilled. An older installed copy needs to accept the analytics-enabled update first.
+Online launches from an iPhone/iPad Home Screen run the same analytics code as browser visits, provided the installed build has analytics enabled and requests are not blocked. A fresh app load/reload sends a gallery pageview, and moving between screens sends further pageviews; merely returning to an already-running app does not. Puzzle starts, completions and active solving time are reported in either context; background time is excluded. Adding the site to the Home Screen is not tracked; `Puzzle started` reports `display: standalone` for Home Screen/installed launches and `browser` otherwise. Offline launches and gameplay are not reported or backfilled. An older installed copy needs to accept the analytics-enabled update first.
 
 Browser acceptance simulates the iOS standalone flag to verify this code path; it is not physical iPhone/iPad or live-provider acceptance.
 
 ### Enable for GitHub Pages
 
 1. **Review privacy and consent requirements first**, especially because this is a children's game. This implementation does not provide a consent banner or parental-consent flow. Cookieless does not automatically mean consent-free; leave analytics disabled if consent is required until an appropriate flow is implemented. Review the provider's processing terms, retention and access controls.
-2. Add a website for `davidmarek.github.io` in Umami and copy its **Website ID** (UUID) from its settings/tracking code. You do not need to install the provided script. Events `Puzzle started`, `Puzzle completed` and `Puzzle time spent` appear automatically after receipt; inspect their event data to break down activity by `puzzleId`.
+2. Add a website for `davidmarek.github.io` in Umami and copy its **Website ID** (UUID) from its settings/tracking code. You do not need to install the provided script. Events `Puzzle started`, `Puzzle left`, `Puzzle completed` and `Puzzle time spent` appear automatically after receipt; inspect their event data to break down activity by `puzzleId`.
 3. In repository **Settings → Secrets and variables → Actions → Variables**, set all three public build settings:
    - `VITE_ANALYTICS_ENABLED`: the exact string `true`.
    - `VITE_UMAMI_WEBSITE_ID`: the Website ID from Umami, **not** an API key.
@@ -165,7 +174,7 @@ Browser acceptance simulates the iOS standalone flag to verify this code path; i
 
 ### Privacy and limitations
 
-- Event payloads contain only the configured Website ID, site hostname, canonical deployment base path, event name, stable puzzle ID and, for timing events, active seconds. Current URL paths, query strings, fragments, answers, equations, screen size, page title, language, saved progress and completion badges are not added to the payload. Pointer/key interactions only reset a local idle timer; their content and individual timestamps are never sent. HTTP referrers are suppressed.
+- Event payloads contain only the configured Website ID, site hostname, a virtual screen path (deployment base path, optionally followed by `puzzle/<puzzleId>`), the game language (`en`/`cs`), device screen dimensions, and for events the name and the properties listed above. Real URL paths, query strings, fragments, answers, equations, page title, saved progress and completion badges are not added to the payload. Pointer/key interactions only reset a local idle timer; their content and individual timestamps are never sent. HTTP referrers are suppressed.
 - Requests omit cookies/credentials and cannot follow redirects. No analytics identifiers or event queues are written to browser storage. Umami's returned cache/session/visit IDs are discarded; no `identify` calls or custom visitor IDs are used.
 - Like any receiving service, Umami receives the connection's IP address and browser information. It derives visitor/session identifiers server-side from the website, IP and User-Agent with a rotating salt; these are estimates, not exact counts of people. The [Umami documentation](https://docs.umami.is/docs/metric-definitions) states raw IP addresses are not stored by analytics, but separately configured proxy/server logs may retain them. Review hosting and retention settings. Ignoring the response cache can split visits at hour boundaries.
 - Browser **Do Not Track** (`1`) and **Global Privacy Control** suppress requests. English/Czech Settings display a parent-facing disclosure and a link to Umami's privacy-related FAQ when analytics is configured.
