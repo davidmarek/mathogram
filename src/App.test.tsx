@@ -600,6 +600,28 @@ describe('bilingual gallery and settings', () => {
     expect(document.querySelector('.active-row')).toBeVisible();
     view.unmount();
   });
+  it('closes settings by clicking the backdrop, but not inside the dialog', () => {
+    render(<App />);
+    const settingsButton = screen.getByRole('button', { name: 'Settings' });
+    fireEvent.click(settingsButton);
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    vi.spyOn(dialog, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 100, y: 100, width: 300, height: 400 }),
+    );
+    const inside = { clientX: 110, clientY: 110 };
+    fireEvent.mouseDown(dialog, inside);
+    fireEvent.click(dialog, inside);
+    fireEvent.mouseDown(dialog, inside);
+    fireEvent.click(dialog, { clientX: 10, clientY: 10 });
+    expect(dialog).toBeInTheDocument();
+    const outside = { clientX: 10, clientY: 10 };
+    fireEvent.mouseDown(dialog, outside);
+    fireEvent.click(dialog, outside);
+    expect(
+      screen.queryByRole('dialog', { name: 'Settings' }),
+    ).not.toBeInTheDocument();
+    expect(settingsButton).toHaveFocus();
+  });
   it('keeps settings focus when a deferred exercise finishes its feedback', () => {
     vi.useFakeTimers();
     render(<App />);

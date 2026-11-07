@@ -1,5 +1,17 @@
 import { useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
+
+// Clicks on the ::backdrop target the dialog itself, as do clicks on its padding.
+function isBackdropEvent(event: MouseEvent<HTMLDialogElement>) {
+  if (event.target !== event.currentTarget) return false;
+  const rect = event.currentTarget.getBoundingClientRect();
+  return (
+    event.clientX < rect.left ||
+    event.clientX > rect.right ||
+    event.clientY < rect.top ||
+    event.clientY > rect.bottom
+  );
+}
 
 export function Modal({
   title,
@@ -13,6 +25,7 @@ export function Modal({
   closeLabel: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const pressedBackdrop = useRef(false);
   useEffect(() => {
     const previous = document.activeElement;
     const dialog = ref.current;
@@ -31,6 +44,14 @@ export function Modal({
       onCancel={(event) => {
         event.preventDefault();
         onClose();
+      }}
+      onMouseDown={(event) => {
+        pressedBackdrop.current = isBackdropEvent(event);
+      }}
+      onClick={(event) => {
+        const fromBackdrop = pressedBackdrop.current;
+        pressedBackdrop.current = false;
+        if (fromBackdrop && isBackdropEvent(event)) onClose();
       }}
       onKeyDown={(event) => {
         if (event.key !== 'Tab') return;
